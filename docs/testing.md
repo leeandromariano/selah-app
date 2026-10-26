@@ -29,6 +29,13 @@ O arquivo preexistente `supabase/tests/authorization.sql` é uma suíte SQL sepa
 
 ## Testes ainda necessários
 
+A revisão prévia de 26/10/2026 ampliou a suíte SQL com criação indevida de objetos
+no schema público, autoria forjada, alterações de autoria/timestamps, leitura direta
+da lista administrativa e revogação de administrador sem troca de claims. O arquivo
+ativa `ON_ERROR_STOP` e deve ser executado integralmente com psql em banco local
+descartável; não usa pgTAP e não é executado por `supabase test db`. Esses novos
+casos passaram na execução integral local de 26/10/2026 (59 verificações, zero falhas). Ver `database.md` para configuração e limitações.
+
 - Limites de idade (1/120 e fora do intervalo), celular inválido, Instagram inválido e senha com menos de oito caracteres no cadastro.
 - Inclusão, edição e cancelamento no painel; campos obrigatórios no navegador real.
 - Navegação por links, voltar/avançar, rota desconhecida e seleção do devocional correto.
@@ -41,3 +48,20 @@ O arquivo preexistente `supabase/tests/authorization.sql` é uma suíte SQL sepa
 Não há cobertura percentual mínima estabelecida. Priorizar riscos e comportamentos em vez de perseguir números ou testar constantes. Formulários continuam demonstrativos: passar nos testes não significa autenticação implementada. O painel público não representa controle de acesso. Remontar App verifica o descarte de estado React, mas não substitui recarregar uma página em E2E.
 
 Resultados de execução devem acompanhar o relatório da tarefa; não presumir aprovação porque existe um teste no repositório.
+
+## Execução SQL local em 26/10/2026
+
+Suíte authorization.sql revisada e executada integralmente com psql do contêiner
+supabase_db_devocionais-app, PostgreSQL 17.11, correspondente à porta local
+127.0.0.1:54322. Migração 20261023000100 confirmada no histórico.
+Resultado: 59 assertions aprovadas, zero falhas, nenhuma omitida; término com
+ROLLBACK e mensagem de sucesso. Foram usados papéis anon/authenticated e fixtures
+sintéticas. Nenhum comando remoto, reset ou alteração na migração foi necessário.
+A conexão psql foi feita pelo socket interno do contêiner identificado pelo
+mapeamento de porta, sem credenciais na linha de comando. Valida RLS e privilégios
+no banco para os cenários cobertos; não valida JWT real, Auth HTTP ou PostgREST.
+
+Verificações complementares da mesma sessão: npm.cmd run test:run (7 testes
+aprovados), npm.cmd run build e npm.cmd run lint concluídos com código zero.
+Consulta após o rollback confirmou ausência das fixtures de Auth e dos
+devocionais fictícios criados pela suíte.
