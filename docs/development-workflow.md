@@ -2,7 +2,7 @@
 
 ## Situação atual
 
-Aplicativo React + TypeScript + Vite, navegação por hash. Cadastro, confirmação de e-mail, login, logout e recuperação de senha usam Supabase Auth exclusivamente local. Perfis, publicações dos leitores e histórico de aberturas persistem no PostgreSQL local. O painel exige sessão e autorização administrativa confirmada no banco, mas suas operações e indicadores continuam demonstrativos em memória e não alteram o acervo persistente. Não há conclusão de leitura: o schema registra somente aberturas. O devocional do dia usa a data em America/Sao_Paulo. Ver `devotionals-local.md` para a Etapa 18.2.
+Aplicativo React + TypeScript + Vite, navegação por hash. Cadastro, confirmação de e-mail, login, logout e recuperação de senha usam Supabase Auth exclusivamente local. Perfis, publicações e histórico de aberturas persistem no PostgreSQL local. Na Etapa 19, o painel administrativo cria, edita, agenda e publica no acervo local usando a sessão do administrador; privilégios vêm de membership privada provisionada por operador local confiável, nunca do frontend. Cards mostram somente contagens de conteúdo por status, sem métricas de leitores. Não há conclusão de leitura: o schema registra somente aberturas. O devocional do dia usa America/Sao_Paulo. Ver `admin-local.md` e `devotionals-local.md`.
 
 O cliente em `src/lib/supabase.ts` é usado pela autenticação e recusa destinos fora de localhost/127.0.0.1:54321. A suíte React simula esse módulo na fronteira, sem importar o cliente real. A suíte SQL local teve 59 verificações aprovadas; a Etapa 16 não altera migrações nem políticas. Não executar SQL ou migrações durante validações do frontend. Ver `auth-local.md` para os fluxos HTTP locais e suas limitações.
 

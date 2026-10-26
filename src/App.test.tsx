@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { supabase } from './lib/supabase'
 import App from './App'
 import { libraryBoundary, olderPublications } from './test/libraryBoundary'
+import { adminBoundary, editorialFixture } from './test/adminBoundary'
 
 describe('fluxos locais do Selah', () => {
   it('busca publicação anterior por referência sem diferenciar maiúsculas e recupera resultado vazio', async () => {
@@ -39,21 +40,23 @@ describe('fluxos locais do Selah', () => {
     expect(screen.getByText(/Uma abertura não significa leitura concluída/)).toBeVisible()
   })
 
-  it('remove conteúdo em memória, mas preserva o último devocional', async () => {
+  it('edita conteúdo administrativo e restaura a resposta persistida ao remontar', async () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'fictional-admin' } } }, error: null } as never)
-    vi.mocked(supabase.rpc).mockResolvedValue({ data: [], error: null } as never)
+    const table = adminBoundary()
     window.location.hash = 'admin'
     const user = userEvent.setup()
     const view = render(<App />)
-    await screen.findAllByRole('button', { name: 'Remover' })
+    await screen.findAllByRole('button', { name: 'Editar' })
     const main = screen.getByRole('main')
-    for (let i = 0; i < 3; i++) await user.click(within(main).getAllByRole('button', { name: 'Remover' })[0])
-    expect(within(main).getAllByRole('button', { name: 'Remover' })).toHaveLength(1)
-    await user.click(within(main).getByRole('button', { name: 'Remover' }))
-    expect(screen.getByRole('status')).toHaveTextContent('Mantenha ao menos um devocional')
-    expect(within(main).getAllByRole('button', { name: 'Remover' })).toHaveLength(1)
+    await user.click(within(main).getByRole('button', { name: 'Editar' }))
+    expect(screen.getByLabelText('Título')).toHaveValue(editorialFixture.title)
+    await user.clear(screen.getByLabelText('Título'))
+    await user.type(screen.getByLabelText('Título'), 'Mensagem Revisada')
+    await user.click(screen.getByRole('button', { name: 'Salvar devocional' }))
+    expect(await screen.findByRole('status')).toHaveTextContent('Rascunho salvo')
+    expect(table.update).toHaveBeenCalledWith(expect.objectContaining({ title: 'Mensagem Revisada' }))
     view.unmount()
     render(<App />)
-    expect(await screen.findAllByRole('button', { name: 'Remover' })).toHaveLength(4)
+    expect(await screen.findByText('Mensagem Revisada')).toBeVisible()
   })
 })

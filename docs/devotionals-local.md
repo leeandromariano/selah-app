@@ -105,9 +105,9 @@ Não integra os comandos de teste/build/lint e nunca deve apontar a outro ambien
 
 ## Limitações e validação manual
 
-O painel administrativo e seus dados de exemplo continuam separados e
-demonstrativos; editar o painel não publica no acervo real. Não foi implementado
-CMS, agendador ou persistência de conclusões. Uma conclusão futura exige modelo
+Na Etapa 18.2 o painel administrativo ainda era demonstrativo. A Etapa 19 substitui
+esse painel por edição/publicação persistente no Supabase local; ver admin-local.md.
+Não foi implementado agendador automático ou persistência de conclusões. Uma conclusão futura exige modelo
 explícito e migração incremental, sem reinterpretar eventos de abertura antigos.
 As respostas já carregadas ficam em memória até a próxima consulta; não há Realtime.
 O histórico não comprova leitura e seus eventos podem ser repetidos pelo cliente.
@@ -161,9 +161,9 @@ anteriores; não foram reexecutadas nesta etapa. Nenhum usuário real foi criado
 
 Referência `6e2c793`, branch `feat/local-auth`. Nenhuma alteração funcional foi
 necessária nesta preparação; somente o registro da documentação foi atualizado.
-O acervo persistente não importa fixtures nem usa conteúdo de demonstração como
-fallback. O mock antigo continua exclusivamente no painel administrativo DEMO;
-as fixtures novas estão nos testes e no script opt-in de integração local.
+Na revisão da Etapa 18.2, o acervo persistente não importava fixtures nem usava
+conteúdo de demonstração como fallback. O mock antigo ainda existia no painel DEMO;
+a Etapa 19 remove esse uso em runtime. As fixtures ficam nos testes e scripts opt-in.
 O script gera contas/senhas aleatórias em memória, sem incluir credenciais de
 contas criadas ou tokens no repositório. Arquivos de ambiente e dados temporários
 permanecem fora dos candidatos ao commit. Migrações e RLS seguem inalteradas.

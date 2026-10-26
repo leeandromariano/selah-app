@@ -21,7 +21,7 @@ npm run lint
 | --- | --- |
 | `src/components/UI.test.tsx` | Teste unitário do card isolado: ativação por teclado chama o callback com o devocional correspondente, somente após interação |
 | `src/components/AuthForm.test.tsx` | Entrada inválida, mensagens e foco no primeiro erro; cadastro via fronteira Auth simulada sem Instagram, limpeza de campos, ausência de fetch real e remoção da mensagem ao editar; cadastro incompleto e senhas divergentes |
-| `src/App.test.tsx` | Busca por referência sem diferenciar maiúsculas, resultado vazio e recuperação; registro de abertura e histórico restaurado ao remontar; remoção de itens, preservação do último devocional e restauração do acervo demonstrativo administrativo em nova montagem |
+| `src/App.test.tsx` | Busca por referência sem diferenciar maiúsculas, resultado vazio e recuperação; registro de abertura e histórico restaurado ao remontar; edição administrativa e restauração da resposta persistida ao remontar |
 
 A base inicial tinha sete testes de comportamento local, incluindo um teste unitário de componente e integração entre App, componentes e estado React. Não há extração artificial de regras para duplicar a implementação em testes. Novos casos unitários podem ser adicionados quando surgirem módulos de domínio independentes.
 
@@ -220,3 +220,78 @@ Nesta preparação da Etapa 18.2 foram executados novamente:
 `npm.cmd run test:run` (49 testes aprovados em nove arquivos),
 `npm.cmd run build` e `npm.cmd run lint` (código zero; lint sem avisos).
 Vitest apresentou somente sugestão informativa de otimização do jsdom.
+
+## Etapa 19 — administração editorial local
+
+Árvore limpa confirmada antes da implementação; HEAD c564d28 e script de integração
+do acervo confirmados como versionados. Schema real, constraints, trigger, funções,
+grants e RLS inspecionados no PostgreSQL local. Nenhuma migração foi necessária.
+
+O teste de App que removia demonstrações foi adaptado ao novo contrato editorial:
+edição via fronteira API simulada, seguida de restauração ao remontar. Exclusão
+definitiva não integra o novo painel; voltar a Rascunho oculta conteúdo sem apagar
+dados. Os demais cenários de autenticação, perfil, acervo e histórico foram mantidos.
+
+`src/components/AdminPanel.test.tsx` cobre carregamento da autorização, leitor
+negado, todos os status, ausência de métricas pessoais, criação/validação, edição,
+agendamento, publicação, falha de conexão/nova tentativa, revogação e gravação
+pendente seguida de logout. `src/admin/repository.test.ts` cobre campos/limites,
+datas, preservação de segundos, revalidação de autorização, paginação e zero linhas.
+As integrações são simuladas na fronteira Supabase, sem serviços ou credenciais.
+
+`node scripts/local-admin-smoke.mjs` executou **41 verificações HTTP locais**,
+todas aprovadas. Provisionou temporariamente uma conta administrativa fictícia
+por SQL local confiável, sem e-mail fixo, depois de confirmar a conta pelo Mailpit.
+Criação, edição, agendamento oculto, publicação explícita, retorno a rascunho,
+persistência em cliente novo/novo login, permissões negadas por API direta e
+revogação com as mesmas claims foram comprovados. O grant temporário foi revogado;
+duas contas e dois textos fictícios permanecem locais. Não houve exclusão de conteúdo.
+
+As 59 verificações SQL/RLS, 35 HTTP de acervo e 29 HTTP de perfis são resultados
+anteriores, não reexecutados nesta etapa. O roteiro manual do painel está em
+`admin-local.md`; nenhuma operação editorial no navegador foi declarada validada.
+
+Esse registro corresponde à implementação inicial; a validação manual posterior
+informada pelo responsável está registrada na conclusão abaixo.
+
+Validação final: `npm.cmd run test:run` aprovou **65 testes em 11 arquivos**,
+incluindo os 49 cenários anteriores adaptados ao contrato atual, 11 testes de painel
+e cinco de repositório editorial. `npm.cmd run build` e `npm.cmd run lint` terminaram
+com código zero; lint sem avisos. Vitest mostrou apenas sugestão de otimização de jsdom.
+A execução concorrente com build teve um timeout em teste do acervo ainda em
+carregamento; a execução final isolada da suíte completa passou sem mudar limites,
+remover ou pular testes. A revisão também corrigiu a mensagem transitória de acesso
+negado durante autorização pendente, coberta por teste de regressão.
+
+## Conclusão da Etapa 19 — validação manual informada pelo responsável
+
+Branch feat/local-auth, referência c564d28. O responsável confirmou nesta sessão
+**dez testes manuais aprovados** na interface local:
+
+1. Acesso administrativo com conta autorizada.
+2. Criação e salvamento de rascunho.
+3. Persistência do rascunho após recarga.
+4. Edição e salvamento.
+5. Agendamento de publicação futura.
+6. Ocultação do conteúdo agendado para leitores comuns.
+7. Publicação de devocionais.
+8. Exibição no acervo quando a data permite.
+9. Bloqueio do painel para contas comuns.
+10. Mensagens de erro e validação funcionando corretamente.
+
+Esses resultados são manuais e relatados pelo responsável, não execuções
+automatizadas do agente. As 41 verificações HTTP administrativas e as 59 SQL/RLS
+permanecem resultados anteriores, sem reexecução nesta preparação.
+
+Uma correção de segurança necessária restringiu os scripts administrativos a
+sockets Docker locais fixados explicitamente, eliminando herança de contexto
+remoto. `src/test/localDocker.test.ts` acrescenta cinco testes de regressão sem
+rede, SQL ou subprocessos reais. A concessão/revogação real não foi reexecutada
+após essa correção; o registro HTTP anterior permanece identificado como tal.
+Não houve alteração de migrações, RLS ou comportamento editorial nesta preparação.
+
+Verificações executadas nesta preparação: `npm.cmd run test:run` aprovou
+**70 testes em 12 arquivos** (65 anteriores e cinco de proteção Docker);
+`npm.cmd run build` e `npm.cmd run lint` concluíram com código zero, lint sem
+avisos. Vitest apresentou apenas sugestão informativa de otimização de jsdom.
+HTTP, SQL e scripts de concessão/revogação real não foram executados novamente.

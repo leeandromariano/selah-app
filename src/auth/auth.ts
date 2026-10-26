@@ -12,7 +12,7 @@ export function authMessage(error: unknown) {
 }
 
 export const AuthContext = createContext<{
-  session: Session | null; loading: boolean; recovery: boolean; admin: boolean; error: string;
+  session: Session | null; loading: boolean; recovery: boolean; admin: boolean; adminLoading: boolean; error: string;
   logout: () => Promise<void>; finishRecovery: () => void;
 } | null>(null)
 

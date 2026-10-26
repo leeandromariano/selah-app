@@ -9,7 +9,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [recovery, setRecovery] = useState(false)
-  const [adminSession, setAdminSession] = useState<Session | null>(null)
+  const [adminAuthorization, setAdminAuthorization] = useState<{ session: Session; allowed: boolean } | null>(null)
   const [error, setError] = useState(callbackError)
   useEffect(() => {
     let active = true
@@ -17,8 +17,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data } = supabase.auth.onAuthStateChange((event, next) => {
       if (!active) return
       eventReceived = true
-      setAdminSession(null)
-      setSession(next)
+      setAdminAuthorization(null)
+      setSession(next ? { ...next } : null)
       setLoading(false)
       setError(next ? '' : callbackError)
       if (event === 'PASSWORD_RECOVERY') { setRecovery(true); location.hash = 'nova-senha' }
@@ -38,8 +38,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (session && !recovery) {
       // The server authorizes this RPC using private membership, never user metadata.
       supabase.rpc('devotional_open_counts').then(({ error }) => {
-        if (active) setAdminSession(error ? null : session)
-      }, () => { /* Fail closed. */ })
+        if (active) setAdminAuthorization({ session, allowed: !error })
+      }, () => { if (active) setAdminAuthorization({ session, allowed: false }) })
     }
     return () => { active = false }
   }, [session, recovery])
@@ -48,8 +48,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
-      setSession(null); setAdminSession(null); setRecovery(false); location.hash = 'login'
+      setSession(null); setAdminAuthorization(null); setRecovery(false); location.hash = 'login'
     } catch (error) { setError(authMessage(error)) }
   }
-  return <AuthContext.Provider value={{ session, loading, recovery, admin: Boolean(session && adminSession === session), error, logout, finishRecovery: () => setRecovery(false) }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ session, loading, recovery, admin: Boolean(session && adminAuthorization?.session === session && adminAuthorization.allowed), adminLoading: Boolean(session && !recovery && adminAuthorization?.session !== session), error, logout, finishRecovery: () => setRecovery(false) }}>{children}</AuthContext.Provider>
 }

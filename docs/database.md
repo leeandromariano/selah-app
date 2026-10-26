@@ -3,8 +3,9 @@
 ## Escopo e estado atual
 
 Na Etapa 16, AuthForm usa Supabase Auth exclusivamente local. Confirmação de e-mail,
-login, logout e recuperação são reais no ambiente local. AdminPanel continua
-demonstrativo em memória. Na Etapa 18.2, publicações e histórico de aberturas dos
+login, logout e recuperação são reais no ambiente local. Na Etapa 19, AdminPanel
+usa a API pública com sessão administrativa para criar, editar, agendar e publicar;
+ver admin-local.md. Na Etapa 18.2, publicações e histórico de aberturas dos
 leitores usam as tabelas existentes pela API com sessão. Não há conclusão de leitura
 no schema; ver devotionals-local.md. O painel exige sessão e autorização confirmada
 pela RPC protegida; nenhuma política ou migração foi alterada. Ver auth-local.md.

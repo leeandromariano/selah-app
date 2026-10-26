@@ -9,3 +9,5 @@
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 
 .auth-card select{width:100%;border:1px solid #e7e0ed;border-radius:7px;padding:12px;background:#fff;color:inherit;font:inherit}.auth-card select:focus{outline:2px solid #9875b8;outline-offset:2px}
+
+.editor fieldset{border:0;margin:0;padding:0;min-width:0}

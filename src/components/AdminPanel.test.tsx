@@ -1,0 +1,146 @@
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it, vi } from 'vitest'
+import App from '../App'
+import { supabase } from '../lib/supabase'
+import { adminBoundary, editorialFixture } from '../test/adminBoundary'
+import { dateTimeInput } from '../admin/repository'
+
+function openAdmin() {
+  location.hash = 'admin'
+  vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: editorialFixture.author_id, user_metadata: {} } } }, error: null } as never)
+  return render(<App />)
+}
+async function fill(user: ReturnType<typeof userEvent.setup>) {
+  for (const [label, value] of [['Título', 'Novo Texto Fictício'], ['Referência bíblica', 'Ref fictícia'], ['Texto bíblico', 'Texto fictício'], ['Reflexão', 'Reflexão fictícia'], ['Para refletir', 'Pergunta fictícia?']]) await user.type(screen.getByLabelText(label), value)
+}
+describe('painel administrativo real', () => {
+  it('exibe verificação de acesso durante autorização pendente, sem falso acesso negado', async () => {
+    adminBoundary()
+    let finish!: (value: unknown) => void
+    vi.mocked(supabase.rpc).mockReturnValueOnce(new Promise(resolve => { finish = resolve }) as never)
+    openAdmin()
+    await waitFor(() => expect(screen.getByText('Verificando acesso administrativo…')).toBeVisible())
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(supabase.from).not.toHaveBeenCalled()
+    await act(async () => { finish({ data: [], error: null }) })
+    expect(await screen.findByText(editorialFixture.title)).toBeVisible()
+  })
+  it('nega leitor antes de consultar conteúdo administrativo', async () => {
+    openAdmin()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Acesso restrito')
+    expect(supabase.from).not.toHaveBeenCalled()
+  })
+  it('revalida autorização na renovação de sessão e fecha painel após revogação', async () => {
+    adminBoundary()
+    openAdmin()
+    await screen.findByText(editorialFixture.title)
+    vi.mocked(supabase.rpc).mockResolvedValueOnce({ data: null, error: { code: '42501' } } as never)
+    act(() => { vi.mocked(supabase.auth.onAuthStateChange).mock.calls.at(-1)![0]('TOKEN_REFRESHED', { user: { id: editorialFixture.author_id, user_metadata: { role: 'admin' } } } as never) })
+    expect(await screen.findByRole('alert')).toHaveTextContent('Acesso restrito')
+    expect(screen.queryByText(editorialFixture.title)).not.toBeInTheDocument()
+  })
+  it('lista todos os status e exibe somente métricas de conteúdo, sem métricas pessoais', async () => {
+    const table = adminBoundary([editorialFixture, { ...editorialFixture, id: 'scheduled', title: 'Agendado Fictício', status: 'scheduled', publish_at: '2099-01-01T12:00:00Z' }])
+    openAdmin()
+    expect(await screen.findByText('Agendado Fictício')).toBeVisible()
+    expect(screen.getByText(editorialFixture.title)).toBeVisible()
+    expect(table.select).toHaveBeenCalled()
+    expect(screen.queryByText('93217')).not.toBeInTheDocument()
+    expect(screen.queryByText('Leitores')).not.toBeInTheDocument()
+    expect(screen.queryByText('Visualizações')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Remover' })).not.toBeInTheDocument()
+  })
+  it('valida formulário vazio e cria rascunho com autoria da sessão', async () => {
+    const table = adminBoundary([])
+    const user = userEvent.setup()
+    openAdmin()
+    await user.click(await screen.findByRole('button', { name: /Novo devocional/ }))
+    await user.click(screen.getByRole('button', { name: 'Salvar devocional' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Informe um título')
+    expect(table.insert).not.toHaveBeenCalled()
+    await fill(user)
+    await user.click(screen.getByRole('button', { name: 'Salvar devocional' }))
+    expect(await screen.findByRole('status')).toHaveTextContent('Rascunho salvo')
+    expect(table.insert).toHaveBeenCalledWith({ title: 'Novo Texto Fictício', bible_reference: 'Ref fictícia', bible_text: 'Texto fictício', content: 'Reflexão fictícia', reflection_question: 'Pergunta fictícia?', status: 'draft', publish_at: null, author_id: editorialFixture.author_id })
+  })
+  it('agenda data futura e informa que ainda exige publicação explícita', async () => {
+    const table = adminBoundary()
+    const user = userEvent.setup()
+    openAdmin()
+    await user.click(await screen.findByRole('button', { name: 'Editar' }))
+    await user.selectOptions(screen.getByLabelText('Situação'), 'scheduled')
+    const future = new Date(Date.now() + 86_400_000).toISOString()
+    fireEvent.change(screen.getByLabelText('Data e hora (fuso do dispositivo)'), { target: { value: dateTimeInput(future) } })
+    await user.click(screen.getByRole('button', { name: 'Salvar devocional' }))
+    expect(await screen.findByRole('status')).toHaveTextContent('continuará oculto')
+    expect(table.update).toHaveBeenCalledWith(expect.objectContaining({ status: 'scheduled' }))
+    expect(new Date(table.update.mock.calls[0][0].publish_at).getTime()).toBeGreaterThan(Date.now())
+  })
+  it('recusa agendamento sem data e publicação futura sem chamar a escrita', async () => {
+    const table = adminBoundary()
+    const user = userEvent.setup()
+    openAdmin()
+    await user.click(await screen.findByRole('button', { name: 'Editar' }))
+    await user.selectOptions(screen.getByLabelText('Situação'), 'scheduled')
+    await user.click(screen.getByRole('button', { name: 'Salvar devocional' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Informe a data')
+    await user.selectOptions(screen.getByLabelText('Situação'), 'published')
+    fireEvent.change(screen.getByLabelText('Data e hora (fuso do dispositivo)'), { target: { value: dateTimeInput('2099-01-01T12:00:00Z') } })
+    await user.click(screen.getByRole('button', { name: 'Salvar devocional' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('use Agendado')
+    expect(table.update).not.toHaveBeenCalled()
+  })
+  it('publica explicitamente com instante atual preservando campos protegidos', async () => {
+    const table = adminBoundary()
+    const user = userEvent.setup()
+    openAdmin()
+    await user.click(await screen.findByRole('button', { name: 'Editar' }))
+    expect(screen.getAllByRole('textbox')).toHaveLength(5)
+    await user.click(screen.getByRole('button', { name: 'Publicar agora' }))
+    expect(await screen.findByRole('status')).toHaveTextContent('publicado e salvo')
+    const payload = table.update.mock.calls[0][0]
+    expect(payload.status).toBe('published')
+    expect(new Date(payload.publish_at).getTime()).toBeLessThanOrEqual(Date.now())
+    for (const field of ['id', 'author_id', 'created_at', 'updated_at']) expect(payload).not.toHaveProperty(field)
+  })
+  it('falha de conexão na lista bloqueia editor e permite nova tentativa', async () => {
+    const table = adminBoundary()
+    table.range.mockRejectedValueOnce(new Error('offline'))
+    const user = userEvent.setup()
+    openAdmin()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Verifique sua conexão')
+    expect(screen.queryByRole('button', { name: /Novo devocional/ })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Tentar novamente' }))
+    expect(await screen.findByText(editorialFixture.title)).toBeVisible()
+  })
+  it('revogação durante edição nega gravação sem falso sucesso ou perder os campos', async () => {
+    const table = adminBoundary()
+    const user = userEvent.setup()
+    openAdmin()
+    await user.click(await screen.findByRole('button', { name: 'Editar' }))
+    vi.mocked(supabase.rpc).mockResolvedValueOnce({ data: null, error: { code: '42501' } } as never)
+    await user.click(screen.getByRole('button', { name: 'Salvar devocional' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Acesso administrativo negado')
+    expect(screen.getByLabelText('Título')).toHaveValue(editorialFixture.title)
+    expect(table.update).not.toHaveBeenCalled()
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
+  it('bloqueia envios repetidos e descarta resultado atrasado após logout', async () => {
+    const table = adminBoundary()
+    let finish!: (value: unknown) => void
+    table.single.mockReturnValueOnce(new Promise(resolve => { finish = resolve }))
+    const user = userEvent.setup()
+    openAdmin()
+    await user.click(await screen.findByRole('button', { name: 'Editar' }))
+    await user.click(screen.getByRole('button', { name: 'Salvar devocional' }))
+    expect(screen.getByRole('button', { name: 'Salvando…' })).toBeDisabled()
+    expect(screen.getByLabelText('Título')).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Salvando…' }))
+    expect(table.update).toHaveBeenCalledTimes(1)
+    act(() => { vi.mocked(supabase.auth.onAuthStateChange).mock.calls.at(-1)![0]('SIGNED_OUT', null) })
+    await act(async () => { finish({ data: editorialFixture, error: null }) })
+    expect(screen.queryByLabelText('Título')).not.toBeInTheDocument()
+    expect(screen.queryByText('Rascunho salvo com sucesso.')).not.toBeInTheDocument()
+  })
+})

@@ -88,10 +88,12 @@ Validação final: 22 testes automatizados aprovados em cinco arquivos,
   Após confirmar e entrar, o leitor revisa e salva explicitamente seu perfil
   em PostgreSQL. Ver `profiles-local.md`; isso não altera os resultados históricos acima.
 - Na Etapa 18.2 o conteúdo dos leitores e o histórico de aberturas passam a usar
-  o PostgreSQL local; não existe conclusão de leitura no schema. O painel e suas
-  métricas continuam demonstrativos. O controle visual não substitui RLS.
+  o PostgreSQL local; não existe conclusão de leitura no schema. Na Etapa 19, o
+  painel também persiste conteúdo e exibe apenas contagens editoriais, sem métricas
+  pessoais. O controle visual não substitui RLS; ver admin-local.md.
   Revogação administrativa é imposta no banco a cada RPC; a interface reavalia
-  a autorização quando a sessão muda, não por polling da lista privada.
+  a autorização quando a sessão muda e antes de listar/gravar conteúdo no painel,
+  sem polling da lista privada.
 - A recuperação em andamento depende do evento recebido ao abrir o link. Recarregar
   a página de nova senha após consumir o link pode exigir solicitar outro link.
 - E-mails são interceptados pelo Mailpit local; SMTP externo não foi testado.
