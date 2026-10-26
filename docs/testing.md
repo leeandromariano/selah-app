@@ -339,3 +339,54 @@ configurações conflitantes em vez de enfraquecer as guardas. Não usar os scri
 homologação/produção. Matriz completa e limites em `pre-deploy-audit.md`, seção 12:
 criação de novo `.env` e Unix somente simulados; falha real de revoke/interrupção
 abrupta e ambiente hostil/túneis locais não foram comprovados.
+
+## Etapa 21.2 — seleção segura de ambiente
+
+`src/lib/environment.test.ts` acrescenta 44 cenários sem rede/credenciais: modos e
+declarações divergentes, configuração ausente, namespace DEV/legado e conflitos,
+URL DEV exata, chaves públicas/privilegiadas, referências futuras e reutilização
+entre STAGING/PROD. Contratos remotos válidos continuam bloqueados em código,
+mesmo com flags de habilitação. A fábrica de cliente é simulada: nenhuma chamada
+ocorre se configuração/origem for inválida ou o ambiente estiver desabilitado.
+Também verifica que somente a configuração DEV selecionada vai ao artefato e que
+as opções de sessão existentes são preservadas. Testes da interface continuam
+simulando o cliente Supabase na fronteira.
+
+Validação: `npm.cmd run test:run` aprovou **149 testes em 15 arquivos** (105 anteriores
+e 44 novos), build DEV e lint aprovados sem avisos. Os comandos `build:staging` e
+`build:prod` foram realmente executados e recusados com código 1 por configuração
+genérica herdada; são testes negativos esperados, não builds remotos aprovados.
+Na implementação, o agente não reexecutou HTTP/SQL ou fluxos manuais. Os 59 SQL/RLS
+e 19/29/35/41 HTTP registrados na Etapa 21.1 permanecem evidências anteriores.
+
+Não houve alteração de scripts locais, migrações/RLS ou dados. Limites e roteiro
+para navegador em `environments.md`; B01 ainda depende de habilitação futura
+autorizada e infraestrutura própria. Produção permanece desabilitada.
+
+## Conclusão da Etapa 21.2 — preparação do commit
+
+Branch `feat/local-auth`, referência `59e2082`. O responsável informou **sete
+testes manuais locais aprovados**:
+
+1. O Selah abriu normalmente.
+2. O login funcionou.
+3. Meu perfil carregou e salvou dados.
+4. O preflight `--check-local` foi aprovado.
+5. O acervo e o histórico funcionaram.
+6. O logout funcionou.
+7. As requisições Supabase observadas no Network apontaram somente para `127.0.0.1:54321`.
+
+Validação manual relatada pelo responsável; não equivale a teste automatizado
+executado pelo agente. O preflight local consulta metadados/portas, e o Network
+comprova apenas as requisições observadas nessas interações. Não há validação de
+infraestrutura remota, projetos separados, HTTPS, SMTP, MFA, backups ou implantação.
+STAGING/PROD permanecem bloqueados. As 59 verificações SQL e 19/29/35/41 HTTP da
+Etapa 21.1 não foram reexecutadas nesta preparação.
+
+Verificações repetidas na preparação do commit: `npm.cmd run test:run` aprovou
+**149 testes em 15 arquivos**, sem falhas/omitidos; `npm.cmd run build` e
+`npm.cmd run lint` terminaram com código zero, lint sem avisos. Os comandos
+`npm.cmd run build:staging` e `npm.cmd run build:prod` foram novamente recusados
+com código 1 por variáveis genéricas herdadas de DEV, sem produzir artefato remoto.
+Os testes unitários também confirmam o bloqueio em código com contratos futuros
+válidos. Não houve mudança funcional durante esta preparação.

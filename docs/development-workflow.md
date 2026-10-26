@@ -4,7 +4,7 @@
 
 Aplicativo React + TypeScript + Vite, navegação por hash. Cadastro, confirmação de e-mail, login, logout e recuperação de senha usam Supabase Auth exclusivamente local. Perfis, publicações e histórico de aberturas persistem no PostgreSQL local. Na Etapa 19, o painel administrativo cria, edita, agenda e publica no acervo local usando a sessão do administrador; privilégios vêm de membership privada provisionada por operador local confiável, nunca do frontend. Cards mostram somente contagens de conteúdo por status, sem métricas de leitores. Não há conclusão de leitura: o schema registra somente aberturas. O devocional do dia usa America/Sao_Paulo. Ver `admin-local.md` e `devotionals-local.md`.
 
-O cliente em `src/lib/supabase.ts` é usado pela autenticação e recusa destinos fora de localhost/127.0.0.1:54321. A suíte React simula esse módulo na fronteira, sem importar o cliente real. A suíte SQL local teve 59 verificações aprovadas; a Etapa 16 não altera migrações nem políticas. Não executar SQL ou migrações durante validações do frontend. Ver `auth-local.md` para os fluxos HTTP locais e suas limitações.
+O cliente em `src/lib/supabase.ts` é usado pela autenticação e exige DEV em 127.0.0.1:54321. STAGING/PROD têm contratos separados, ainda desabilitados em código. Ver `environments.md`. A suíte React simula esse módulo na fronteira, sem importar o cliente real. A suíte SQL local teve 59 verificações aprovadas; não executar SQL ou migrações durante validações do frontend. Ver `auth-local.md` para os fluxos HTTP locais e suas limitações.
 
 ## Três ambientes
 
@@ -23,7 +23,7 @@ migrações, triggers ou RLS. Ver `profiles-local.md` para validação e limita�
 
 Homologação e produção são uma separação exigida pelo processo, não ambientes criados nesta etapa. Antes de conectar qualquer backend, verificar manualmente o destino e suas permissões. Nunca reutilizar credenciais entre ambientes ou copiar dados de produção para testes. Não usar serviços de produção ao desenvolver localmente.
 
-Vite carrega `.env` e `.env.local` também em outros modos. Evitar credenciais nesses arquivos genéricos; verificar a configuração existente privadamente antes de usar qualquer integração. Usar arquivos específicos por modo. `vite build --mode staging` poderá gerar o candidato de homologação quando houver infraestrutura; `npm run build` usa o modo de produção por padrão. **Build local não publica nada**, mas seu bundle incorpora variáveis `VITE_*`: elas não podem conter segredos. Nunca usar `service_role`, senha do banco ou tokens administrativos no frontend. `.env.example` deve conter somente placeholders.
+Vite carrega `.env` e `.env.local` também em outros modos; variáveis do processo prevalecem. Evitar configurações compartilhadas nesses arquivos; usar namespaces e arquivos específicos por modo. Na Etapa 21.2, `npm run build` escolhe explicitamente `development`, mantendo otimização de build; `build:staging` e `build:prod` são recusados até futura revisão autorizada de código. Só a configuração DEV selecionada é injetada no bundle; não há exposição automática das demais variáveis. **Build local não publica nada** e seu artefato continua DEV. Nunca usar `service_role`, senha do banco ou tokens administrativos no frontend. `.env.example` deve conter somente placeholders. Detalhes, limites e roteiro manual em `environments.md`.
 
 ## Ciclo de uma mudança
 

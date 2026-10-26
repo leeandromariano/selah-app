@@ -1,7 +1,7 @@
 # Etapa 20 — auditoria técnica antes da implantação
 
 > As seções 1–11 preservam o diagnóstico histórico da Etapa 20. A correção de
-> scripts da Etapa 21.1 e suas novas evidências estão na seção 12; o estado antigo
+> scripts da Etapa 21.1 está na seção 12; ambientes da Etapa 21.2 na seção 13. O estado antigo
 > de B02 e as contagens históricas abaixo não descrevem essa revisão posterior.
 
 Data: 26/10/2026. Branch: `feat/local-auth`. Referência confirmada:
@@ -387,3 +387,54 @@ esses candidatos não encontrou blocos de chave privada ou chaves `sb_secret_`
 de tamanho plausível; não é scanner completo de segredos/histórico.
 `.env.local`, `.env.development.local`, `.env.staging.local` e
 `.env.production.local` confirmados ignorados, sem leitura de conteúdo.
+
+## 13. Etapa 21.2 — contratos independentes de ambientes
+
+Branch `feat/local-auth`, HEAD inicial `59e2082`, árvore limpa antes desta etapa.
+Configuração Vite, cliente Supabase, exemplos, scripts locais e documentação
+inspecionados sem ler arquivos de credenciais para inspeção geral. O carregamento
+normal do Vite durante build usa as configurações locais sem imprimir valores.
+
+B01 avançou no código: contrato DEV/STAGING/PROD explícito, namespaces próprios,
+validação antes de build e cliente, conflitos recusados e origem DEV restrita.
+**B01 não está encerrado para implantação:** STAGING/PROD continuam desabilitados
+em código e não há projeto/artefato hospedado validado. B03/B04 e achados de
+privacidade, sessão, recuperação, acessibilidade e operação permanecem pendentes.
+Produção não está pronta. Não houve acesso, provisionamento, migração ou publicação remota.
+
+`npm.cmd run build` agora escolhe mode development explicitamente, mantendo build
+otimizado. O bundle recebe apenas configuração DEV selecionada; `envPrefix: []`
+desativa exposição automática do restante das variáveis. Cliente revalida antes
+de criar SDK. Configuração ausente/insegura não cai para outro ambiente. DEV
+exige exatamente HTTP 127.0.0.1:54321; nomes legados só funcionam em DEV e conflitos
+são rejeitados. Origem do browser deve ser HTTP 127.0.0.1/localhost:5173 ou :4173.
+Servidor e preview ficam em loopback com porta fixa. Sessão e privilégios do banco
+não mudam. Contratos remotos futuros exigem projeto/ref/chave próprios, mas nenhuma
+variável habilita conexão remota nesta etapa. Detalhamento em `environments.md`.
+
+Resultados e limites desta revisão:
+
+- `npm.cmd run test:run`: 149 testes em 15 arquivos aprovados; 105 anteriores e
+  44 novos cenários de ambientes. Integrações simuladas na fronteira, sem rede.
+- `npm.cmd run build` e `npm.cmd run lint`: aprovados; lint sem avisos.
+- `npm.cmd run build:staging` e `npm.cmd run build:prod`: ambos recusados com código
+  1 por variáveis genéricas herdadas, como previsto. Não produziram artefato remoto.
+  Testes unitários também cobrem contratos futuros válidos recusados por bloqueio
+  em código, inclusive tentativas de habilitação por flags.
+- Nenhum script local, arquivo de `supabase/`, migração ou RLS alterado. Restrições
+  Docker/HTTP da Etapa 21.1 preservadas e seus testes incluídos na execução atual.
+- As 59 verificações SQL e 19/29/35/41 verificações HTTP continuam sendo os resultados
+  anteriores da Etapa 21.1; não foram reexecutadas nesta etapa. Não houve criação
+  de contas ou alterações de dados para validar configuração.
+- Durante a implementação, o agente não reexecutou fluxos de navegador/auth HTTP.
+  Na conclusão, o responsável informou sete testes manuais locais aprovados,
+  registrados em `environments.md` e `testing.md`. Isso não valida infraestrutura remota.
+
+Formato de chave pública não comprova assinatura, pertença da publishable key ou
+titularidade do recurso; comparar contratos só detecta reutilização se ambos estão
+disponíveis. JavaScript/configuração alterável pelo usuário não substitui RLS.
+Ainda são necessários projeto STAGING novo (sem reutilizar o hospedado existente),
+aprovação explícita para habilitação, infraestrutura exclusiva, callbacks/SMTP,
+HTTPS/headers/CORS/MFA, privacidade/menores, backup/restore e plano de implantação
+autorizado. Build recusado pode deixar `dist` DEV anterior intacto; não confundir
+presença de artefato com aprovação nem reutilizá-lo como produção.
