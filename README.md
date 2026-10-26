@@ -1,6 +1,6 @@
 # Selah · Devocionais diários
 
-Protótipo visual responsivo em React + TypeScript + Vite, sem dependências adicionais.
+Protótipo visual responsivo em React + TypeScript + Vite.
 
 ## Executar
 
@@ -19,6 +19,7 @@ Em uma instalação nova do repositório, execute `npm ci` antes de iniciar.
 ```sh
 npm run build
 npm run lint
+npm run test:run
 ```
 
 ## Telas e comportamento
@@ -37,7 +38,11 @@ O navegador pode ter seus próprios recursos de preenchimento automático.
 
 O acervo apresenta uma edição demonstrativa fixa de 23 de outubro de 2026.
 Alterações administrativas e marcações de leitura são perdidas ao recarregar a página.
-O painel é público neste protótipo. Não há banco de dados, armazenamento local ou serviços externos.
+O painel é público neste protótipo. A interface não utiliza banco de dados, armazenamento local ou serviços externos. Há arquivos preparatórios de Supabase separados, ainda sem integração com os componentes.
+
+## Processo de engenharia
+
+As regras permanentes estão em [AGENTS.md](AGENTS.md). Consulte o [fluxo de desenvolvimento e publicação](docs/development-workflow.md) e o [inventário de testes e lacunas](docs/testing.md). `npm test` inicia o modo de observação do Vitest. Publicações e alterações em banco de produção exigem autorização explícita.
 
 ## Estrutura
 
