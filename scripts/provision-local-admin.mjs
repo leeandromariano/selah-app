@@ -1,4 +1,6 @@
 import { setLocalAdmin } from './local-admin-tools.mjs'
+import { prepareLocalScript } from './local-environment.mjs'
+if (process.argv[2] === '--check-local') prepareLocalScript()
 const [action, userId, ...extra] = process.argv.slice(2)
 if (!['grant', 'revoke'].includes(action) || !userId || extra.length) {
   console.error('Usage: node scripts/provision-local-admin.mjs grant|revoke AUTH_UUID')

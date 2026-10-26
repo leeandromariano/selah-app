@@ -1,28 +1,16 @@
+import { prepareLocalScript, localUrl } from './local-environment.mjs'
 // Opt-in local HTTP integration. Two synthetic accounts remain locally; no reset/delete.
-import { spawnSync } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
-import { createClient } from '@supabase/supabase-js'
 import { createProfileRepository } from '../src/profiles/profile.ts'
 
-const api = 'http://127.0.0.1:54321'
-const mail = 'http://127.0.0.1:54324'
-const status = spawnSync(process.execPath, ['node_modules/supabase/dist/supabase.js', 'status', '-o', 'json'], { encoding: 'utf8' })
-if (status.status !== 0) { console.error('Local status unavailable; no profile HTTP tests executed.'); process.exit(1) }
-const config = JSON.parse(status.stdout)
-if (config.API_URL !== api) { console.error('Unexpected API target; tests aborted.'); process.exit(1) }
-const key = config.PUBLISHABLE_KEY || config.ANON_KEY
-if (!key || key.startsWith('sb_secret_')) throw new Error('Local public key unavailable')
-const options = { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
-const makeClient = () => createClient(api, key, options)
+const local = prepareLocalScript()
+const { mail } = local
+const makeClient = () => local.client()
 let passed = 0
 let stage = 'synthetic signup'
 function check(ok, label) { stage = label; if (!ok) throw new Error('check failed'); passed++; console.log(`PASS ${label}`) }
-function localUrl(value) {
-  const url = new URL(value)
-  if (url.protocol !== 'http:' || !['127.0.0.1', 'localhost'].includes(url.hostname) || !['54321', '54324', '5173'].includes(url.port)) throw new Error('non-local URL')
-  return url
-}
-async function request(url) { return fetch(localUrl(url), { redirect: 'manual' }) }
+
+async function request(url, options) { return local.fetch(url, options) }
 async function reader() {
   const client = makeClient()
   const email = `selah-profile-${randomUUID()}@example.invalid`
@@ -41,7 +29,7 @@ async function reader() {
   }
   check(Boolean(link), 'synthetic confirmation received in local Mailpit')
   const response = await request(link)
-  const destination = localUrl(response.headers.get('location'))
+  const destination = localUrl(response.headers.get('location'), 'frontend')
   const tokens = new URLSearchParams(destination.hash.slice(1))
   const confirmed = await client.auth.setSession({ access_token: tokens.get('access_token'), refresh_token: tokens.get('refresh_token') })
   check(!confirmed.error && confirmed.data.user.id === data.user.id, 'synthetic reader confirmed with own session')

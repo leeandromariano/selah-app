@@ -1,30 +1,17 @@
+import { prepareLocalScript, localUrl } from './local-environment.mjs'
 // Explicit local integration. SQL is used only to insert synthetic content fixtures.
 // Normal reader operations below exclusively use the public API and reader sessions.
-import { spawnSync } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
-import { createClient } from '@supabase/supabase-js'
 import { createDevotionalRepository, localDay, publishedToday } from '../src/devotionals/repository.ts'
 
-const api = 'http://127.0.0.1:54321'
-const mail = 'http://127.0.0.1:54324'
-const status = spawnSync(process.execPath, ['node_modules/supabase/dist/supabase.js', 'status', '-o', 'json'], { encoding: 'utf8' })
-if (status.status !== 0) { console.error('Local status unavailable; no library HTTP checks executed.'); process.exit(1) }
-const config = JSON.parse(status.stdout)
-const database = new URL(config.DB_URL)
-if (config.API_URL !== api || database.hostname !== '127.0.0.1' || database.port !== '54322') throw new Error('Non-local target rejected')
-const key = config.PUBLISHABLE_KEY || config.ANON_KEY
-if (!key || key.startsWith('sb_secret_')) throw new Error('Local public key unavailable')
-const options = { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
-const makeClient = () => createClient(api, key, options)
+const local = prepareLocalScript()
+const { mail } = local
+const makeClient = () => local.client()
 let passed = 0
 let stage = 'synthetic account setup'
 function check(ok, label) { stage = label; if (!ok) throw new Error('check failed'); passed++; console.log(`PASS ${label}`) }
-function localUrl(value) {
-  const url = new URL(value)
-  if (url.protocol !== 'http:' || !['127.0.0.1', 'localhost'].includes(url.hostname) || !['54321', '54324', '5173'].includes(url.port)) throw new Error('non-local URL')
-  return url
-}
-async function request(url) { return fetch(localUrl(url), { redirect: 'manual' }) }
+
+async function request(url, options) { return local.fetch(url, options) }
 async function reader() {
   const client = makeClient()
   const email = `selah-library-${randomUUID()}@example.invalid`
@@ -43,7 +30,7 @@ async function reader() {
   }
   check(Boolean(link), 'confirmation received in local Mailpit')
   const response = await request(link)
-  const tokens = new URLSearchParams(localUrl(response.headers.get('location')).hash.slice(1))
+  const tokens = new URLSearchParams(localUrl(response.headers.get('location'), 'frontend').hash.slice(1))
   const verified = await client.auth.setSession({ access_token: tokens.get('access_token'), refresh_token: tokens.get('refresh_token') })
   check(!verified.error, 'synthetic reader authenticated')
   return { client, email, password, id: signup.data.user.id, repository: createDevotionalRepository(client) }
@@ -62,8 +49,8 @@ try {
     ('${ids[2]}','Rascunho fictício','Referência fictícia','Texto fictício','Conteúdo fictício','Pergunta?',null,'draft','${first.id}'),
     ('${ids[3]}','Agendado fictício','Referência fictícia','Texto fictício','Conteúdo fictício','Pergunta?',now()-interval '1 day','scheduled','${first.id}'),
     ('${ids[4]}','Publicado futuro fictício','Referência fictícia','Texto fictício','Conteúdo fictício','Pergunta?',now()+interval '1 day','published','${first.id}'); commit;`
-  const seeded = spawnSync('docker', ['exec', '-i', 'supabase_db_devocionais-app', 'psql', '-X', '-U', 'postgres', '-d', 'postgres', '-v', 'ON_ERROR_STOP=1'], { input: fixtures, encoding: 'utf8' })
-  check(seeded.status === 0, 'five synthetic content fixtures inserted locally without schema changes')
+  const seeded = local.psql(fixtures)
+  check(seeded.includes('INSERT 0 5'), 'five synthetic content fixtures inserted locally without schema changes')
   const now = new Date()
   const published = await first.repository.published(now)
   const ownFixture = published.filter(item => ids.includes(item.id))

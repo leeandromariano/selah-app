@@ -1,5 +1,9 @@
 # Etapa 20 — auditoria técnica antes da implantação
 
+> As seções 1–11 preservam o diagnóstico histórico da Etapa 20. A correção de
+> scripts da Etapa 21.1 e suas novas evidências estão na seção 12; o estado antigo
+> de B02 e as contagens históricas abaixo não descrevem essa revisão posterior.
+
 Data: 26/10/2026. Branch: `feat/local-auth`. Referência confirmada:
 `2b9ffa7292295f31cc99e53966f3be40737148e6` — painel administrativo local com
 provisionamento seguro. A árvore estava limpa antes desta auditoria.
@@ -290,3 +294,96 @@ contra serviços hospedados, rodadas suites que criam contas ou avaliadas config
 reais de produção. O scan de padrões não substitui ferramenta dedicada, e a revisão
 legal exige profissional responsável. Nenhum achado foi corrigido nesta auditoria:
 o produto e seus scripts continuam exatamente no comportamento de 2b9ffa7.
+
+## 12. Etapa 21.1 — proteção dos scripts locais
+
+Revisão em 26/10/2026, branch `feat/local-auth`; árvore inicialmente limpa,
+HEAD `5f27a4d` (auditoria), código de referência `2b9ffa7`. Esta revisão altera
+somente scripts, testes dos scripts e documentação. Nenhum arquivo de `supabase/`,
+migração, RLS, componente React, dependência ou configuração de ambiente foi alterado.
+Não houve acesso hospedado, publicação, commit, link, db push ou reset.
+
+**B02 corrigido para os caminhos inventariados e cenários testados.** Isso não
+representa comprovação universal de segurança nem aprovação para implantação.
+B01/B03/B04 e os demais achados fora do escopo permanecem pendentes.
+
+### Destinos e conflitos
+
+- `local-docker.mjs` consulta apenas metadados de contexto antes de acessar o daemon.
+  Recusa TCP/SSH (inclusive TCP loopback), pipes de outra máquina, contexto com
+  sintaxe de argumento/caminho e metadados inválidos. Se host e contexto estiverem
+  definidos, ambos precisam apontar ao mesmo socket local. Cada operação posterior
+  recebe `--host` fixo; o subprocesso CLI recebe `DOCKER_HOST` fixo, sem contexto/TLS herdados.
+- `local-environment.mjs` centraliza status CLI, URLs, portas, chave pública,
+  transporte do SDK e psql. Antes de fixtures/grants, valida API:54321,
+  DB:54322/postgres, Mailpit:54324 e os mapeamentos dos três contêineres esperados.
+  Todas as URLs anunciadas no status devem pertencer aos serviços locais permitidos.
+- Somente HTTP loopback nas portas explícitas; `localhost` é convertido a
+  `127.0.0.1` antes do transporte, evitando resolução DNS. IPv6 literal `::1`
+  é aceito. Studio:54323 é validado como metadado e frontend:5173 como destino
+  de retorno; nenhum deles pode ser buscado pelo transporte dos testes.
+- API/DB remotos em variáveis conhecidas, overrides PostgreSQL conflitantes,
+  PGSERVICE/PGSERVICEFILE e proxies HTTP/HTTPS/ALL_PROXY são recusados. Não há
+  leitura automática de arquivos `.env`. Variáveis são revalidadas antes de SQL/HTTP.
+- O SDK e Mailpit compartilham fetch protegido com `redirect: manual` forçado.
+  O Location de confirmação/recuperação é validado separadamente como frontend
+  local; não é seguido. Teste reproduziu perda do modo manual ao reconstruir
+  Request e orientou sua correção, preservando POST, headers e corpo.
+- psql usa `-X`, socket `/var/run/postgresql`, porta interna 5432, usuário/banco
+  explícitos e `ON_ERROR_STOP=1`, dentro do contêiner no daemon fixado. Não herda
+  destino TCP do PostgreSQL. Falhas são relatadas sem saída bruta ou credenciais.
+
+### Matriz de execução desta etapa
+
+| Rota | Evidência real local / limite |
+| --- | --- |
+| Todos os sete entrypoints | `--check-local` aprovado: configure, Auth, perfis, acervo, admin, provisionamento e wrapper SQL. Esse modo valida metadados/portas, não a saúde HTTP nem executa fixtures. |
+| Configuração do frontend | Execução normal preservou `.env.development.local` existente sem ler seu conteúdo. Criação com `wx`, recusa antes de escrita e preservação são cobertas com filesystem simulado; criação real de novo arquivo não foi executada. |
+| `local-auth-smoke.mjs` | 19 verificações HTTP aprovadas; cadastro, Mailpit, login, recuperação, sessão, logout e negação de métricas. Repetida após ajuste da asserção do destino. |
+| `local-profile-smoke.mjs` | 29 verificações HTTP aprovadas; persistência e acesso negado entre leitores. |
+| `local-library-smoke.mjs` | 35 verificações aprovadas, incluindo INSERT SQL pelo socket fixado, persistência e isolamento. Repetida após ajuste da confirmação do INSERT de cinco fixtures. |
+| `local-admin-smoke.mjs` | 41 verificações HTTP aprovadas; grant/revoke pelo helper, edição/publicação, persistência e negações. Grant do teste revogado. |
+| CLI `provision-local-admin.mjs` | Grant e revoke executados com sucesso para fixture confirmada `selah-editor-…@example.invalid` sem membership prévia. Seleção limitada a esse padrão sintético, sem exibir UUID ou credenciais; revoke em finally. Runner temporário removido. |
+| `run-local-authorization.mjs` | 59 verificações SQL existentes aprovadas; término com ROLLBACK e mensagem de fixtures revertidas. SQL integral sem alterações. |
+| CMD / Docker Desktop | `cmd.exe /d /c node scripts/local-auth-smoke.mjs --check-local` aprovado. Não houve teste real em Linux/macOS; socket Unix é coberto por simulação. |
+| Regressões sem serviços | 105 testes em 14 arquivos aprovados, sem omitidos; 65 da aplicação e 40 dos scripts. Entrypoints em modo normal e preflight recusam host remoto, URL remota e contexto malicioso; grant/revoke também são exercitados nessas recusas. Contextos remotos válidos, conflitos host/context, status/JSON/portas inválidos, chave privilegiada, proxy, PG overrides e redirects cobertos por mocks. Nenhum daemon remoto foi consultado. |
+| Build / lint | `npm.cmd run build` e `npm.cmd run lint` aprovados, lint sem avisos. |
+
+As integrações deixaram **10 contas e 12 devocionais fictícios** no banco local:
+Auth e acervo rodaram duas vezes; perfis e admin uma vez. Não houve limpeza de
+dados, exclusão de conteúdo ou mudança de schema. A suíte SQL reverteu suas
+próprias fixtures. Não confundir esses resultados novos com o histórico das seções anteriores.
+
+Na primeira execução dos novos testes, o caso de redirecionamento falhou; foi
+corrigido sem remover ou afrouxar o teste. Duas tentativas intermediárias de build
+falharam por declarações TypeScript dos testes/scripts; corrigidas com tipos locais,
+sem mudar a configuração do aplicativo. Lint inicialmente indicou variáveis não
+usadas, depois removidas. Tentativas de acesso ao Docker no sandbox foram recusadas
+antes de operações e repetidas com autorização fora dele. Um comando auxiliar de
+grant/revoke falhou no parsing de aspas antes de executar; a repetição em arquivo
+temporário passou. Os resultados finais acima correspondem às execuções corrigidas.
+
+### Repetição e limites residuais
+
+No CMD da raiz do projeto, começar com
+`node scripts/local-auth-smoke.mjs --check-local`. Se houver recusa, corrigir a
+seleção de ambiente/contexto na sessão local; não remover as guardas nem fornecer
+URLs de homologação/produção. Os executáveis aceitam o mesmo modo de leitura.
+Integrações completas são opt-in e retêm dados fictícios. Para SQL usar
+`node scripts/run-local-authorization.mjs`, nunca uma conexão arbitrária passada ao psql.
+`npm.cmd run test:run`, build e lint não executam SQL ou integrações reais.
+
+Supõe-se máquina, executáveis, contêineres, sockets e configuração Docker locais
+confiáveis. Não se comprova que um socket/porta local não seja um túnel/proxy montado
+por um operador hostil, nem se protege contra runtime/OS comprometido ou comandos
+manuais fora desses scripts. Publicação de portas na LAN permanece como achado
+operacional; esta etapa não altera Docker/Supabase config. Criação real de novo
+`.env`, plataformas Unix, interrupção abrupta durante grant e falha real de revoke
+não foram ensaiadas; não há alegação de cobertura integral dessas rotas/falhas.
+
+Revisão final: `git diff --check` sem erros; 19 arquivos modificados/novos,
+nenhum em `supabase/` ou código da aplicação fora de testes. Scan restrito a
+esses candidatos não encontrou blocos de chave privada ou chaves `sb_secret_`
+de tamanho plausível; não é scanner completo de segredos/histórico.
+`.env.local`, `.env.development.local`, `.env.staging.local` e
+`.env.production.local` confirmados ignorados, sem leitura de conteúdo.

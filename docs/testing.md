@@ -295,3 +295,47 @@ Verificações executadas nesta preparação: `npm.cmd run test:run` aprovou
 `npm.cmd run build` e `npm.cmd run lint` concluíram com código zero, lint sem
 avisos. Vitest apresentou apenas sugestão informativa de otimização de jsdom.
 HTTP, SQL e scripts de concessão/revogação real não foram executados novamente.
+
+## Etapa 21.1 — destinos dos scripts locais
+
+Validação final desta etapa: `npm.cmd run test:run` aprovou **105 testes em 14
+arquivos**; build e lint aprovados, lint sem avisos. Os 65 cenários da aplicação
+permanecem; há 40 testes dos scripts (sete Docker, 29 ambiente/transporte/entrypoints,
+quatro de filesystem/wrapper SQL). Não houve remoção ou skip.
+
+- `src/test/localDocker.test.ts`: sockets locais, host/context remoto ou conflitante,
+  nomes maliciosos, metadados inválidos e fixação do endpoint/ambiente.
+- `src/test/localEnvironment.test.ts`: URLs/portas, proxies, PG overrides, status CLI,
+  chave pública, psql fixado/falha sem diagnóstico sensível, SDK com transporte
+  simulado, POST preservado e redirects manuais. Subprocessos dos sete entrypoints
+  são exercitados com configurações recusadas antes de acessar serviços: modos
+  normal/preflight e grant/revoke. Não usam banco, credenciais ou serviços externos.
+- `src/test/localEntrypoints.test.ts`: criação exclusiva de `.env` com chave pública
+  fictícia, preservação sem leitura, recusa antes de escrita e SQL integral enviado
+  à fronteira protegida. Filesystem, preflight e psql simulados; nenhum `.env` real lido.
+
+Os testes de scripts podem exercitar o SDK com fetch simulado; os testes da
+interface continuam simulando a integração sem importar o cliente Supabase real.
+O caso de redirecionamento falhou antes da correção da reconstrução de Request.
+Erros intermediários de build (tipos) e avisos de lint foram corrigidos; não são
+ocultados pelo resultado final.
+
+Integrações **executadas novamente nesta etapa**, exclusivamente locais:
+Auth **19**, perfis **29**, acervo **35**, administração **41** verificações aprovadas;
+SQL/RLS **59** aprovadas pelo novo `node scripts/run-local-authorization.mjs`, com
+ROLLBACK. Não são apenas reaproveitamento dos resultados históricos anteriores.
+Sete entrypoints passaram em `--check-local`; CMD/Docker Desktop confirmado por
+preflight no CMD. Configuração normal preservou o arquivo existente; CLI grant/revoke
+passou com conta fictícia confirmada e removeu o grant temporário.
+
+Auth e acervo foram repetidos após ajustes das asserções: ficaram 10 contas e 12
+devocionais fictícios adicionais no banco local, sem exclusões destrutivas. Não
+rodar as integrações para limpar dados ou como parte do Vitest/build/lint. A suíte
+SQL não mudou e reverte suas próprias fixtures. Nenhuma migração/RLS/React alterada.
+
+Cada executável local aceita `--check-local` para validar status/portas sem mudar
+fixtures ou permissões; não confundir esse modo com teste de saúde HTTP. Corrigir
+configurações conflitantes em vez de enfraquecer as guardas. Não usar os scripts em
+homologação/produção. Matriz completa e limites em `pre-deploy-audit.md`, seção 12:
+criação de novo `.env` e Unix somente simulados; falha real de revoke/interrupção
+abrupta e ambiente hostil/túneis locais não foram comprovados.

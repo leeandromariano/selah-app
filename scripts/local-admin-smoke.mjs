@@ -1,7 +1,7 @@
+import { prepareLocalScript, localUrl } from './local-environment.mjs'
 // Opt-in HTTP integration. Two synthetic accounts and editorial fixtures remain local.
 import { randomUUID } from 'node:crypto'
-import { createClient } from '@supabase/supabase-js'
-import { localAdminConfig, setLocalAdmin } from './local-admin-tools.mjs'
+import { setLocalAdmin } from './local-admin-tools.mjs'
 import { createAdminRepository } from '../src/admin/repository.ts'
 import { createDevotionalRepository } from '../src/devotionals/repository.ts'
 
@@ -9,20 +9,12 @@ let passed = 0
 let stage = 'local status'
 let adminId
 function check(ok, label) { stage = label; if (!ok) throw new Error('check failed'); passed++; console.log(`PASS ${label}`) }
-const api = 'http://127.0.0.1:54321'
-const mail = 'http://127.0.0.1:54324'
-function localUrl(value) {
-  const url = new URL(value)
-  if (url.protocol !== 'http:' || !['127.0.0.1', 'localhost'].includes(url.hostname) || !['54321', '54324', '5173'].includes(url.port)) throw new Error('non-local URL')
-  return url
-}
-async function request(url) { return fetch(localUrl(url), { redirect: 'manual' }) }
+const local = prepareLocalScript()
+const { mail } = local
+
+async function request(url, options) { return local.fetch(url, options) }
 try {
-  const config = localAdminConfig()
-  const key = config.PUBLISHABLE_KEY || config.ANON_KEY
-  if (!key || key.startsWith('sb_secret_')) throw new Error('Local public key unavailable')
-  const options = { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
-  const makeClient = () => createClient(api, key, options)
+  const makeClient = () => local.client()
   async function reader() {
     const client = makeClient()
     const email = `selah-editor-${randomUUID()}@example.invalid`
@@ -41,7 +33,7 @@ try {
     }
     check(Boolean(link), 'confirmation received in local Mailpit')
     const response = await request(link)
-    const tokens = new URLSearchParams(localUrl(response.headers.get('location')).hash.slice(1))
+    const tokens = new URLSearchParams(localUrl(response.headers.get('location'), 'frontend').hash.slice(1))
     check(!(await client.auth.setSession({ access_token: tokens.get('access_token'), refresh_token: tokens.get('refresh_token') })).error, 'synthetic account confirmed')
     return { client, id: result.data.user.id, email, password }
   }

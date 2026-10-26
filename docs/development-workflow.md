@@ -27,6 +27,16 @@ Vite carrega `.env` e `.env.local` também em outros modos. Evitar credenciais n
 
 ## Ciclo de uma mudança
 
+Na Etapa 21.1, scripts de integração/configuração/provisionamento compartilham
+guardas de Docker e URLs locais. Antes de qualquer integração opt-in, executar
+`node scripts/local-auth-smoke.mjs --check-local` (ou o mesmo modo no executável
+pretendido). Uma recusa exige corrigir o ambiente/contexto, sem retirar a proteção.
+Para a suíte SQL local usar `node scripts/run-local-authorization.mjs`, que fixa o
+contêiner/socket e preserva o BEGIN/ROLLBACK do arquivo. Não passar conexões
+arbitrárias ao psql. Esses comandos não integram os testes automáticos de frontend
+e nunca devem ser apontados a homologação/produção. Ver `testing.md` e a seção 12
+de `pre-deploy-audit.md` para evidências e limites.
+
 1. Inspecionar `git status`, ler `AGENTS.md` e preservar trabalho existente.
 2. Criar branch `feat/nome`, `fix/nome` ou `chore/nome`. Nesta implantação: `chore/engineering-workflow`.
 3. Definir comportamento esperado, telas afetadas e riscos de regressão. Preservar interface e funcionalidades fora do escopo.
