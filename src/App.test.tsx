@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { supabase } from './lib/supabase'
 import App from './App'
 
 describe('fluxos locais do Selah', () => {
@@ -30,9 +31,12 @@ describe('fluxos locais do Selah', () => {
   })
 
   it('remove conteúdo em memória, mas preserva o último devocional', async () => {
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'fictional-admin' } } }, error: null } as never)
+    vi.mocked(supabase.rpc).mockResolvedValue({ data: [], error: null } as never)
     window.location.hash = 'admin'
     const user = userEvent.setup()
     const view = render(<App />)
+    await screen.findAllByRole('button', { name: 'Remover' })
     const main = screen.getByRole('main')
     for (let i = 0; i < 3; i++) await user.click(within(main).getAllByRole('button', { name: 'Remover' })[0])
     expect(within(main).getAllByRole('button', { name: 'Remover' })).toHaveLength(1)
@@ -41,6 +45,6 @@ describe('fluxos locais do Selah', () => {
     expect(within(main).getAllByRole('button', { name: 'Remover' })).toHaveLength(1)
     view.unmount()
     render(<App />)
-    expect(screen.getAllByRole('button', { name: 'Remover' })).toHaveLength(4)
+    expect(await screen.findAllByRole('button', { name: 'Remover' })).toHaveLength(4)
   })
 })

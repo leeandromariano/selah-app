@@ -20,10 +20,10 @@ npm run lint
 | Arquivo | Comportamentos exercitados |
 | --- | --- |
 | `src/components/UI.test.tsx` | Teste unitário do card isolado: ativação por teclado chama o callback com o devocional correspondente, somente após interação |
-| `src/components/AuthForm.test.tsx` | Entrada inválida, mensagens e foco no primeiro erro; cadastro fictício válido sem Instagram, limpeza de campos, ausência de fetch e remoção da mensagem ao editar; cadastro incompleto e senhas divergentes |
+| `src/components/AuthForm.test.tsx` | Entrada inválida, mensagens e foco no primeiro erro; cadastro via fronteira Auth simulada sem Instagram, limpeza de campos, ausência de fetch real e remoção da mensagem ao editar; cadastro incompleto e senhas divergentes |
 | `src/App.test.tsx` | Busca por referência sem diferenciar maiúsculas combinada com tema, resultado vazio e recuperação; marcação de leitura com botão desabilitado e descarte em nova montagem; remoção de itens, preservação do último devocional e restauração do acervo em nova montagem |
 
-São sete testes de comportamento local, incluindo um teste unitário de componente e integração entre App, componentes e estado React. Não há extração artificial de regras para duplicar a implementação em testes. Novos casos unitários podem ser adicionados quando surgirem módulos de domínio independentes.
+A base inicial tinha sete testes de comportamento local, incluindo um teste unitário de componente e integração entre App, componentes e estado React. Não há extração artificial de regras para duplicar a implementação em testes. Novos casos unitários podem ser adicionados quando surgirem módulos de domínio independentes.
 
 O arquivo preexistente `supabase/tests/authorization.sql` é uma suíte SQL separada. Não faz parte do Vitest e não deve ser executado contra banco remoto nesta etapa. Sua existência não comprova que permissões ou migrações foram validadas.
 
@@ -45,7 +45,7 @@ casos passaram na execução integral local de 26/10/2026 (59 verificações, ze
 - Quando houver backend real: erros de rede, sessão, autorização administrativa, persistência, isolamento entre usuários e RLS em banco local descartável com dados sintéticos.
 - Para cada bug futuro: teste específico que reproduza o problema antes da correção.
 
-Não há cobertura percentual mínima estabelecida. Priorizar riscos e comportamentos em vez de perseguir números ou testar constantes. Formulários continuam demonstrativos: passar nos testes não significa autenticação implementada. O painel público não representa controle de acesso. Remontar App verifica o descarte de estado React, mas não substitui recarregar uma página em E2E.
+Não há cobertura percentual mínima estabelecida. Priorizar riscos e comportamentos em vez de perseguir números ou testar constantes. A autenticação agora usa Supabase Auth local; testes React simulam a integração e não comprovam HTTP. O painel exige sessão e autorização no banco, mas ainda edita apenas o acervo em memória. Remontar App verifica o descarte de estado React, mas não substitui recarregar uma página em E2E.
 
 Resultados de execução devem acompanhar o relatório da tarefa; não presumir aprovação porque existe um teste no repositório.
 
@@ -65,3 +65,47 @@ Verificações complementares da mesma sessão: npm.cmd run test:run (7 testes
 aprovados), npm.cmd run build e npm.cmd run lint concluídos com código zero.
 Consulta após o rollback confirmou ausência das fixtures de Auth e dos
 devocionais fictícios criados pela suíte.
+
+## Etapa 16 — Auth local
+
+A suíte mantém os sete cenários originais, adaptando o contrato do cadastro para
+Auth e exigindo administrador simulado no teste de edição do painel. As demais
+interações do acervo continuam em memória. Novos testes cobrem login, erros,
+restauração de sessão, listeners, resposta atrasada após logout, autorização
+negada inclusive por metadado admin forjado, recuperação e alteração de senha.
+`src/lib/localAuthConfig.test.ts` verifica recusa de URL remota e chaves privilegiadas
+sem importar o cliente real. O módulo Supabase é simulado globalmente na fronteira.
+
+`scripts/local-auth-smoke.mjs` é opt-in e separado de Vitest/build/lint. Foi
+executado nesta etapa com 19 verificações HTTP aprovadas, incluindo recebimento
+no Mailpit, confirmação e recuperação de senha. Usa uma identidade adulta fictícia
+por execução, que permanece somente no banco local; não apaga dados. Nunca imprime
+chaves, senhas, conteúdo de e-mail ou tokens. Não testa DOM ou armazenamento do navegador.
+A execução SQL de 59 verificações registrada acima pertence à etapa anterior;
+as políticas e a suíte SQL não foram modificadas nem reexecutadas na Etapa 16.
+
+Validação final da Etapa 16 (26/10/2026): `npm.cmd run test:run` aprovou 22 testes
+em cinco arquivos; `npm.cmd run build` e `npm.cmd run lint` terminaram com código
+zero, sem avisos. As primeiras execuções identificaram duas falhas nos testes
+(referência ao DOM desmontado após troca de identidade e preenchimento repetido
+do e-mail); elas foram corrigidas sem remover cenários. O conector de navegador
+não disponibilizou navegador ao agente, portanto não houve validação visual/E2E
+pelo agente durante a implementação. A validação manual posterior está registrada abaixo.
+
+## Validação manual da Etapa 16 — informada pelo responsável
+
+Em 26/10/2026, o responsável confirmou nesta sessão **sete testes manuais aprovados**
+na interface local: abertura, cadastro, confirmação por Mailpit, retorno do link,
+login, persistência da sessão após recarga e logout. Esses resultados foram
+relatados pelo responsável; não são testes automatizados executados pelo agente.
+O detalhamento está em `auth-local.md`.
+
+Recuperação e atualização de senha não foram incluídas nesse relato manual.
+As 19 verificações HTTP e as 59 verificações SQL são registros de execuções
+anteriores, sem nova execução durante a preparação do commit.
+
+Na preparação do commit em `feat/local-auth`, foram executados novamente:
+`npm.cmd run test:run` (22 testes aprovados em cinco arquivos),
+`npm.cmd run build` e `npm.cmd run lint` (ambos com código zero, sem avisos).
+Esta preparação alterou somente a documentação; migrações, políticas RLS
+e funcionalidades foram preservadas.

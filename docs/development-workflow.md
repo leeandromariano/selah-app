@@ -2,15 +2,15 @@
 
 ## Situação atual
 
-Aplicativo React + TypeScript + Vite, navegação por hash e estado em memória. Formulários não criam contas nem autenticam; o painel é público e demonstrativo. A edição do acervo e a conclusão de leituras desaparecem ao recarregar. A edição do dia e os indicadores são fictícios e fixos.
+Aplicativo React + TypeScript + Vite, navegação por hash e estado em memória. Cadastro, confirmação de e-mail, login, logout e recuperação de senha usam Supabase Auth exclusivamente local. O painel exige sessão e autorização administrativa confirmada no banco, mas suas operações continuam demonstrativas em memória. A edição do acervo e a conclusão de leituras desaparecem ao recarregar. A edição do dia e os indicadores são fictícios e fixos.
 
-Existe um módulo de cliente Supabase em `src/lib/supabase.ts`, além de SQL em `supabase/`, mas os componentes atuais não importam esse cliente. A presença desses arquivos não confirma infraestrutura provisionada nem banco seguro para uso. Não executar SQL ou migrações durante validações do frontend.
+O cliente em `src/lib/supabase.ts` é usado pela autenticação e recusa destinos fora de localhost/127.0.0.1:54321. A suíte React simula esse módulo na fronteira, sem importar o cliente real. A suíte SQL local teve 59 verificações aprovadas; a Etapa 16 não altera migrações nem políticas. Não executar SQL ou migrações durante validações do frontend. Ver `auth-local.md` para os fluxos HTTP locais e suas limitações.
 
 ## Três ambientes
 
 | Ambiente | Finalidade | Dados e serviços | Configuração |
 | --- | --- | --- | --- |
-| Desenvolvimento local | Implementar e testar na máquina | Acervo fictício; testes sem rede. Futuro backend local isolado, se necessário | `.env.development.local`, apenas credenciais de desenvolvimento |
+| Desenvolvimento local | Implementar e testar na máquina | Acervo fictício; testes sem rede. Supabase local isolado; Auth real apenas com identidades fictícias | `.env.development.local`, apenas credenciais de desenvolvimento |
 | Homologação | Revisar uma versão candidata antes da produção | Somente dados sintéticos; projeto/backend exclusivo de homologação | `.env.staging.local` ou variáveis exclusivas no provedor |
 | Produção | Atender usuários reais | Recursos e contas exclusivos; acesso restrito | Segredos exclusivos do ambiente de produção no provedor |
 

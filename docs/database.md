@@ -2,9 +2,11 @@
 
 ## Escopo e estado atual
 
-O frontend React/Vite continua demonstrativo. `AuthForm` valida campos sem enviar dados;
-`AdminPanel` e marcações de leitura usam apenas memória. `src/lib/supabase.ts` exporta
-o cliente, mas os componentes ainda não o utilizam. Interface e dados fictícios preservados.
+Na Etapa 16, AuthForm usa Supabase Auth exclusivamente local. Confirmação de e-mail,
+login, logout e recuperação são reais no ambiente local. AdminPanel e marcações
+de leitura continuam em memória. O painel exige sessão e autorização confirmada
+pela RPC protegida; nenhuma política ou migração foi alterada. Ver auth-local.md.
+Campos pessoais do cadastro ainda não criam perfis persistentes.
 
 A migração `supabase/migrations/20261023000100_initial_schema.sql` prepara o banco;
 não foi aplicada remotamente. Não contém contas reais, senhas, credenciais nem dados
@@ -79,7 +81,7 @@ PKs/constraints únicas já criam índices. Índices adicionais cobrem publicaç
 Triggers atualizam `updated_at`. Clientes não escolhem IDs/datas de eventos ou
 ciências, não mudam autoria e não editam timestamps de perfil/devocional.
 
-## Autenticação planejada
+## Autenticação local e integração futura
 
 Usar exclusivamente Supabase Auth com e-mail/senha; nenhuma tabela própria de senhas.
 Na futura conexão da interface:
@@ -98,7 +100,8 @@ Na futura conexão da interface:
 Configurar SMTP e testar entrega/links de confirmação e recuperação em ambiente de
 teste. A política de senha deve existir também no Auth, não somente no formulário.
 Ver [guia oficial de e-mail/senha](https://supabase.com/docs/guides/auth/passwords).
-Esta etapa documenta os fluxos; não os implementa nem altera configurações remotas.
+A Etapa 16 implementa Auth local; criação do perfil persistente, provisionamento
+de administrador e integrações de conteúdo permanecem futuros. Nenhuma configuração remota foi alterada.
 Variáveis `VITE_` são públicas no bundle: somente URL e chave publishable podem ir
 nelas. Nunca adicionar `service_role`, secret key ou senha de banco ao frontend.
 
