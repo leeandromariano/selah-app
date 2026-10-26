@@ -87,8 +87,9 @@ Validação final: 22 testes automatizados aprovados em cinco arquivos,
   campos pessoais como rascunho em metadados de Auth, sem idade exata nem papéis.
   Após confirmar e entrar, o leitor revisa e salva explicitamente seu perfil
   em PostgreSQL. Ver `profiles-local.md`; isso não altera os resultados históricos acima.
-- O conteúdo, métricas exibidas no painel e marcas de leitura continuam fictícios
-  ou em memória. O controle visual não substitui RLS nas futuras operações reais.
+- Na Etapa 18.2 o conteúdo dos leitores e o histórico de aberturas passam a usar
+  o PostgreSQL local; não existe conclusão de leitura no schema. O painel e suas
+  métricas continuam demonstrativos. O controle visual não substitui RLS.
   Revogação administrativa é imposta no banco a cada RPC; a interface reavalia
   a autorização quando a sessão muda, não por polling da lista privada.
 - A recuperação em andamento depende do evento recebido ao abrir o link. Recarregar

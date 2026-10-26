@@ -113,4 +113,5 @@ recarga de página e persistência após novo login também foram aprovadas manu
 pelo responsável conforme o registro acima. Recuperação de perfil removido por operador confiável exige
 reabrir a tela; edições simultâneas seguem a última escrita, sem versionamento.
 O rascunho do cadastro permanece nos metadados Auth; alterações futuras no perfil
-usam a tabela, sem sincronizar o rascunho. Acervo e painel continuam demonstrativos.
+usam a tabela, sem sincronizar o rascunho. Na Etapa 18.2, o acervo dos leitores
+e suas aberturas passam a persistir no banco; o painel permanece demonstrativo.

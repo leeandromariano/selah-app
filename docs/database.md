@@ -3,8 +3,10 @@
 ## Escopo e estado atual
 
 Na Etapa 16, AuthForm usa Supabase Auth exclusivamente local. Confirmação de e-mail,
-login, logout e recuperação são reais no ambiente local. AdminPanel e marcações
-de leitura continuam em memória. O painel exige sessão e autorização confirmada
+login, logout e recuperação são reais no ambiente local. AdminPanel continua
+demonstrativo em memória. Na Etapa 18.2, publicações e histórico de aberturas dos
+leitores usam as tabelas existentes pela API com sessão. Não há conclusão de leitura
+no schema; ver devotionals-local.md. O painel exige sessão e autorização confirmada
 pela RPC protegida; nenhuma política ou migração foi alterada. Ver auth-local.md.
 Na Etapa 18.1, os campos pessoais enviados como rascunho do cadastro podem ser
 revisados e salvos em “Meu perfil” após confirmação/login. A tela carrega e edita

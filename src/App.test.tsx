@@ -3,31 +3,40 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { supabase } from './lib/supabase'
 import App from './App'
+import { libraryBoundary, olderPublications } from './test/libraryBoundary'
 
 describe('fluxos locais do Selah', () => {
-  it('combina busca sem diferenciar maiúsculas com filtro de tema', async () => {
+  it('busca publicação anterior por referência sem diferenciar maiúsculas e recupera resultado vazio', async () => {
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'fictional-reader' } } }, error: null } as never)
+    libraryBoundary(olderPublications)
     window.location.hash = 'historico'
     const user = userEvent.setup()
     render(<App />)
-    await user.type(screen.getByRole('textbox', { name: 'Buscar devocionais' }), 'JOÃO')
+    await user.type(await screen.findByRole('textbox', { name: 'Buscar devocionais' }), 'JOÃO')
     expect(screen.getByRole('status')).toHaveTextContent('1 devocionais encontrados')
     expect(screen.getByRole('heading', { name: 'Paz em meio ao caminho' })).toBeVisible()
-    await user.click(screen.getByRole('button', { name: 'Gratidão' }))
+    await user.type(screen.getByRole('textbox'), ' inexistente')
     expect(screen.getByRole('status')).toHaveTextContent('0 devocionais encontrados')
     expect(screen.getByText(/Nenhum devocional encontrado/)).toBeVisible()
     await user.clear(screen.getByRole('textbox'))
     expect(screen.getByRole('heading', { name: 'O extraordinário no simples' })).toBeVisible()
   })
 
-  it('marca leitura uma vez e descarta a marca ao iniciar nova sessão', async () => {
-    window.location.hash = 'leitura'
+  it('registra abertura e restaura histórico ao remontar, sem marcar conclusão', async () => {
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'fictional-reader' } } }, error: null } as never)
+    const { historyQuery } = libraryBoundary(olderPublications)
+    window.location.hash = 'historico'
     const user = userEvent.setup()
     const view = render(<App />)
-    await user.click(screen.getByRole('button', { name: /Marcar como lido/ }))
-    expect(screen.getByRole('button', { name: /Leitura concluída nesta sessão/ })).toBeDisabled()
+    await user.click(await screen.findByRole('button', { name: /Paz em meio ao caminho/ }))
+    expect(await screen.findByText(/sem comprovar conclusão/)).toBeVisible()
+    expect(historyQuery.insert).toHaveBeenCalledWith({ devotional_id: olderPublications[0].id })
+    expect(screen.queryByRole('button', { name: /Marcar como lido/ })).not.toBeInTheDocument()
     view.unmount()
+    location.hash = 'minhas-leituras'
     render(<App />)
-    expect(screen.getByRole('button', { name: /Marcar como lido/ })).toBeEnabled()
+    expect(await screen.findByText(olderPublications[0].title)).toBeVisible()
+    expect(screen.getByText(/Uma abertura não significa leitura concluída/)).toBeVisible()
   })
 
   it('remove conteúdo em memória, mas preserva o último devocional', async () => {

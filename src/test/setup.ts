@@ -10,7 +10,9 @@ vi.mock('../lib/supabase', () => ({ supabase: {
 } }))
 
 beforeEach(() => {
-  vi.mocked(supabase.from).mockReset()
+  const emptyQuery = { select: vi.fn(), eq: vi.fn(), lte: vi.fn(), order: vi.fn(), range: vi.fn().mockResolvedValue({ data: [], error: null }) }
+  for (const method of ['select', 'eq', 'lte', 'order'] as const) emptyQuery[method].mockReturnValue(emptyQuery)
+  vi.mocked(supabase.from).mockReset().mockReturnValue(emptyQuery as never)
   vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: null }, error: null })
   vi.mocked(supabase.auth.onAuthStateChange).mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } } as never)
   for (const method of ['signUp', 'signInWithPassword', 'signOut', 'resetPasswordForEmail', 'updateUser'] as const) vi.mocked(supabase.auth[method]).mockReset().mockResolvedValue({ data: {}, error: null } as never)

@@ -21,7 +21,7 @@ npm run lint
 | --- | --- |
 | `src/components/UI.test.tsx` | Teste unitário do card isolado: ativação por teclado chama o callback com o devocional correspondente, somente após interação |
 | `src/components/AuthForm.test.tsx` | Entrada inválida, mensagens e foco no primeiro erro; cadastro via fronteira Auth simulada sem Instagram, limpeza de campos, ausência de fetch real e remoção da mensagem ao editar; cadastro incompleto e senhas divergentes |
-| `src/App.test.tsx` | Busca por referência sem diferenciar maiúsculas combinada com tema, resultado vazio e recuperação; marcação de leitura com botão desabilitado e descarte em nova montagem; remoção de itens, preservação do último devocional e restauração do acervo em nova montagem |
+| `src/App.test.tsx` | Busca por referência sem diferenciar maiúsculas, resultado vazio e recuperação; registro de abertura e histórico restaurado ao remontar; remoção de itens, preservação do último devocional e restauração do acervo demonstrativo administrativo em nova montagem |
 
 A base inicial tinha sete testes de comportamento local, incluindo um teste unitário de componente e integração entre App, componentes e estado React. Não há extração artificial de regras para duplicar a implementação em testes. Novos casos unitários podem ser adicionados quando surgirem módulos de domínio independentes.
 
@@ -160,3 +160,63 @@ Verificações executadas novamente nesta preparação: `npm.cmd run test:run`
 aprovou 34 testes em sete arquivos; `npm.cmd run build` e `npm.cmd run lint`
 terminaram com código zero, sem avisos. Esses resultados são independentes
 dos oito testes manuais relatados acima.
+
+## Etapa 18.2 — publicações e histórico de aberturas
+
+Schema, constraints, trigger e RLS de devotionals/devotional_views conferidos no
+PostgreSQL local em execução. Não há campo/tabela de conclusão; a interface agora
+explica aberturas, sem fabricar conclusão. Não houve mudança em supabase/.
+
+Os dois testes de App relacionados ao acervo foram adaptados legitimamente ao novo
+contrato: busca em publicações persistentes sem filtro de tema inexistente no schema,
+e abertura persistente sem marcação volátil de conclusão. O teste do painel mantém
+o contrato demonstrativo isolado. Nenhum teste foi removido ou pulado.
+
+`src/devotionals/repository.test.ts` verifica fronteira de dia em São Paulo, seleção
+sem fallback de dia antigo, prévia/tempo derivados, projeção, filtros, ordenação,
+paginação além de 100 registros e payload de abertura restrito. Os testes em
+`src/components/ReaderLibrary.test.tsx` cobrem destaque, ausência de publicação
+hoje, acervo/histórico vazios, negação/nova tentativa, falha de histórico, abertura
+negada, recarga por UUID sem duplicar evento, conteúdo indisponível e respostas
+atrasadas após logout. A fronteira Supabase é simulada; não usa credenciais/rede.
+
+`node scripts/local-library-smoke.mjs` executou **35 verificações HTTP locais**,
+todas aprovadas, incluindo persistência e tentativas diretas de acesso negado.
+Preparou duas contas e cinco publicações fictícias locais, sem exclusões ou
+mudança de schema. Ver `devotionals-local.md` para escopo e limitações.
+As 59 verificações SQL/RLS e 29 HTTP de perfis são resultados anteriores, não
+reexecutados aqui. A nova experiência de leitura recebeu posteriormente a
+validação manual informada pelo responsável, registrada abaixo.
+
+Validação final da Etapa 18.2: `npm.cmd run test:run` aprovou **49 testes em nove
+arquivos**; `npm.cmd run build` e `npm.cmd run lint` terminaram com código zero.
+Lint não emitiu avisos. Vitest apresentou apenas uma sugestão informativa de
+otimização do ambiente jsdom; nenhum teste falhou ou foi omitido na execução final.
+
+## Conclusão da Etapa 18.2 — validação manual informada pelo responsável
+
+Na preparação do commit da branch `feat/local-auth`, referência `6e2c793`, o
+responsável confirmou nesta sessão **dez testes manuais aprovados**:
+
+1. O acervo carrega publicações do banco.
+2. O destaque apresenta o devocional do dia ou mensagem apropriada quando não existe.
+3. A busca encontra devocionais anteriores.
+4. Os devocionais abrem e exibem o conteúdo.
+5. A página do devocional permanece correta após recarga.
+6. Minhas aberturas registra os acessos.
+7. O histórico persiste após recarga, logout e novo login.
+8. O histórico é isolado entre usuários.
+9. A interface funciona em telas móveis.
+10. Falhas de conexão apresentam erro sem inventar conteúdo.
+
+Esses resultados foram relatados pelo responsável na interface local; não são
+testes automatizados executados pelo agente. Ver `devotionals-local.md` para
+limitações e roteiro de repetição. As 35 verificações HTTP de acervo, 29 de perfis
+e 59 verificações SQL/RLS permanecem resultados anteriores, sem nova execução
+nesta preparação. Nenhuma migração, política RLS ou funcionalidade foi alterada
+durante a preparação do commit.
+
+Nesta preparação da Etapa 18.2 foram executados novamente:
+`npm.cmd run test:run` (49 testes aprovados em nove arquivos),
+`npm.cmd run build` e `npm.cmd run lint` (código zero; lint sem avisos).
+Vitest apresentou somente sugestão informativa de otimização do jsdom.
