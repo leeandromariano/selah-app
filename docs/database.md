@@ -6,7 +6,9 @@ Na Etapa 16, AuthForm usa Supabase Auth exclusivamente local. Confirmação de e
 login, logout e recuperação são reais no ambiente local. AdminPanel e marcações
 de leitura continuam em memória. O painel exige sessão e autorização confirmada
 pela RPC protegida; nenhuma política ou migração foi alterada. Ver auth-local.md.
-Campos pessoais do cadastro ainda não criam perfis persistentes.
+Na Etapa 18.1, os campos pessoais enviados como rascunho do cadastro podem ser
+revisados e salvos em “Meu perfil” após confirmação/login. A tela carrega e edita
+o próprio registro em public.profiles pela API com sessão. Ver profiles-local.md.
 
 A migração `supabase/migrations/20261023000100_initial_schema.sql` prepara o banco;
 não foi aplicada remotamente. Não contém contas reais, senhas, credenciais nem dados
@@ -100,8 +102,9 @@ Na futura conexão da interface:
 Configurar SMTP e testar entrega/links de confirmação e recuperação em ambiente de
 teste. A política de senha deve existir também no Auth, não somente no formulário.
 Ver [guia oficial de e-mail/senha](https://supabase.com/docs/guides/auth/passwords).
-A Etapa 16 implementa Auth local; criação do perfil persistente, provisionamento
-de administrador e integrações de conteúdo permanecem futuros. Nenhuma configuração remota foi alterada.
+A Etapa 16 implementou Auth local; a Etapa 18.1 implementa perfil persistente local.
+Provisionamento de administrador e integrações de conteúdo permanecem futuros.
+Nenhuma configuração remota foi alterada.
 Variáveis `VITE_` são públicas no bundle: somente URL e chave publishable podem ir
 nelas. Nunca adicionar `service_role`, secret key ou senha de banco ao frontend.
 

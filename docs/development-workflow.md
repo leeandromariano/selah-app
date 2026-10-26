@@ -8,6 +8,13 @@ O cliente em `src/lib/supabase.ts` é usado pela autenticação e recusa destino
 
 ## Três ambientes
 
+A Etapa 18.1 acrescenta `#perfil`: leitura, criação explícita e atualização do
+próprio perfil pelo cliente público com sessão, persistindo no PostgreSQL local.
+O cadastro envia um rascunho de campos pessoais nos metadados de Auth; depois da
+confirmação/login, o leitor revisa e salva em “Meu perfil”. Metadados não concedem
+administração nem substituem um perfil já existente. Não houve alteração de
+migrações, triggers ou RLS. Ver `profiles-local.md` para validação e limitações.
+
 | Ambiente | Finalidade | Dados e serviços | Configuração |
 | --- | --- | --- | --- |
 | Desenvolvimento local | Implementar e testar na máquina | Acervo fictício; testes sem rede. Supabase local isolado; Auth real apenas com identidades fictícias | `.env.development.local`, apenas credenciais de desenvolvimento |

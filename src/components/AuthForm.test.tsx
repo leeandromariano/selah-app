@@ -28,7 +28,7 @@ describe('formulários de autenticação', () => {
     ]) await user.type(screen.getByLabelText(label), value)
     await user.click(screen.getByRole('button', { name: /Criar conta/ }))
     expect(await screen.findByRole('status')).toHaveTextContent('Confirme seu endereço')
-    expect(supabase.auth.signUp).toHaveBeenCalledWith({ email: 'pessoa@example.test', password: 'senha-ficticia', options: { emailRedirectTo: location.origin } })
+    expect(supabase.auth.signUp).toHaveBeenCalledWith({ email: 'pessoa@example.test', password: 'senha-ficticia', options: { emailRedirectTo: location.origin, data: { profile: { name: 'Pessoa Fictícia', phone: '+5511999990000', age_range: '25_34', instagram: null } } } })
     expect(screen.getByLabelText('E-mail')).toHaveValue('')
     expect(screen.getByLabelText('Senha')).toHaveValue('')
     expect(fetch).not.toHaveBeenCalled()

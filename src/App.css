@@ -7,3 +7,5 @@
 @media(max-width:650px){.card-body p{font-size:12px}.card-body small{font-size:9px}.encouragement p{font-size:11px}.hero-copy>p{font-size:12px}.greeting p{font-size:12px}.hero-copy{width:85%}.hero{min-height:360px}}
 @media(max-width:380px){.sidebar{padding-inline:12px}.sidebar nav{gap:4px}.nav-item{font-size:9px;padding:10px 3px;gap:5px}.nav-item b{display:none}main{padding-inline:16px}.hero-copy{width:94%}.hero-copy>p{max-width:220px}.card{grid-template-columns:82px 1fr}.card-body{padding:14px}.landscape-label{left:5px;padding-inline:6px}.hero h2{font-size:32px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.auth-card select{width:100%;border:1px solid #e7e0ed;border-radius:7px;padding:12px;background:#fff;color:inherit;font:inherit}.auth-card select:focus{outline:2px solid #9875b8;outline-offset:2px}

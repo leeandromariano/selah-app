@@ -109,3 +109,54 @@ Na preparação do commit em `feat/local-auth`, foram executados novamente:
 `npm.cmd run build` e `npm.cmd run lint` (ambos com código zero, sem avisos).
 Esta preparação alterou somente a documentação; migrações, políticas RLS
 e funcionalidades foram preservadas.
+
+## Etapa 18.1 — perfis persistentes locais
+
+Schema real, constraints, trigger e RLS inspecionados por leitura de metadados
+no PostgreSQL local. Nenhuma migração ou política foi alterada.
+
+`src/components/ProfileForm.test.tsx` acrescenta nove testes de leitura do próprio
+perfil, criação explícita com rascunho permitido, edição, remontagem, campos
+opcionais, carregamento/erros, nova tentativa, acesso negado, submissão pendente
+e resposta atrasada após logout. `src/profiles/profile.test.ts` acrescenta três
+testes de normalização, limites de dados, campos protegidos e zero linhas em update.
+São mocks na fronteira Supabase; não comprovam persistência por si só.
+O teste de cadastro passou a exigir o rascunho permitido, sem papel administrativo,
+conforme o novo contrato de signUp; os cenários anteriores foram mantidos.
+
+Execução: `npm.cmd run test:run` aprovou **34 testes em sete arquivos**;
+`npm.cmd run build` e `npm.cmd run lint` terminaram com código zero, sem avisos.
+`node scripts/local-profile-smoke.mjs` aprovou **29 verificações HTTP locais**,
+incluindo criação, edição, timestamps do servidor, leitura por cliente novo,
+logout/novo login, tentativa de leitura/edição do perfil alheio e campos protegidos.
+Usa duas contas fictícias confirmadas pelo Mailpit; não usa chaves privilegiadas
+nas operações nem apaga dados. Nenhuma verificação dessa execução foi omitida.
+
+As 59 verificações SQL/RLS, 19 HTTP de Auth e sete testes manuais de Auth permanecem
+registros das etapas anteriores; não foram reexecutados nesta etapa. A nova tela
+de perfil recebeu posteriormente a validação manual registrada abaixo.
+
+## Conclusão da Etapa 18.1 — validação manual informada pelo responsável
+
+Na preparação do commit da branch `feat/local-auth`, referência `171bf26`, o
+responsável confirmou nesta sessão **oito testes manuais aprovados**:
+
+1. Acesso à página Meu perfil.
+2. Carregamento correto dos dados do cadastro.
+3. Salvamento com confirmação.
+4. Edição de informações pessoais.
+5. Persistência após recarregar a página.
+6. Persistência após logout e novo login.
+7. Isolamento visual entre contas.
+8. Salvamento com campos opcionais vazios.
+
+Esses resultados foram relatados pelo responsável no navegador local; não são
+execuções automatizadas do agente. O detalhamento e as limitações estão em
+`profiles-local.md`. Os 29 testes HTTP de perfis e as 59 verificações SQL/RLS
+permanecem resultados anteriores, sem nova execução nesta preparação do commit.
+Nenhuma migração, política RLS ou funcionalidade foi alterada nesta preparação.
+
+Verificações executadas novamente nesta preparação: `npm.cmd run test:run`
+aprovou 34 testes em sete arquivos; `npm.cmd run build` e `npm.cmd run lint`
+terminaram com código zero, sem avisos. Esses resultados são independentes
+dos oito testes manuais relatados acima.

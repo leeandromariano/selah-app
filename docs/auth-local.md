@@ -83,9 +83,10 @@ Validação final: 22 testes automatizados aprovados em cinco arquivos,
 - O agente não teve navegador disponível no conector durante a implementação.
   A validação posterior da interface foi feita pelo responsável e está registrada
   acima; não houve execução E2E automatizada em navegador pelo agente.
-- Cadastro envia somente e-mail e senha. Os campos pessoais preservam a interface
-  e validação anterior, mas não são enviados nem criam `profiles`; isso é informado
-  no formulário. A persistência do perfil requer uma próxima integração.
+- Na Etapa 16 o cadastro enviava somente e-mail/senha. A Etapa 18.1 acrescenta
+  campos pessoais como rascunho em metadados de Auth, sem idade exata nem papéis.
+  Após confirmar e entrar, o leitor revisa e salva explicitamente seu perfil
+  em PostgreSQL. Ver `profiles-local.md`; isso não altera os resultados históricos acima.
 - O conteúdo, métricas exibidas no painel e marcas de leitura continuam fictícios
   ou em memória. O controle visual não substitui RLS nas futuras operações reais.
   Revogação administrativa é imposta no banco a cada RPC; a interface reavalia
