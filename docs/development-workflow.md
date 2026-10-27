@@ -1,8 +1,14 @@
+> Etapa 22.3.2 / Prompt 48: Claro/Escuro/Sistema implementados, com preferência
+> local independente da sessão, bootstrap pré-React e tokens CSS semânticos.
+> Estratégia, suporte e checklist: [appearance-local.md](appearance-local.md).
+> SQL/RLS não repetidos nesta mudança visual; nenhuma alteração de negócio ou banco.
+
 > Etapa 22.3.1 / Prompt 44: Minha Jornada (`#minha-jornada`) reutiliza a RPC
 > pessoal e o calendário da 22.2, com histórico mensal somente leitura. Diagnóstico,
 > roadmap oficial das cinco subetapas e checklist: [journey-roadmap.md](journey-roadmap.md).
-> Prompt 46: 22.3.2 Modo Noturno é a próxima implementação, ainda não iniciada;
-> 22.3.3 Push, 22.3.4 Comentários/Reações e 22.3.5 Conquistas/Desafios planejados.
+> Prompt 48: 22.3.1 versionada; 22.3.2 implementado, 11/11 manuais informados,
+> aguardando commit; 22.3.3 Push é próxima, não iniciada. 22.3.4 Comentários/Reações
+> e 22.3.5 Conquistas/Desafios permanecem planejados. Nenhuma publicação autorizada.
 
 > Prompt 41: auditoria agregada somente de leitura, origem das fixtures e limites
 > do painel em [owner-community-review.md](owner-community-review.md). Sem limpeza.

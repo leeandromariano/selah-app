@@ -1,23 +1,27 @@
 # Etapa 22.3 — Minha Jornada e evolução pessoal
 
+Estado atual — Prompt 48: base `195a9b5`, branch `feat/local-auth`. 22.3.1
+versionada; 22.3.2 implementada com onze aprovações manuais informadas, aguardando
+commit. 22.3.3 é a próxima subetapa, sem implementação autorizada nesta auditoria.
+
 Base: `42e6070`, branch `feat/local-auth`, árvore limpa confirmada no início do
 Prompt 44. Conferência final e numeração definitiva no Prompt 46. Somente ambiente
-local. Implementação autorizada e entregue: **22.3.1**.
-As seções 22.3.2–22.3.5 são propostas técnicas, sem recursos ativos, migrações,
+local. Implementações entregues: **22.3.1** e **22.3.2** (Prompt 47).
+As seções 22.3.3–22.3.5 são propostas técnicas, sem recursos ativos, migrações,
 dependências, service worker, permissões ou chamadas desses recursos nesta rodada.
 
 ## Roadmap oficial — numeração definitiva (Prompt 46)
 
 | Subetapa | Funcionalidade | Estado |
 | --- | --- | --- |
-| 22.3.1 | Minha Jornada | Implementada |
-| 22.3.2 | Modo Noturno | Próxima implementação; não iniciada nesta rodada |
-| 22.3.3 | Notificações Push | Planejadas |
+| 22.3.1 | Minha Jornada | Versionada em `195a9b5` |
+| 22.3.2 | Modo Noturno | Implementado; 11/11 manuais informados no Prompt 48; aguardando commit |
+| 22.3.3 | Notificações Push | Próxima; ainda não iniciada |
 | 22.3.4 | Comentários e Reações | Planejados |
 | 22.3.5 | Conquistas e Desafios | Planejados |
 
 Esta numeração substitui a proposta de quatro subetapas do Prompt 44. Apenas a
-documentação é atualizada no Prompt 46; nenhuma implementação futura foi ativada.
+documentação foi atualizada no Prompt 46; o Prompt 47 implementa somente aparência.
 
 ## Validação manual — responsável, Prompt 46: 8/8 aprovados
 
@@ -89,13 +93,20 @@ Critérios de saída: unitários/integração React com fronteira Supabase simul
 suíte regressiva 22.2; SQL/RLS existente repetido em PostgreSQL isolado; build DEV,
 lint e diff limpos. Revisão visual/mobile e sessão real local têm checklist abaixo.
 
-## 22.3.2 — próxima implementação: Modo Noturno
+## 22.3.2 — implementada: Modo Noturno (Prompt 47)
 
-**Somente requisitos/arquitetura nesta rodada. Não implementar tema agora.**
+Claro, Escuro e Sistema implementados localmente. Bootstrap pré-React, store
+independente de sessão, preferência local e tokens semânticos compartilhados.
+Diagnóstico, decisões, cobertura, suporte e checklist atuais em
+[appearance-local.md](appearance-local.md). Requisitos planejados no Prompt 46
+abaixo passam a ser contrato de implementação; testes/resultados reais em
+`testing.md`. As oito aprovações humanas da Jornada não aprovam aparência;
+as onze aprovações específicas de aparência foram informadas no Prompt 48 e
+transcritas em `appearance-local.md` e `testing.md`, sem presumir outros cenários.
 
 ### Experiência e preferência local
 
-- Três modos explícitos: Claro, Escuro e Sistema; padrão proposto Sistema.
+- Três modos explícitos: Claro, Escuro e Sistema; padrão Sistema.
   Seleção acessível por teclado, com nome/estado reconhecíveis, sem depender só
   de ícone ou cor. Não alterar conteúdo, contratos de navegação ou autorização.
 - Preferência persistente do dispositivo/navegador, sem serviço remoto ou
@@ -116,7 +127,7 @@ lint e diff limpos. Revisão visual/mobile e sessão real local têm checklist a
   atributo de tema e `color-scheme` na raiz antes do React. Evitar flash de tema
   incorreto em acesso direto/refresh; primeiro render React deve concordar com
   a resolução inicial, sem escrever preferência em render.
-- Bootstrap futuro pequeno, estático e revisado, com tratamento de erro de
+- Bootstrap pequeno, estático e revisado, com tratamento de erro de
   storage; sem interpolar conteúdo fornecido pelo usuário. Compatibilizar com
   política CSP da versão publicada quando houver, sem relaxá-la para resolver tema.
 - Centralizar cores/superfícies em tokens CSS semânticos: fundo, superfície,
@@ -128,7 +139,7 @@ lint e diff limpos. Revisão visual/mobile e sessão real local têm checklist a
   administração/comunidade. Incluir formulários, tabelas, legendas, badges,
   ícones e campos nativos; não aplicar somente a fundo/texto da página.
 
-### Acessibilidade, atualização e validação futura
+### Acessibilidade, atualização e validação
 
 - Contraste acessível de textos/ícones/controles em ambos os temas, foco sempre
   visível e hover/seleção/disabled legíveis. Hoje/conclusão no calendário e erros
@@ -138,16 +149,16 @@ lint e diff limpos. Revisão visual/mobile e sessão real local têm checklist a
   cleanup; alternância do sistema só afeta quem selecionou Sistema.
 - Respeitar `prefers-reduced-motion`; não criar animações obrigatórias ou
   transições globais que causem desconforto/flash na inicialização.
-- Testes futuros de Claro/Escuro/Sistema em desktop e celular, preferência
+- Testes de Claro/Escuro/Sistema em desktop e celular, preferência
   persistida após refresh, login/logout/troca de conta, sistema alterado com
   página aberta e abas sincronizadas. Cobrir valor inválido, storage bloqueado,
   redução de movimento, foco/hover, contraste e primeira pintura sem flash.
 - Testes unitários com `matchMedia`/storage simulados; Chromium com preferência
   de cor emulada antes da navegação, screenshots de todas as telas com dados
   fictícios e verificação humana de legibilidade. Nenhum SQL, serviço remoto,
-  permissão push, novo papel ou implementação dessas APIs nesta entrega.
+  permissão push, novo papel ou API de recursos futuros nesta entrega.
 
-## 22.3.3 — planejadas: Notificações Push
+## 22.3.3 — próxima: Notificações Push (não iniciadas)
 
 ### Fluxo e componentes futuros
 

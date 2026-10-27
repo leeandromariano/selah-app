@@ -1,5 +1,136 @@
 # Inventário e execução de testes
 
+## Etapa 22.3.2 — Prompt 48: auditoria definitiva e preparação de commit
+
+Branch `feat/local-auth`, HEAD `195a9b5`. Mesmos **17 candidatos: nove modificados
+e oito novos**; nenhum candidato extra identificado em relação à lista final do
+Prompt 47. Esta conferência preserva código/testes/estilos; atualiza documentação.
+Sem staging, commit, push ou deploy.
+
+Validação manual informada pelo responsável — **11/11 aprovados**, exatamente:
+
+1. Claro, Escuro e Sistema funcionam antes do login.
+2. Todas as telas mudam corretamente entre Claro e Escuro.
+3. Modo Sistema acompanha a aparência configurada no Windows.
+4. Uma escolha explícita prevalece sobre o tema do Windows.
+5. F5 mantém a preferência e não provoca flash perceptível.
+6. Login, logout e Alt+Tab não alteram o tema selecionado.
+7. Formulários, tabelas, mensagens de erro e carregamento estão legíveis.
+8. Foco por teclado, botões e estados desabilitados permanecem visíveis.
+9. Redução de movimento é respeitada quando ativada no dispositivo.
+10. A interface funciona em uma janela pequena ou celular.
+11. Minha Jornada preserva a navegação e o mês escolhido.
+
+Esse registro não aprova cenários adicionais nem representa teste manual feito
+pelo agente. Não houve evidência de Firefox/Safari, leitor de tela ou aparelho
+físico identificado; o item 10 não autoriza inferir qual dispositivo foi usado.
+
+| Comando realmente repetido agora, no Prompt 48 | Resultado |
+| --- | --- |
+| `npm.cmd run test:run` | **418 aprovados em 39 arquivos**, sem falhas/omitidos |
+| `npm.cmd run build` | DEV aprovado; JS 516,31 kB, gzip 146,81 kB; CSS 30,40 kB; aviso de bundle acima de 500 kB |
+| `npm.cmd run lint` | Aprovado, sem avisos/erros |
+| `node scripts/local-navigation-browser.mjs --appearance` | **88 verificações aprovadas**, Supabase fictício; três modos, mídia, preferência/refresh, foco, telas, contraste, editor/OWNER, mobile emulado, erros/hover/disabled e storage negado |
+| `node scripts/local-navigation-browser.mjs` | **18 verificações aprovadas** de regressão 22.2/22.3.1, Supabase fictício; navegação, meses, foco/visibilidade, sessão, refresh e bloqueio OWNER |
+| `npm.cmd run build:staging` | Recusado, código 1: variáveis genéricas Supabase DEV não podem configurar STAGING/PROD |
+| `npm.cmd run build:prod` | Recusado, código 1, mesma proteção |
+| `git diff --check` | Aprovado após documentação final; somente avisos LF/CRLF do Git no Windows |
+
+Os números são novas execuções dos casos existentes, não casos novos nem soma
+com o Prompt 47. A execução dirigida dos 20 testes de aparência da rodada anterior
+não foi repetida separadamente: os mesmos casos passaram dentro dos 418 agora.
+Os resultados anteriores abaixo ficam como histórico, sem atribuição à rodada atual.
+
+SQL/RLS **não repetidos**: as 12 migrações e os arquivos de Auth, leitura de 60s,
+RPCs/métricas, RLS, permissões e ambientes estão preservados em relação à base.
+Não há alteração nem indício de regressão de banco/autorização que justifique
+acesso aos serviços. Não houve HTTP backend, sessão pessoal inspecionada, login
+real, nova conclusão real ou alteração de usuários/dados nesta auditoria.
+As regressões sem rede pertinentes permanecem na suíte completa.
+
+Limites: Chromium usa preferência do sistema emulada e backend fictício; não
+substitui Windows nativo/Alt+Tab informado na validação humana. Teste pré-React
+confere paleta já aplicada com main retido, não todos os cenários de cache/rede.
+Contraste automatizado cobre tokens e textos/estados observados, não todos os
+pixels, dados, fontes, controles nativos ou acessibilidade integral. Select/progress
+podem variar por OS. Firefox/Safari/dispositivos físicos não foram testados pelo
+agente. O bundle segue acima de 500 kB, sem publicar ou liberar outros ambientes.
+
+Auditoria arquivo a arquivo, riscos e comandos CMD exatos em
+[appearance-local.md](appearance-local.md). Bootstrap não usa eval, Function,
+innerHTML, document.write, interpolação HTML ou rede: só enum estrito em
+dataset/color-scheme/storage. O new Function no setup de testes executa apenas
+o arquivo local confiável do bootstrap, nunca conteúdo do storage. Nenhum
+segredo/cookie/log/cache/env/dado pessoal real identificado nos candidatos;
+arquivos de credenciais não foram abertos. A varredura por padrões não prova
+ausência universal de segredos. Nenhuma implementação de push iniciada.
+
+## Etapa 22.3.2 — Prompt 47: Claro, Escuro e Sistema
+
+Base `195a9b5`, branch `feat/local-auth`, árvore limpa no início. Implementação
+somente de aparência. Diagnóstico/tokens/store/limites/checklist em
+[appearance-local.md](appearance-local.md). À época do Prompt 47 nenhuma aprovação
+humana de aparência havia sido informada; o registro específico de onze aprovações
+do Prompt 48 está acima. Aprovações 22.3.1/22.2 abaixo permanecem históricas.
+
+Novos testes executam `public/appearance.js` real: 15 casos de bootstrap/store
+(ausência, dois explícitos, Sistema/mídia ao vivo, reload, cinco inválidos,
+storage negado/cheio, sem mídia, sincronização entre abas, assinaturas/cleanup e
+listener legado), dois casos de contraste da paleta e três de seletor React
+(teclado/estado, rota/mês/sessão/login/logout e aviso de persistência negada).
+O setup simula matchMedia e inicializa o mesmo bootstrap; Supabase continua
+simulado na fronteira, sem cliente real ou serviço dentro do Vitest.
+
+| Comando executado | Resultado nesta rodada |
+| --- | --- |
+| `npm.cmd run test:run -- src/appearance/bootstrap.test.ts src/appearance/contrast.test.ts src/components/AppearanceControl.test.tsx` | 20 testes novos aprovados |
+| `npm.cmd run test:run` | **418 aprovados em 39 arquivos**, sem falhas/omitidos, inclusive na execução final; 398 anteriores mais 20 novos |
+| `npm.cmd run build` | DEV aprovado; JS 516,31 kB, gzip 146,81 kB; aviso acima de 500 kB |
+| `npm.cmd run lint` | Aprovado, sem avisos/erros na rodada final |
+| `node scripts/local-navigation-browser.mjs --appearance` | **88 verificações aprovadas no código final**, integração Supabase simulada |
+| `node scripts/local-navigation-browser.mjs` | 18 regressões 22.2/22.3.1 aprovadas, Supabase simulado |
+| `npm.cmd run build:staging` / `npm.cmd run build:prod` | Ambos recusados, código 1: variáveis genéricas Supabase DEV não configuram STAGING/PROD; sem acesso remoto |
+| `git diff --check` | Aprovado após fechamento documental; somente avisos LF/CRLF do Git no Windows |
+
+Chromium de aparência: módulo main retido enquanto paleta escura e color-scheme
+já estão aplicados antes do React; três modos, alterações de mídia em tempo real,
+refresh, logout/login fictícios, opção por teclado/foco visível. Doze rotas em
+Claro/Escuro: Início, biblioteca, leitura/progresso, Minhas aberturas, Jornada,
+admin/comunidade, perfil, privacidade, login, cadastro, recuperar senha e bloqueio
+de link de nova senha sem recuperação válida. Cinco dessas rotas também a 390px.
+Inclui editor aberto e tabela comunitária preenchida. Verifica texto renderizado/contraste, formulário inválido, hover sem animação de
+cor, disabled sintético, redução de movimento e storage ausente/corrupto/negado.
+Capturas desktop/mobile fictícias em cache ignorado foram inspecionadas.
+
+Regressão detectada no Chromium antes da correção: transição de background do
+botão do hero gerava 2,37:1 de contraste durante a troca de paleta. Removida
+transição de cor; o teste de contraste imediatamente após alternância e o de
+hover sem transição passam. Não foram reduzidos os limiares nem removidos casos.
+
+Tentativas intermediárias: três suítes novas não iniciaram ao resolver caminho
+de leitura do bootstrap por import.meta.url sob jsdom (URL http). Usar caminho
+estático local corrigiu; 20 passaram. Lint inicialmente avisou quatro parâmetros
+catch não usados; substituídos por catch sem binding. Foco no Chromium exigiu
+modalidade de teclado real, e hover exigiu scroll do botão para viewport; o roteiro
+foi corrigido. Nova senha sem recovery foi testada como bloqueio, preservando Auth.
+Uma repetição final evidenciou corrida do roteiro após reload: a condição podia
+encontrar seletor do documento antigo. O helper agora exige novo performance.timeOrigin
+e montagem do seletor antes de prosseguir; a rodada final passou os 88 casos.
+Essas tentativas não são aprovação de casos não executados.
+
+SQL/RLS/HTTP backend **não repetidos por ausência de razão técnica**: sem mudanças
+em migrations, Auth, RLS, RPCs, repositórios, leitura de 60s, dados ou permissões.
+Não houve usuário criado, dado de leitura alterado ou sessão pessoal inspecionada.
+Casos anteriores sem rede de autenticação/leitura/OWNER e Jornada permanecem na
+suíte completa. Chromium usa módulo fictício, não integrações Auth reais; sua
+leitura concluída é resposta simulada, não nova conclusão de 60s no banco.
+
+Limites: contraste de tokens/texto observado não é auditoria WCAG completa; select
+e progress nativos variam por OS. Sem inspeção de todos os estados de dados,
+leitor de tela, Firefox/Safari ou aparelho real. Checklist humano pendente naquela rodada, sem
+aproveitar as oito aprovações de Jornada como aprovação de aparência. Build local
+não publica; STAGING/PROD não foram liberados. Sem git add/commit/push/deploy.
+
 ## Etapa 22.3.1 — Prompt 46: auditoria final para commit
 
 Branch `feat/local-auth`, HEAD/base `42e6070`. **10 candidatos: sete modificados

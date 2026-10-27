@@ -3,6 +3,10 @@ import { cleanup } from '@testing-library/react'
 import { afterEach, beforeEach, vi } from 'vitest'
 import { supabase } from '../lib/supabase'
 import { consistencyFixture } from './consistencyBoundary'
+import { readFileSync } from 'node:fs'
+import type { AppearanceStore } from '../appearance/store'
+
+const appearanceBootstrap = readFileSync('public/appearance.js', 'utf8')
 
 vi.mock('../lib/supabase', () => ({ supabase: {
   auth: { getSession: vi.fn(), onAuthStateChange: vi.fn(), signUp: vi.fn(), signInWithPassword: vi.fn(), setSession: vi.fn(), signOut: vi.fn(), resetPasswordForEmail: vi.fn(), updateUser: vi.fn() },
@@ -12,6 +16,11 @@ vi.mock('../lib/supabase', () => ({ supabase: {
 } }))
 
 beforeEach(() => {
+  ;(window.selahAppearance as AppearanceStore | undefined)?.dispose()
+  Reflect.deleteProperty(window, 'selahAppearance')
+  localStorage.removeItem('selah.appearance.v1')
+  vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })))
+  new Function(appearanceBootstrap)()
   const emptyQuery = { select: vi.fn(), eq: vi.fn(), lte: vi.fn(), order: vi.fn(), range: vi.fn().mockResolvedValue({ data: [], error: null }) }
   for (const method of ['select', 'eq', 'lte', 'order'] as const) emptyQuery[method].mockReturnValue(emptyQuery)
   vi.mocked(supabase.from).mockReset().mockReturnValue(emptyQuery as never)
@@ -32,5 +41,6 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  window.selahAppearance?.dispose()
   window.history.replaceState(null, '', '/')
 })

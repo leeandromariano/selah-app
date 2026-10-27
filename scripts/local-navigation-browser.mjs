@@ -5,7 +5,8 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { resolve } from 'node:path'
 
-if (process.argv.length !== 2) throw Error('No arguments accepted')
+const appearanceRun = process.argv.length === 3 && process.argv[2] === '--appearance'
+if (process.argv.length !== 2 && !appearanceRun) throw Error('Only --appearance is accepted')
 const origin = 'http://127.0.0.1:5173', debug = 'http://127.0.0.1:9229'
 const executable = ['C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].find(existsSync)
 if (!executable) throw Error('Installed Chromium unavailable')
@@ -16,7 +17,7 @@ const profile = resolve('node_modules/.cache/selah-navigation-browser', randomUU
 mkdirSync(profile, { recursive: true })
 const child = spawn(executable, ['--headless=new', '--no-first-run', '--disable-extensions', '--disable-sync', '--disable-background-networking', '--remote-debugging-address=127.0.0.1', '--remote-debugging-port=9229', '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1', `--user-data-dir=${profile}`, 'about:blank'], { windowsHide: true, stdio: 'ignore' })
 const sleep = ms => new Promise(r => setTimeout(r, ms))
-let socket, sequence = 0, passed = 0
+let socket, sequence = 0, passed = 0, holdMain = false, heldMain
 const pending = new Map()
 function send(method, params = {}) {
   const id = ++sequence
@@ -27,6 +28,17 @@ function send(method, params = {}) {
   })
 }
 const evaluate = async expression => (await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true })).result?.value
+async function reloadPage() {
+  const before=await evaluate('performance.timeOrigin')
+  await send('Page.reload')
+  for(let i=0;i<100;i++) {
+    try {
+      if(await evaluate(`performance.timeOrigin!==${before} && Boolean(document.querySelector('.appearance-control select'))`))return
+    } catch { /* navigation may invalidate the old execution context */ }
+    await sleep(100)
+  }
+  throw Error('Reload did not mount a new document')
+}
 async function check(expression, label) {
   for (let i = 0; i < 60; i++) {
     if (await evaluate(expression)) { passed++; console.log('PASS ' + label); return }
@@ -35,17 +47,20 @@ async function check(expression, label) {
   throw Error(label)
 }
 const mock = `
-const session = { user: { id: 'synthetic-navigation' } }; let callback;
+const session = { user: { id: 'synthetic-navigation', user_metadata: {} } }; let callback, currentSession=session;
 window.__ownerAllowed = true;
 window.addEventListener('focus', () => callback?.('SIGNED_IN', { ...session }));
 window.__renew = () => callback?.('TOKEN_REFRESHED', { ...session });
 const query = { select(){return this}, eq(){return this}, lte(){return this}, order(){return this}, range:async()=>({data:[],error:null}) };
+const content={id:'theme-fiction',title:'Uma pausa fictícia',bible_reference:'Referência fictícia',bible_text:'Texto fictício para verificar aparência.',content:'Reflexão fictícia para testar legibilidade e cores.',reflection_question:'Uma pergunta fictícia?',publish_at:new Date().toISOString(),reading_revision:1,status:'published',author_id:session.user.id,created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
+window.__themeSignIn=()=>{currentSession=session;callback?.('SIGNED_IN',session)};
 export const supabase = {
- auth: { getSession:async()=>({data:{session},error:null}), onAuthStateChange(fn){callback=fn;return {data:{subscription:{unsubscribe(){callback=null}}}}}, signOut:async()=>({error:null}) },
- from:()=>query,
+ auth: { getSession:async()=>({data:{session:currentSession},error:null}), onAuthStateChange(fn){callback=fn;return {data:{subscription:{unsubscribe(){callback=null}}}}}, signOut:async()=>{currentSession=null;callback?.('SIGNED_OUT',null);return {error:null}} },
+ from:(table)=>({...query,select(){return this},eq(){return this},lte(){return this},order(){return this},maybeSingle:async()=>({data:null,error:null}),range:async()=>({data:table==='devotionals'?[content,{...content,id:'theme-previous',title:'Pausa anterior fictícia',publish_at:new Date(Date.now()-86400000).toISOString()}]:[],error:null})}),
  rpc(name,args){
   if(name==='devotional_open_counts')return Promise.resolve({data:[],error:null});
-  if(name==='get_owner_community')return {abortSignal:async()=>window.__ownerAllowed ? {data:{server_today:'2026-10-28',time_zone:'America/Sao_Paulo',page:0,size:25,total_readers:0,completed_today:0,matched_readers:0,readers:[]},error:null} : {data:null,error:{code:'42501'}}};
+  if(name==='get_my_reading_state')return {abortSignal:async()=>({data:{status:'completed',devotional_id:args.p_devotional_id,revision:1,credited_ms:60000,revision_changed:false,completed_at:'2026-10-28T15:00:00Z',completed_day:'2026-10-28'},error:null})};
+  if(name==='get_owner_community')return {abortSignal:async()=>window.__ownerAllowed ? {data:{server_today:'2026-10-28',time_zone:'America/Sao_Paulo',page:0,size:25,total_readers:1,completed_today:0,matched_readers:1,readers:[{username:'leitor_tema',current_streak:0,best_streak:0,total_days:0,status:'empty'}]},error:null} : {data:null,error:{code:'42501'}}};
   if(name==='get_my_consistency') return {abortSignal:async()=>{
    const month=args.p_month??'2026-10-01'; await new Promise(r=>setTimeout(r,150));
    const count=new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5,7)),0)).getUTCDate();
@@ -55,6 +70,126 @@ export const supabase = {
   return Promise.resolve({data:[],error:null});
  }
 };`
+function renderedContrast() {
+  const color = value => {
+    const n=value.match(/[\d.]+/g)?.map(Number)??[0,0,0]
+    return [n[0],n[1],n[2],n[3]??1]
+  }
+  const blend=(front,back)=>front.slice(0,3).map((v,i)=>v*front[3]+back[i]*(1-front[3])).concat(1)
+  const lum=rgb=>rgb.slice(0,3).map(v=>v/255).map(v=>v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4).reduce((sum,v,i)=>sum+v*[0.2126,0.7152,0.0722][i],0)
+  const ratio=(a,b)=>(Math.max(lum(a),lum(b))+0.05)/(Math.min(lum(a),lum(b))+0.05)
+  const failures=[]
+  const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT)
+  let node
+  while((node=walker.nextNode())) {
+    const el=node.parentElement
+    if(!node.textContent.trim()||!el||el.closest('script,style,[disabled],[aria-hidden="true"],.sr-only'))continue
+    const rect=el.getBoundingClientRect(),style=getComputedStyle(el)
+    if(!el.getClientRects().length||rect.bottom<0||style.visibility==='hidden')continue
+    const chain=[];for(let p=el;p;p=p.parentElement)chain.unshift(p)
+    let bg=color(getComputedStyle(document.documentElement).backgroundColor)
+    for(const p of chain)bg=blend(color(getComputedStyle(p).backgroundColor),bg)
+    const fg=blend(color(style.color),bg),value=ratio(fg,bg)
+    const size=parseFloat(style.fontSize),large=size>=24||(size>=18.66&&Number(style.fontWeight)>=700)
+    if(value<(large?3:4.5))failures.push({tag:el.tagName,classes:el.className,ratio:Number(value.toFixed(2))})
+  }
+  return failures
+}
+async function appearanceChecks() {
+  const choose=async value=>evaluate(`(()=>{const select=document.querySelector('.appearance-control select');select.value=${JSON.stringify(value)};select.dispatchEvent(new Event('change',{bubbles:true}));})()`)
+  const media=async (scheme,motion='no-preference')=>send('Emulation.setEmulatedMedia',{features:[{name:'prefers-color-scheme',value:scheme},{name:'prefers-reduced-motion',value:motion}]})
+  await media('light')
+  const init=await send('Page.addScriptToEvaluateOnNewDocument',{source:"localStorage.setItem('selah.appearance.v1','dark')"})
+  holdMain=true
+  await send('Page.navigate',{url:origin+'/#login'})
+  await check(`document.documentElement.dataset.theme==='dark' && getComputedStyle(document.documentElement).backgroundColor==='rgb(21, 18, 27)' && document.querySelector('#root')?.childElementCount===0`, 'dark palette and native scheme apply before React, with main module held')
+  if(!heldMain)throw Error('Main module was not held; prepaint check invalid')
+  holdMain=false;await send('Fetch.continueRequest',{requestId:heldMain});await send('Page.removeScriptToEvaluateOnNewDocument',{identifier:init.identifier})
+  await check(`document.querySelector('.appearance-control select')?.value==='dark'`, 'selector restores initial saved preference')
+  await choose('light');await media('dark')
+  await check(`document.documentElement.dataset.theme==='light'`, 'explicit light beats dark device')
+  await choose('dark');await media('light')
+  await check(`document.documentElement.dataset.theme==='dark'`, 'explicit dark beats light device')
+  await choose('system')
+  await check(`document.documentElement.dataset.theme==='light'`, 'system resolves light')
+  await media('dark')
+  await check(`document.documentElement.dataset.theme==='dark' && localStorage.getItem('selah.appearance.v1')==='system'`, 'system updates live without saving resolved mode')
+  await choose('dark');await reloadPage()
+  await check(`document.querySelector('.appearance-control select')?.value==='dark'`, 'preference survives real refresh')
+  await send('Page.bringToFront')
+  await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Tab',code:'Tab',windowsVirtualKeyCode:9})
+  await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Tab',code:'Tab',windowsVirtualKeyCode:9})
+  await evaluate(`document.querySelector('.appearance-control select').focus()`)
+  await check(`getComputedStyle(document.activeElement).outlineStyle==='solid' && parseFloat(getComputedStyle(document.activeElement).outlineWidth)>=3`, 'keyboard focus is visibly outlined')
+  await choose('system');await evaluate(`document.querySelector('.appearance-control select').focus()`)
+  await send('Input.dispatchKeyEvent',{type:'keyDown',key:'ArrowUp',code:'ArrowUp',windowsVirtualKeyCode:38})
+  await send('Input.dispatchKeyEvent',{type:'keyUp',key:'ArrowUp',code:'ArrowUp',windowsVirtualKeyCode:38})
+  await check(`document.querySelector('.appearance-control select')?.value==='dark'`, 'native selector accepts keyboard choice')
+  await evaluate(`Array.from(document.querySelectorAll('header button')).find(b=>b.textContent==='Sair').click()`)
+  await check(`document.querySelector('input[name="identifier"]') && document.querySelector('.appearance-control select')?.value==='dark'`, 'logout retains device preference')
+  await evaluate(`window.__themeSignIn()`)
+  await check(`document.querySelector('header a[href="#perfil"]') && document.querySelector('.appearance-control select')?.value==='dark'`, 'synthetic login retains device preference')
+  const routes=[['inicio','.hero'],['historico','.card'],['leitura/theme-fiction','.reading-progress'],['minhas-leituras','.completion-history'],['minha-jornada','.journey-history'],['admin/comunidade','.community-summary'],['perfil','input[name="name"]'],['privacidade','h1'],['login','input[name="identifier"]'],['cadastro','input[name="confirm"]'],['recuperar-senha','.auth-card'],['nova-senha','main [role="alert"]']]
+  for(const theme of ['light','dark']) {
+    await choose(theme)
+    for(const [page,selector] of routes) {
+      await evaluate(`location.hash=${JSON.stringify(page)}`)
+      await check(`Boolean(document.querySelector(${JSON.stringify(selector)})) && document.documentElement.dataset.theme===${JSON.stringify(theme)}`,theme+' covers '+page)
+      const failures=await evaluate('('+renderedContrast.toString()+')()')
+      if(failures.length)throw Error('Rendered contrast '+theme+'/'+page+': '+JSON.stringify(failures.slice(0,3)))
+      passed++;console.log('PASS rendered text contrast '+theme+'/'+page)
+      if(page==='admin/comunidade') {
+        await evaluate(`Array.from(document.querySelectorAll('button')).find(b=>b.textContent.includes('Novo devocional')).click()`)
+        await check(`Boolean(document.querySelector('.editor textarea')) && Boolean(document.querySelector('.community table'))`,theme+' editor and populated community table share theme')
+        const editor=await evaluate('('+renderedContrast.toString()+')()')
+        if(editor.length)throw Error('Editor contrast '+theme+': '+JSON.stringify(editor.slice(0,3)))
+        passed++;console.log('PASS editor and table contrast '+theme)
+      }
+      if(page==='cadastro') {
+        await evaluate(`document.querySelector('form').requestSubmit()`)
+        await check(`Boolean(document.querySelector('.field-error'))`,theme+' shows native form validation errors')
+        const errors=await evaluate('('+renderedContrast.toString()+')()')
+        if(errors.length)throw Error('Form error contrast '+theme+': '+JSON.stringify(errors.slice(0,3)))
+        passed++;console.log('PASS form error text contrast '+theme)
+      }
+      if(page==='login') {
+        const point=await evaluate(`(()=>{const b=document.querySelector('.auth-submit');b.scrollIntoView({block:'center'});const r=b.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()`)
+        await send('Input.dispatchMouseEvent',{type:'mouseMoved',...point})
+        await check(`document.querySelector('.auth-submit').matches(':hover') && getComputedStyle(document.querySelector('.auth-submit')).transitionProperty==='transform'`,theme+' button hover has no palette transition')
+        const hovered=await evaluate('('+renderedContrast.toString()+')()')
+        if(hovered.length)throw Error('Hovered contrast '+theme)
+        passed++;console.log('PASS hovered button contrast '+theme)
+        await evaluate(`document.querySelector('.auth-submit').disabled=true`)
+        await check(`Number(getComputedStyle(document.querySelector('.auth-submit')).opacity)<=0.7 && getComputedStyle(document.querySelector('.auth-submit')).transform==='none'`,theme+' disabled styling remains distinct without hover movement (synthetic attribute)')
+        await evaluate(`document.querySelector('.auth-submit').disabled=false`)
+      }
+      if(['inicio','minha-jornada','admin/comunidade','login','leitura/theme-fiction'].includes(page)) {
+        await evaluate('document.activeElement?.blur();window.scrollTo(0,0)')
+        writeFileSync(resolve(profile,'appearance-'+theme+'-'+page.replaceAll('/','-')+'.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true})).data,'base64'))
+      }
+    }
+    await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true})
+    for(const [page,selector] of routes.filter(([page])=>['login','historico','leitura/theme-fiction','admin/comunidade','minha-jornada'].includes(page))) {
+      await evaluate(`location.hash=${JSON.stringify(page)}`)
+      await check(`Boolean(document.querySelector(${JSON.stringify(selector)})) && document.documentElement.scrollWidth<=innerWidth`,theme+' fits mobile '+page+' and selector')
+    }
+    writeFileSync(resolve(profile,'appearance-'+theme+'-mobile.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true})).data,'base64'))
+    await send('Emulation.setDeviceMetricsOverride',{width:1280,height:900,deviceScaleFactor:1,mobile:false})
+  }
+  await media('dark','reduce')
+  await check(`getComputedStyle(document.querySelector('.button')).transitionDuration==='0s'`, 'reduced motion removes button transitions')
+  await evaluate(`localStorage.setItem('selah.appearance.v1','corrupted')`);await reloadPage()
+  await check(`document.querySelector('.appearance-control select')?.value==='system' && document.documentElement.dataset.theme==='dark'`, 'corrupt storage safely falls back to system')
+  await evaluate(`localStorage.removeItem('selah.appearance.v1')`);await reloadPage()
+  await check(`document.querySelector('.appearance-control select')?.value==='system'`, 'absent storage uses system')
+  const denied=await send('Page.addScriptToEvaluateOnNewDocument',{source:"Object.defineProperty(window,'localStorage',{get(){throw new Error('blocked for synthetic test')}})"})
+  await reloadPage()
+  await check(`document.querySelector('.appearance-control select')?.value==='system'`, 'blocked storage does not prevent app mount')
+  await choose('light')
+  await check(`document.documentElement.dataset.theme==='light' && document.querySelector('.appearance-control [role="status"]')?.textContent.includes('nesta aba')`, 'blocked storage still permits in-memory explicit choice')
+  await send('Page.removeScriptToEvaluateOnNewDocument',{identifier:denied.identifier})
+  console.log(`${passed} Chromium appearance checks passed. Synthetic backend; screenshots in ignored profile: ${profile}`)
+}
 try {
   let target
   for (let i = 0; i < 50; i++) {
@@ -71,12 +206,16 @@ try {
     if (m.method === 'Fetch.requestPaused') {
       const { requestId, request } = m.params, u = new URL(request.url)
       try {
-        if (u.origin === origin && u.pathname === '/src/lib/supabase.ts') await send('Fetch.fulfillRequest', { requestId, responseCode: 200, responseHeaders: [{ name: 'Content-Type', value: 'application/javascript' }], body: Buffer.from(mock).toString('base64') })
+        if (holdMain && u.origin === origin && u.pathname === '/src/main.tsx') heldMain=requestId
+        else if (u.origin === origin && u.pathname === '/src/lib/supabase.ts') await send('Fetch.fulfillRequest', { requestId, responseCode: 200, responseHeaders: [{ name: 'Content-Type', value: 'application/javascript' }], body: Buffer.from(mock).toString('base64') })
         else await send(u.origin === origin ? 'Fetch.continueRequest' : 'Fetch.failRequest', u.origin === origin ? { requestId } : { requestId, errorReason: 'BlockedByClient' })
       } catch { /* closing */ }
     }
   })
   await send('Page.enable'); await send('Runtime.enable'); await send('Fetch.enable', { patterns: [{ urlPattern: '*' }] })
+  if (appearanceRun) {
+    await appearanceChecks()
+  } else {
   await send('Page.navigate', { url: origin + '/#inicio' })
   await check(`document.querySelector('.consistency-calendar h3')?.textContent==='outubro de 2026'`, 'calendar loads synthetic current month')
   await evaluate(`document.querySelector('[aria-label="Mês anterior"]').click();document.querySelector('[aria-label="Mês anterior"]').click()`)
@@ -89,7 +228,7 @@ try {
   await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r' })
   await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 })
   await check(`document.querySelector('.consistency-calendar h3')?.textContent==='setembro de 2026'`, 'keyboard advances one month')
-  await send('Page.reload')
+  await reloadPage()
   await check(`document.querySelector('.consistency-calendar h3')?.textContent==='outubro de 2026'`, 'calendar reload starts at server current month')
   await check(`document.querySelector('[aria-label="Próximo mês"]')?.disabled`, 'future navigation blocked')
   await evaluate(`document.querySelector('nav a[href="#minha-jornada"]').click()`)
@@ -102,7 +241,7 @@ try {
   await send('Target.activateTarget', { targetId: target.id }); await send('Page.bringToFront')
   await evaluate(`window.__renew()`)
   await check(`document.querySelector('.consistency-calendar h3')?.textContent==='agosto de 2026' && location.hash==='#minha-jornada'`, 'journey keeps selected month after focus and session renewal')
-  await send('Page.reload')
+  await reloadPage()
   await check(`document.querySelector('h1')?.textContent==='Minha Jornada' && document.querySelector('.consistency-calendar h3')?.textContent==='outubro de 2026'`, 'journey refresh keeps route and resets month to server current')
   await evaluate(`window.__journeyFilled=true;window.dispatchEvent(new Event('focus'))`)
   await check(`document.querySelectorAll('.journey-history li').length===2 && document.querySelector('.journey-history li')?.textContent.includes('2 devocionais concluídos') && document.querySelector('.journey-history dl')?.textContent.includes('Devocionais concluídos no mês3')`, 'journey distinguishes two completed days from three texts in real rendered history')
@@ -120,11 +259,12 @@ try {
   await send('Target.activateTarget', { targetId: target.id }); await send('Page.bringToFront')
   await evaluate(`window.__renew()`)
   await check(`Boolean(document.querySelector('.community-summary')) && location.hash==='#admin/comunidade'`, 'focus plus session renewal preserve community route')
-  await send('Page.reload')
+  await reloadPage()
   await check(`Boolean(document.querySelector('.community-summary'))`, 'refresh restores community section')
   await evaluate(`window.__ownerAllowed=false;window.__renew()`)
   await check(`Boolean(document.querySelector('.community [role="alert"]')) && !document.querySelector('.community table')`, 'OWNER revocation blocks data after renewal')
   console.log(passed + ' Chromium navigation checks passed; synthetic boundary, no backend access.')
+  }
 } catch (error) { console.error('Navigation Chromium failed: ' + error.message); process.exitCode = 1 }
 finally {
   try { if (socket?.readyState === WebSocket.OPEN) await send('Browser.close') } catch { /* own instance */ }
