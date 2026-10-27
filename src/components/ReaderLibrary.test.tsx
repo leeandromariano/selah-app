@@ -11,6 +11,31 @@ function open(page = 'inicio') {
   return render(<App />)
 }
 describe('acervo persistente do leitor', () => {
+  it('mostra conclusão do dia confirmada pelo banco sem converter aberturas', async () => {
+    const today = { ...olderPublications[0], publish_at: new Date().toISOString() }
+    const boundary = libraryBoundary([today])
+    boundary.completionsQuery.range.mockResolvedValue({ data: [{ source_devotional_id: today.id, devotional_id: today.id, completed_at: today.publish_at, completed_day: '2026-10-28' }], error: null })
+    open()
+    expect(await screen.findByText('Concluído por você')).toBeVisible()
+    expect(boundary.historyQuery.insert).not.toHaveBeenCalled()
+    expect(boundary.completionsQuery.eq).toHaveBeenCalledWith('user_id', 'fictional-reader')
+  })
+  it('preserva abertura nula e conclusão histórica de conteúdo excluído sem expor texto', async () => {
+    const boundary = libraryBoundary([], [{ id: 'removed-opening', devotional_id: null, opened_at: '2026-10-28T14:00:00Z' }])
+    boundary.completionsQuery.range.mockResolvedValue({ data: [{ source_devotional_id: 'removed-fiction', devotional_id: null, completed_at: '2026-10-28T14:00:00Z', completed_day: '2026-10-28' }], error: null })
+    open('minhas-leituras')
+    expect(await screen.findByRole('heading', { name: 'Minhas conclusões' })).toBeVisible()
+    await screen.findByText(/Concluído em/)
+    expect(screen.getAllByText('Devocional indisponível')).toHaveLength(2)
+    expect(screen.queryByRole('link', { name: 'Reler devocional' })).not.toBeInTheDocument()
+  })
+  it('falha de consulta às conclusões não é apresentada como lista vazia', async () => {
+    const boundary = libraryBoundary([])
+    boundary.completionsQuery.range.mockResolvedValueOnce({ data: null, error: { code: '42501' } })
+    open('minhas-leituras')
+    expect(await screen.findByRole('alert')).toHaveTextContent('não tem autorização')
+    expect(screen.queryByText('Você ainda não concluiu nenhum devocional.')).not.toBeInTheDocument()
+  })
   it('destaca publicação de hoje e mantém anteriores no acervo sem registrar abertura da lista', async () => {
     const today = { ...olderPublications[0], id: 'today-fiction', title: 'Mensagem Fictícia de Hoje', publish_at: new Date().toISOString() }
     const boundary = libraryBoundary([today, ...olderPublications])

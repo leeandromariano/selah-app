@@ -16,11 +16,13 @@ export function libraryBoundary(publications: Publication[], initialOpenings: Op
     })
     return historyQuery
   })
-  vi.mocked(supabase.from).mockImplementation(table => (table === 'devotionals' ? publicationsQuery : historyQuery) as never)
-  return { publicationsQuery, historyQuery }
+  const completionsQuery = { select: vi.fn(), eq: vi.fn(), order: vi.fn(), range: vi.fn().mockResolvedValue({ data: [], error: null }) }
+  for (const method of ['select', 'eq', 'order'] as const) completionsQuery[method].mockReturnValue(completionsQuery)
+  vi.mocked(supabase.from).mockImplementation(table => (table === 'devotionals' ? publicationsQuery : table === 'devotional_completions' ? completionsQuery : historyQuery) as never)
+  return { publicationsQuery, historyQuery, completionsQuery }
 }
 
 export const olderPublications: Publication[] = [
-  { id: '20000000-0000-4000-8000-000000000001', title: 'Paz em meio ao caminho', bible_reference: 'João 14:27', bible_text: 'Texto bíblico fictício', content: 'Reflexão fictícia sobre a paz.', reflection_question: 'Pergunta fictícia?', publish_at: '2020-10-22T12:00:00Z' },
-  { id: '20000000-0000-4000-8000-000000000002', title: 'O extraordinário no simples', bible_reference: 'Salmos 118:24', bible_text: 'Texto bíblico fictício', content: 'Reflexão fictícia sobre gratidão.', reflection_question: 'Pergunta fictícia?', publish_at: '2020-10-21T12:00:00Z' },
+  { id: '20000000-0000-4000-8000-000000000001', title: 'Paz em meio ao caminho', bible_reference: 'João 14:27', bible_text: 'Texto bíblico fictício', content: 'Reflexão fictícia sobre a paz.', reflection_question: 'Pergunta fictícia?', publish_at: '2020-10-22T12:00:00Z', reading_revision: 1 },
+  { id: '20000000-0000-4000-8000-000000000002', title: 'O extraordinário no simples', bible_reference: 'Salmos 118:24', bible_text: 'Texto bíblico fictício', content: 'Reflexão fictícia sobre gratidão.', reflection_question: 'Pergunta fictícia?', publish_at: '2020-10-21T12:00:00Z', reading_revision: 1 },
 ]

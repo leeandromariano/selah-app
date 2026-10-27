@@ -1,8 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-export type Publication = { id: string; title: string; bible_reference: string; bible_text: string; content: string; reflection_question: string; publish_at: string }
-export type Opening = { id: string; devotional_id: string; opened_at: string }
-export const publicationColumns = 'id,title,bible_reference,bible_text,content,reflection_question,publish_at'
+export type Publication = { id: string; title: string; bible_reference: string; bible_text: string; content: string; reflection_question: string; publish_at: string; reading_revision: number }
+export type Opening = { id: string; devotional_id: string | null; opened_at: string }
+export const publicationColumns = 'id,title,bible_reference,bible_text,content,reflection_question,publish_at,reading_revision'
 export const readingTimeZone = 'America/Sao_Paulo'
 export function localDay(instant: string | Date) {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: readingTimeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(instant))

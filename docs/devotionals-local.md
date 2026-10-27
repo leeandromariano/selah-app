@@ -1,5 +1,10 @@
 # Etapa 18.2 — publicações e aberturas persistentes locais
 
+> Atualização 22.1: conclusões voluntárias e tempo confirmado agora existem em
+> registros separados. Aberturas continuam independentes. Após exclusão, a FK de
+> uma abertura fica nula, preservando o evento. Regras atuais, limites e resultados
+> em [reading-local.md](reading-local.md). O relato da Etapa 18.2 abaixo é histórico.
+
 Branch `feat/local-auth`, referência `6e2c793`. Não houve publicação, commit
 automático, reset ou acesso ao Supabase remoto. Nenhuma migração foi necessária;
 todo o diretório supabase permanece igual à referência.

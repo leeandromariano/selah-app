@@ -1,5 +1,10 @@
 # Privacidade essencial — Etapa 21.3
 
+> Atualização 22.1: [permanência confirmada e conclusões](reading-local.md)
+> acrescentam saldo por devocional, autorização operacional temporária e recibos
+> pessoais. RLS limita leitura ao titular, sem diretório administrativo ou logs
+> de pulsos. Não há limpeza automática nem declaração de conformidade legal.
+
 > Atualização 21.5: [login com username ou e-mail](username-login-local.md) resolve
 > username somente no servidor local e acrescenta contadores privados com HMAC,
 > janela e quantidade. Nenhum diretório/e-mail de terceiros é exposto; a sessão
@@ -38,6 +43,9 @@ consultam apenas suas próprias fixtures fictícias.
 | `public.account_usernames` (ajuste): UUID Auth e username canônico | Identificador único, obrigatório em novas contas, consultável apenas pela própria sessão | PK/UNIQUE/CHECK/RLS e trigger Auth transacional. Sem e-mail ou diretório público. Legados escolhem voluntariamente; imutável nesta versão. Reserva anterior à confirmação exige futura política contra ocupação abusiva. |
 | `raw_user_meta_data.profile` legado | Cadastro antigo copiava nome/telefone/faixa/Instagram; perfil ausente ainda permite revisar esse rascunho. | Novo cadastro não cria essa cópia. Limpar `profiles` não limpa Auth. Dados existentes não foram apagados/migrados automaticamente; limpeza coordenada depende de decisão e testes próprios. Metadados nunca concedem administração. |
 | `devotional_views`: UUID evento, UUID leitor, UUID devocional, horário | Histórico pessoal de aberturas; RLS SELECT próprio, INSERT próprio apenas para conteúdo liberado. | Histórico permite inferências sobre interesses religiosos. Abertura não é conclusão. Nenhuma coleta de religião declarada. Não há opt-out/retensão automática nesta etapa; precisa de decisão do produto. |
+| `reading_progress`: UUID leitor/devocional, revisão, saldo até 60.000 ms e atualização | Permanência confirmada para habilitar conclusão; SELECT apenas próprio e escrita por RPC restrita. | Novo registro de hábito, distinto da abertura. Sem eventos individuais, IP ou rastreamento de movimentos; retenção de incompletos pendente, sem exclusão automática. |
+| `private.reading_leases`: UUID da conta/sessão/visualização, token operacional, sequência e âncoras do servidor | Impedir contagem simultânea/replay; nenhum acesso API direto ou acesso a contatos. | Uma linha operacional por conta; expiração lógica não apaga a linha. Limpeza futura exige política e tarefa restrita. Não registrar token em logs. |
+| `devotional_completions`: UUID leitor/original do texto, FK atual anulável, revisão, instante/dia/fuso | Recibo voluntário único após tempo confirmado; SELECT próprio. Admin não ganha leitura de terceiros. | Pode inferir hábito religioso. Sobrevive à retirada do conteúdo sem copiar seu texto; retenção/exclusão da conta exige política própria. Compartilhamento não implementado. |
 | RPC `devotional_open_counts` | Administrador autorizado recebe contagens totais e leitores distintos, sem lista de UUIDs de leitores. | Agregados exatos podem permitir inferência em grupos pequenos. Auth ainda chama essa RPC para verificar autorização; separar verificação booleana/métricas continua pendente (M02). |
 | `devotionals`: conteúdo, autoria UUID, status/datas | Admins gerenciam; leitor vê publicados liberados. | Autoria identifica uma conta. FK `author_id` com DELETE RESTRICT impede apagar um autor sem tratar conteúdo. Não foi alterada. |
 | `private.admin_users`: UUID e criação | Operador confiável provisiona membership local. Sem acesso direto da API de leitores/admins. | Preservado, sem privilégio derivado do cadastro. Operador SQL continua fora do alcance da proteção RLS aplicada a leitores. |

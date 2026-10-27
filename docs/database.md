@@ -1,6 +1,23 @@
 # Banco de dados do Selah
 
-## Escopo e estado atual
+## Estado atual — Etapa 22.1
+
+A base `c2fb5b3` recebeu duas migrações incrementais locais:
+`20261028000100_reading_completions.sql` e `20261028000200_reading_claims_access.sql`.
+Há progresso confirmado, uma autorização temporária por conta e conclusões pessoais
+únicas. Nenhuma abertura anterior foi convertida em conclusão. Novas tabelas usam
+RLS, privilégios mínimos e RPCs autenticadas; o frontend não escreve tempo/datas.
+`devotionals.reading_revision` protege contra uso de tempo de edição anterior.
+Excluir conteúdo agora preserva aberturas com FK anulada e preserva conclusões
+com UUID original, sem texto copiado. Contagens administrativas partem do conteúdo
+atual e ignoram aberturas órfãs; a compatibilidade foi testada. Sem limpeza automática.
+
+Ver [reading-local.md](reading-local.md) para schema, grants, locks, retenção,
+limites e instalação local. Não houve migração hospedada nem reset. As descrições
+abaixo documentam o contrato original; para alterações posteriores de Auth,
+username, campos opcionais e WhatsApp, consultar a documentação específica.
+
+## Base histórica — schema inicial e primeiras integrações
 
 Na Etapa 16, AuthForm usa Supabase Auth exclusivamente local. Confirmação de e-mail,
 login, logout e recuperação são reais no ambiente local. Na Etapa 19, AdminPanel

@@ -1,5 +1,136 @@
 # Inventário e execução de testes
 
+## Encerramento da Etapa 22.1 — Prompt 37
+
+Branch `feat/local-auth`, commit-base/HEAD `c2fb5b3`. O responsável informou
+**12/12 cenários manuais aprovados**, separados das execuções do agente:
+
+1. Devocional abre e exibe indicador de leitura.
+2. Botão Concluir permanece bloqueado antes de 60 segundos.
+3. Tempo avança durante leitura e pausa ao mudar de aba.
+4. Contagem retoma corretamente após voltar.
+5. Recarga preserva progresso confirmado.
+6. Após 60 segundos, botão habilita sem concluir automaticamente.
+7. Concluir registra persistência.
+8. Reabertura mostra conclusão existente.
+9. Logout/login preserva conclusão.
+10. Interface funciona em tela pequena ou celular.
+11. Conclusão acessível por teclado.
+12. Outro usuário não consegue visualizar o progresso.
+
+Não se presume teste com leitor de tela físico, zoom de 200%, modelo específico de
+celular, dois dispositivos ou suspensão real do sistema. Não se atribui ao
+responsável a execução dos testes HTTP/SQL ou Chromium abaixo.
+
+| Comando / categoria | Reexecutado agora, Prompt 37 |
+| --- | --- |
+| `npm.cmd run test:run` | **292 testes em 28 arquivos**, todos aprovados |
+| `npm.cmd run build` / `npm.cmd run lint` | Aprovados; build DEV, lint sem avisos/erros |
+| `node scripts/local-reading-smoke.mjs` | **46 HTTP**, inclusive sessenta segundos reais e cinco checkpoints/conclusões simultâneos |
+| `node scripts/local-reading-sessions.mjs` | **19 HTTP**, sessões Auth distintas, transferência e legado |
+| `node scripts/local-login-smoke.mjs` | **41 HTTP**, username/e-mail, sessão, refresh, logout, legado e limitações |
+| `node scripts/local-whatsapp-smoke.mjs` | **40 HTTP**, telefone, feedback e isolamento |
+| `node scripts/local-profile-smoke.mjs` | **29 HTTP**, perfis e persistência |
+| `node scripts/local-library-smoke.mjs` | **35 HTTP**, acervo e aberturas |
+| `node scripts/local-admin-smoke.mjs` | **41 HTTP**, administração e permissões negadas |
+| `node scripts/run-local-reading-sql.mjs --regression` | **196 SQL/RLS na stack local atual**, todos com rollback: 59 leitura + 59 autorização + 16 privacidade + 18 username + 25 WhatsApp + 19 login |
+| `node scripts/verify-local-reading-install.mjs` | **Nove migrações em ordem e 196 SQL/RLS adicionais em PostgreSQL NOVO isolado**, todos os testes com rollback; compatibilidade de fixtures legadas preservada |
+| `node scripts/local-reading-browser.mjs` | **19 Chromium automatizadas**, tempo real, aba oculta, retomada, recarga, teclado, viewport de 390 px, logout/login e conclusões |
+| `npm.cmd run build:staging` / `build:prod` | Recusa esperada, código 1; conflito de variáveis genéricas de DEV, ambientes também continuam bloqueados em código |
+| `git diff --check` | Aprovado; somente avisos LF/CRLF do Git no Windows |
+
+São **251 verificações HTTP** nesta rodada. As duas execuções de 196 SQL são
+separadas por banco, não casos de segurança distintos. Os 291 testes, 251 HTTP,
+196 SQL e 19 Chromium do Prompt 36 abaixo são históricos e não foram somados aos
+totais atuais. Recuperação, privacidade e cadastro de username não tiveram suas
+suítes HTTP completas repetidas; a cobertura SQL/unitária correspondente passou.
+
+Foi acrescentado um único script de verificação e um teste do seu entrypoint
+contra Docker remoto, URL remota e contexto malicioso; por isso a suíte passou de
+291 para 292. Não houve mudança funcional React nem alteração de migrações nesta
+auditoria. Os dois corpos de funções de leitura instalados na stack atual foram
+comparados com a segunda migração, por consulta somente de leitura, e coincidem.
+
+Instalação nova: mesma imagem local por ID, `--pull=never`, rede `none`, sem portas,
+bind mounts ou volumes. Dados do novo cluster ficam em tmpfs e o contêiner dessa
+execução é parado/removido ao terminar. Copiou-se **somente DDL Auth**; os triggers
+privados do aplicativo são removidos dessa cópia e recriados pelas migrações. Não
+se copiaram contas, verificadores de senha, tokens ou dados da stack atual. O
+bootstrap reproduz schema Auth separado, acesso sem grant option e operador de
+migração sem superuser, com bypass de RLS como operador confiável. Não é uma nova
+stack GoTrue/Kong e não inclui novo HTTP nesse contêiner sem rede.
+
+As tentativas de preparar esse harness foram interrompidas antes de completar as
+assertions por permissões do operador/SET ROLE; foram corrigidas no bootstrap
+descartável, sem alterar migrações ou o banco atual. Somente as rodadas completas
+passadas entram nos totais. Todos os contêineres de preparação foram descartados.
+
+Revisão final: **31 candidatos (12 modificados, 19 novos)**, incluindo o novo
+verificador. Ambientes/caches ignorados, sem segredos nos candidatos e sem staging
+ou commit. O protocolo valida somente seus intervalos aceitos; automação que
+aguarde tempo real e validade residual de JWT até expiração continuam limites.
+Roteiro ampliado, auditoria e inventário em [reading-local.md](reading-local.md).
+
+## Implementação da Etapa 22.1 — Prompt 36 (resultados anteriores)
+
+Branch `feat/local-auth`, base `c2fb5b3`. Resultados **reexecutados nesta etapa**,
+separados de todos os registros históricos abaixo:
+
+| Comando / categoria | Resultado final |
+| --- | --- |
+| `npm.cmd run test:run` | **291 testes em 28 arquivos**, todos aprovados |
+| `npm.cmd run build` | Aprovado, somente DEV |
+| `npm.cmd run lint` | Aprovado, sem avisos/erros |
+| `node scripts/local-reading-smoke.mjs` | **46 HTTP**, com 60 s reais, pausa, replay, cinco checkpoints/conclusões concorrentes, revisão, exclusão e RLS pela API |
+| `node scripts/local-reading-sessions.mjs` | **19 HTTP**, sessões Auth distintas, transferência, progresso após logout/login e fixture legada sem username/WhatsApp |
+| `node scripts/local-login-smoke.mjs` | **41 HTTP**, username/@/maiúsculas/e-mail, confirmação, erros, refresh, logout, limites e legado |
+| `node scripts/local-whatsapp-smoke.mjs` | **40 HTTP**, WhatsApp obrigatório, feedback opcional/revogável e isolamento |
+| `node scripts/local-profile-smoke.mjs` | **29 HTTP**, perfis/persistência/isolamento |
+| `node scripts/local-library-smoke.mjs` | **35 HTTP**, acervo/aberturas/publicação e persistência |
+| `node scripts/local-admin-smoke.mjs` | **41 HTTP**, administração/negações/persistência |
+| `node scripts/run-local-reading-sql.mjs --regression` | **196 SQL**, todos com rollback: 59 leitura + 59 autorização + 16 privacidade + 18 username + 25 WhatsApp + 19 login |
+| `node scripts/local-reading-browser.mjs` | **19 Chromium automatizadas**, 60 s reais, aba oculta, recarga, teclado, viewport móvel, logout/login e histórico |
+| `npm.cmd run build:staging` / `build:prod` | Ambos recusados, código 1 esperado; variáveis genéricas exclusivas de DEV e ambientes remotos continuam desabilitados em código |
+| `git diff --check` | Aprovado; somente avisos de normalização LF/CRLF do Git no Windows |
+
+Total HTTP desta rodada: **251**, sem misturar SQL, testes unitários e navegador.
+As suítes HTTP completas de recuperação, privacidade e cadastro de username não
+foram repetidas nesta rodada. Os registros manuais e a instalação isolada da etapa
+anterior não são novas execuções. Nesta etapa as nove migrações estão aplicadas na
+stack local atual; não houve instalação completa em outro banco, reset ou remoto.
+Os 59.999/60.000 ms são limites preparados no rollback SQL; HTTP e navegador
+validam espera real, sem acelerar o relógio nem editar saldo para concluir.
+
+Novos testes cobrem o controlador de leitura e a fronteira RPC sem cliente real,
+eventos de visibilidade/foco, falhas/retomada, respostas atrasadas, ausência de
+conclusão automática, histórico separado e nullable FK. Os cinco entrypoints novos
+são exercitados com DOCKER_HOST remoto, URL remota e contexto malicioso, incluindo
+o caminho `--regression`; todos recusam antes de acessar serviços. Esses testes
+simulam rede/ambiente ou recusam destinos; não acessam servidores externos.
+
+Correção com regressão: pausa que falhava offline descartava o token local cedo
+demais; agora a autorização é mantida até confirmação da pausa e revogada antes
+de retomar, inclusive em falha curta. Nenhum teste foi pulado ou enfraquecido.
+A primeira tentativa da migração teve rollback por privilégio de transferência
+de owner; depois de aplicada, os testes mostraram a impossibilidade de delegar
+USAGE no schema Auth. A correção está em uma **segunda migração incremental**,
+sem reescrever a aplicada; o helper só lê identidade da requisição.
+
+Execuções intermediárias não são resultados finais: o harness de navegador parou
+após 1 e 14 verificações (seletor/evento CDP), corrigidos antes das rodadas completas
+19/19. Uma rodada unitária teve duas falhas na parametrização do teste novo e uma
+interrupção de processo Node no Windows durante execução concorrente; a suíte
+integral posterior passou 291/291. Um build intermediário apontou a parametrização
+TypeScript; o build final passou. O lint intermediário teve um aviso de regex
+de diagnóstico, removido; lint final sem avisos. Não se alteraram testes para
+ignorar crashes, falhas ou permissões.
+
+No Prompt 36 não havia aceite manual do responsável. Os 12 cenários aprovados
+posteriormente estão registrados no Prompt 37 acima. Naquela rodada, leitor de
+tela, zoom real de 200%, aparelho móvel físico, suspensão real do SO, carga
+sustentada e nova instalação integral estavam fora da cobertura. Registros de tempo não provam compreensão
+nem impedem automação que aguarde intervalos reais. STAGING/PROD não foram liberados.
+
 ## Encerramento da Etapa 21.5 — Prompt 34
 
 Branch `feat/local-auth`, commit-base `1bc58bd`. O responsável informou nesta
