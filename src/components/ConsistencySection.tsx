@@ -13,11 +13,11 @@ const messages = {
   completed_today: 'Conclusão de hoje registrada. Continue no seu ritmo.',
   interrupted: 'Você pode recomeçar hoje. Seus dias anteriores continuam na sua história.',
 }
-export function ConsistencySection({ userId, refreshKey = 0 }: { userId: string; refreshKey?: number }) {
+export function ConsistencySection({ userId, refreshKey = 0, showHistory = false }: { userId: string; refreshKey?: number; showHistory?: boolean }) {
   // A new account always receives a fresh component and no prior reader state.
-  return <ConsistencyView key={userId} refreshKey={refreshKey} />
+  return <ConsistencyView key={userId} refreshKey={refreshKey} showHistory={showHistory} />
 }
-function ConsistencyView({ refreshKey }: { refreshKey: number }) {
+function ConsistencyView({ refreshKey, showHistory }: { refreshKey: number; showHistory: boolean }) {
   const [data, setData] = useState<Consistency | null>(null)
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null)
   const [attempt, setAttempt] = useState(0)
@@ -88,7 +88,25 @@ function ConsistencyView({ refreshKey }: { refreshKey: number }) {
           <p className="calendar-legend"><span>✓ Com conclusão</span><span>— Sem conclusão</span><span>Contorno: hoje</span></p>
         </div>
       </div>
+      {showHistory && <MonthlyHistory data={data} />}
       <p className="consistency-note">A ofensiva registra dias com conclusões; não mede sua fé nem seu valor pessoal. Aberturas e releituras de textos já concluídos não acrescentam dias.</p>
     </>}
   </section>
+}
+
+function MonthlyHistory({ data }: { data: Consistency }) {
+  // Read-only projection of the SAME server snapshot as the calendar. Never a
+  // second ledger, mutable progress counter, or browser calculation of streaks.
+  const completed = data.days.filter(day => day.completions > 0)
+  const total = completed.reduce((sum, day) => sum + day.completions, 0)
+  return <div className="journey-history">
+    <h3>Seu histórico neste mês</h3>
+    <p>{monthLabel(data.month)} · Horário de Brasília</p>
+    <dl className="consistency-totals" aria-label="Resumo do mês exibido">
+      <div><dt>Dias com conclusões no mês</dt><dd>{completed.length}</dd></div>
+      <div><dt>Devocionais concluídos no mês</dt><dd>{total}</dd></div>
+    </dl>
+    {completed.length ? <ol aria-label="Dias com conclusões neste mês">{completed.toReversed().map(day => <li key={day.date}><time dateTime={day.date}>{dayLabel(day.date)}</time><span>{day.completions} {day.completions === 1 ? 'devocional concluído' : 'devocionais concluídos'}</span></li>)}</ol> : <p role="status">Ainda não há conclusões neste mês. Cada pausa é uma oportunidade de recomeçar.</p>}
+    <p className="muted">Do dia mais recente ao mais antigo. Navegue pelo calendário para revisitar outros meses. Os totais acima se referem ao mês exibido; a ofensiva e o recorde consideram toda a sua história.</p>
+  </div>
 }

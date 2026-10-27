@@ -1,3 +1,9 @@
+> Etapa 22.3.1 / Prompt 44: Minha Jornada (`#minha-jornada`) reutiliza a RPC
+> pessoal e o calendário da 22.2, com histórico mensal somente leitura. Diagnóstico,
+> roadmap oficial das cinco subetapas e checklist: [journey-roadmap.md](journey-roadmap.md).
+> Prompt 46: 22.3.2 Modo Noturno é a próxima implementação, ainda não iniciada;
+> 22.3.3 Push, 22.3.4 Comentários/Reações e 22.3.5 Conquistas/Desafios planejados.
+
 > Prompt 41: auditoria agregada somente de leitura, origem das fixtures e limites
 > do painel em [owner-community-review.md](owner-community-review.md). Sem limpeza.
 

@@ -1,7 +1,7 @@
 // Chromium UI regression with a synthetic Supabase module intercepted at the
 // browser boundary. No account, credential, database or OWNER provisioning.
 import { spawn } from 'node:child_process'
-import { existsSync, mkdirSync } from 'node:fs'
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { resolve } from 'node:path'
 
@@ -49,7 +49,8 @@ export const supabase = {
   if(name==='get_my_consistency') return {abortSignal:async()=>{
    const month=args.p_month??'2026-10-01'; await new Promise(r=>setTimeout(r,150));
    const count=new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5,7)),0)).getUTCDate();
-   return {data:{server_now:'2026-10-28T15:00:00Z',server_today:'2026-10-28',time_zone:'America/Sao_Paulo',month,current_month:'2026-10-01',first_month:'2026-01-01',current_streak:0,best_streak:0,total_days:0,total_devotionals:0,today_completed:false,last_completed_day:null,status:'empty',days:Array.from({length:count},(_,i)=>({date:month.slice(0,8)+String(i+1).padStart(2,'0'),completions:0}))},error:null};
+   const filled=Boolean(window.__journeyFilled);
+   return {data:{server_now:'2026-10-28T15:00:00Z',server_today:'2026-10-28',time_zone:'America/Sao_Paulo',month,current_month:'2026-10-01',first_month:'2026-01-01',current_streak:filled?2:0,best_streak:filled?2:0,total_days:filled?2:0,total_devotionals:filled?3:0,today_completed:filled,last_completed_day:filled?'2026-10-28':null,status:filled?'completed_today':'empty',days:Array.from({length:count},(_,i)=>({date:month.slice(0,8)+String(i+1).padStart(2,'0'),completions:filled&&month==='2026-10-01'?(i===27?2:i===26?1:0):0}))},error:null};
   }};
   return Promise.resolve({data:[],error:null});
  }
@@ -91,6 +92,28 @@ try {
   await send('Page.reload')
   await check(`document.querySelector('.consistency-calendar h3')?.textContent==='outubro de 2026'`, 'calendar reload starts at server current month')
   await check(`document.querySelector('[aria-label="Próximo mês"]')?.disabled`, 'future navigation blocked')
+  await evaluate(`document.querySelector('nav a[href="#minha-jornada"]').click()`)
+  await check(`document.querySelector('h1')?.textContent==='Minha Jornada' && document.querySelector('nav a[href="#minha-jornada"]')?.getAttribute('aria-current')==='page'`, 'journey opens through navigation with active link')
+  await check(`document.querySelector('.journey-history')?.textContent.includes('Ainda não há conclusões neste mês')`, 'journey monthly empty state uses server response')
+  await evaluate(`document.querySelector('[aria-label="Mês anterior"]').click();document.querySelector('[aria-label="Mês anterior"]').click()`)
+  await check(`document.querySelector('.consistency-calendar h3')?.textContent==='agosto de 2026' && document.querySelector('.journey-history')?.textContent.includes('agosto de 2026')`, 'journey calendar and monthly history move together')
+  await send('Target.activateTarget', { targetId: tab.targetId })
+  await check(`document.visibilityState==='hidden'`, 'journey loses visibility in real tab switch')
+  await send('Target.activateTarget', { targetId: target.id }); await send('Page.bringToFront')
+  await evaluate(`window.__renew()`)
+  await check(`document.querySelector('.consistency-calendar h3')?.textContent==='agosto de 2026' && location.hash==='#minha-jornada'`, 'journey keeps selected month after focus and session renewal')
+  await send('Page.reload')
+  await check(`document.querySelector('h1')?.textContent==='Minha Jornada' && document.querySelector('.consistency-calendar h3')?.textContent==='outubro de 2026'`, 'journey refresh keeps route and resets month to server current')
+  await evaluate(`window.__journeyFilled=true;window.dispatchEvent(new Event('focus'))`)
+  await check(`document.querySelectorAll('.journey-history li').length===2 && document.querySelector('.journey-history li')?.textContent.includes('2 devocionais concluídos') && document.querySelector('.journey-history dl')?.textContent.includes('Devocionais concluídos no mês3')`, 'journey distinguishes two completed days from three texts in real rendered history')
+  await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false })
+  await evaluate(`document.activeElement?.blur();window.scrollTo(0,0)`)
+  writeFileSync(resolve(profile,'journey-desktop.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true})).data,'base64'))
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true })
+  await check(`document.documentElement.scrollWidth<=window.innerWidth`, 'journey fits mobile viewport without horizontal overflow')
+  writeFileSync(resolve(profile,'journey-mobile.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true})).data,'base64'))
+  console.log('Synthetic journey screenshots stored in ignored profile: '+profile)
+  await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false })
   await evaluate(`location.hash='admin/comunidade'`)
   await check(`Boolean(document.querySelector('.community-summary')) && !document.querySelector('.community [role="alert"]')`, 'community deep link opens with authorized synthetic response')
   await send('Target.activateTarget', { targetId: tab.targetId }); await sleep(300)

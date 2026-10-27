@@ -1,3 +1,13 @@
+> Etapa 22.3.1 / Prompt 44: a rota `#minha-jornada` também reutiliza esta RPC e
+> calendário, acrescentando resumo e histórico mensais somente leitura. Ofensiva,
+> recorde, autorização e regras de conclusão permanecem os mesmos. Roadmap e
+> checklist em [journey-roadmap.md](journey-roadmap.md). Push, comentários/reações
+> e conquistas/desafios são apenas planejados, sem ativação nesta rodada.
+> Numeração definitiva no Prompt 46: 22.3.1 Minha Jornada implementada;
+> 22.3.2 Modo Noturno próximo (não implementado); 22.3.3 Push, 22.3.4 Comentários
+> e Reações, 22.3.5 Conquistas e Desafios planejados. Oito aprovações manuais
+> específicas estão registradas em `journey-roadmap.md` e `testing.md`.
+
 > Estado atual — Prompt 43: OWNER local já provisionado; conferência final na
 > branch `feat/local-auth`, HEAD `31cb42d`. Os registros dos Prompts 39/40 abaixo
 > descrevem o estado histórico anterior ao provisionamento.

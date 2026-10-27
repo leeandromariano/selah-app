@@ -38,3 +38,4 @@
 .community-pagination>span { font-size:12px; color:#716377; }
 .community :focus-visible { outline:3px solid #7952ad; outline-offset:3px; }
 @media(max-width:650px){.community{padding:20px 14px}.community>h2{font-size:21px}.community-summary{grid-template-columns:1fr}.community-search label{max-width:none}.community th,.community td{padding:12px}.community-pagination>span{order:-1;flex-basis:100%}}
+.journey-history{margin-top:24px;padding-top:20px;border-top:1px solid #eee8f3}.journey-history h3{font-size:18px;color:#62427e;margin-bottom:10px}.journey-history>p{font-size:13px;line-height:1.8}.journey-history ol{list-style:none;padding:0;margin:16px 0}.journey-history li{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:12px 0;border-bottom:1px solid #eee8f3;font-size:13px}.journey-history li span{color:#716377}.journey-links{flex-wrap:wrap;align-items:center;margin:24px 0}

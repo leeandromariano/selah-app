@@ -1,5 +1,123 @@
 # Inventário e execução de testes
 
+## Etapa 22.3.1 — Prompt 46: auditoria final para commit
+
+Branch `feat/local-auth`, HEAD/base `42e6070`. **10 candidatos: sete modificados
+e três novos**. Nenhum staging/commit. Código, testes e script Chromium da
+implementação preservados nesta auditoria; atualização apenas documental.
+
+Validação manual realizada pelo responsável — **8/8 aprovados**, exatamente:
+
+1. Minha Jornada abre pelo menu e exibe os dados da conta.
+2. Ofensiva, recorde e dias concluídos correspondem ao desempenho pessoal.
+3. É possível navegar pelos meses e consultar o histórico diário.
+4. Alt+Tab preserva a tela e o mês selecionado.
+5. F5 mantém Minha Jornada aberta e retorna ao mês atual.
+6. A interface funciona em uma janela pequena ou celular.
+7. Uma leitura concluída validamente atualiza o desempenho.
+8. Uma conta diferente não consegue visualizar os dados de outra conta.
+
+Não são testes manuais refeitos pelo agente. Nenhuma aprovação foi atribuída aos
+outros itens do checklist (offline, recuperação, zoom etc.) ou a recursos futuros.
+
+| Comando realmente repetido no Prompt 46 | Resultado |
+| --- | --- |
+| `npm.cmd run test:run` | **398 aprovados em 36 arquivos**, sem falhas/omitidos |
+| `npm.cmd run build` | DEV aprovado; JS 515,64 kB, gzip 146,59 kB; aviso acima de 500 kB |
+| `npm.cmd run lint` | Aprovado, sem avisos/erros |
+| `node scripts/local-navigation-browser.mjs` | **18 Chromium aprovadas**, integração Supabase simulada; calendário, Jornada, foco/visibilidade, sessão, refresh, mobile e bloqueio OWNER |
+| `node scripts/verify-local-reading-install.mjs` | **12 migrações e 288 SQL/RLS** aprovadas em PostgreSQL novo isolado; rollback nas suítes; contêiner temporário encerrado |
+| `node scripts/local-community-readonly-http.mjs` | **8 HTTP locais negativos** aprovados; sem login, fixture ou mutação |
+| `npm.cmd run build:staging` | Recusado, código 1: variáveis genéricas DEV não podem configurar STAGING/PROD |
+| `npm.cmd run build:prod` | Recusado, código 1, mesma proteção |
+| `git diff --check` | Aprovado após atualização documental final; somente avisos LF/CRLF do Git no Windows |
+
+Os onze casos de `JourneyPage.test.tsx` foram repetidos dentro da suíte completa,
+incluindo anon/loading, leitor sem editorial, resumo/histórico, vazio, teclado,
+foco/renovação, reload, erro/retry, logout com resposta atrasada, troca de conta e
+recuperação. Regressões do calendário/administração 22.2 e leitura de 60s também
+permanecem na suíte. SQL inclui 50 consistência, 59 leitura, 29 OWNER e 13
+auditoria: isolamento/permissões exercitados em fixtures transacionais isoladas.
+
+Limitações: Chromium usa respostas fictícias, não login HTTP positivo nem sessão
+pessoal. Troca de abas simula foco; Alt+Tab nativo é a aprovação humana acima.
+HTTP repetido cobre negações, não login ou conclusão real de 60s nesta rodada.
+Os oito cenários humanos não aprovam o checklist inteiro. Nenhuma infraestrutura
+de tema/push/moderação/conquistas foi ativada. SQL isolado copia DDL Auth, não
+registros ou segredos. Não houve ensaio que cria histórico durável na stack
+existente, promoção/revogação OWNER, reset ou migração nessa stack.
+
+Consulta adicional `docker ps -a --filter "name=supabase_edge_runtime_devocionais-app"`
+confirmou Edge Runtime local em execução; isso não é teste de login. A tentativa
+restrita de consultar Docker foi negada por permissão; repetida com autorização
+local, sem iniciar/parar contêiner ou inspecionar credenciais. Estado parado
+observado antes do Prompt 46 não foi presumido como estado atual.
+
+Revisão integral dos dez candidatos e comparação das 12 migrações da base
+(normalizando apenas CRLF/LF): nenhuma migração alterada. Sem mudanças em Auth,
+leitura, RPC pessoal ou permissões. Nenhum caminho/assinatura de segredo, token,
+cookie, log, ambiente ou artefato temporário identificado entre os candidatos;
+arquivos de credenciais não foram abertos. Cache de relatórios/capturas e build
+ignorados pelo Git; varredura por assinaturas não prova ausência universal de
+dados sensíveis. Riscos: bundle grande, privacidade/retenção antes de uso público
+e fixtures locais que não representam engajamento real.
+
+Roadmap definitivo e revisão arquivo a arquivo em
+[journey-roadmap.md](journey-roadmap.md): 22.3.1 entregue; 22.3.2 Modo Noturno é
+próximo, sem implementação; 22.3.3 Push, 22.3.4 Comentários/Reações e 22.3.5
+Conquistas/Desafios planejados. STAGING/PROD continuam bloqueados. Sem bloqueador
+técnico identificado para commit local, condicionado à conferência final do diff.
+
+## Etapa 22.3.1 — Prompt 44: Minha Jornada
+
+Base `42e6070`, branch `feat/local-auth`, árvore limpa no início. Rota autenticada
+`#minha-jornada`; reutilização do calendário/RPC pessoal e projeção mensal da mesma
+resposta. Sem migrações, novos contadores, permissões OWNER ou alterações no
+protocolo de conclusão 22.1. Roadmap completo e checklist humano em
+[journey-roadmap.md](journey-roadmap.md); demais subetapas somente planejadas.
+
+Novo `JourneyPage.test.tsx`: 11 comportamentos com cliente Supabase simulado na
+fronteira: anon/loading, leitor sem editorial, resumo de dois dias/três textos,
+vazio, navegação mouse/Enter e foco/renovação, remontagem/reload, erro/retry,
+logout com resposta atrasada, troca de conta e recuperação. Nenhum ID do leitor
+vai na consulta e não há leitura de acervo/ledger ou RPC OWNER na nova página.
+Casos existentes de cliques agrupados e respostas fora de ordem continuam no
+componente reutilizado, sem duplicar a implementação.
+
+| Comando realmente executado | Resultado nesta rodada |
+| --- | --- |
+| `npm.cmd run test:run -- src/components/JourneyPage.test.tsx src/components/ConsistencySection.test.tsx src/components/AdminPanel.test.tsx` | 35 aprovados nos três arquivos |
+| `npm.cmd run test:run` | **398 aprovados em 36 arquivos**, sem falhas/omitidos; 387 anteriores mais 11 novos |
+| `npm.cmd run build` | DEV aprovado; JS 515,64 kB, gzip 146,59 kB; aviso acima de 500 kB |
+| `npm.cmd run lint` | Aprovado, sem avisos/erros, inclusive após últimos ajustes do script Chromium |
+| `node scripts/verify-local-reading-install.mjs` | 12 migrações e 288 SQL/RLS aprovadas em PostgreSQL novo isolado; rollback nas suítes; contêiner temporário encerrado |
+| `node scripts/local-community-readonly-http.mjs` | 8 verificações HTTP locais negativas aprovadas, sem login/fixtures/mutação |
+| `node scripts/local-navigation-browser.mjs` | Primeira rodada ampliada: 17 aprovadas; segunda rodada com histórico preenchido: 18 verificações Chromium aprovadas, integração Supabase simulada |
+| `npm.cmd run build:staging` / `npm.cmd run build:prod` | Ambos recusados, código 1: variáveis genéricas DEV não podem configurar STAGING/PROD; sem acesso remoto |
+| `git diff --check` | Aprovado; somente avisos LF/CRLF do Git no Windows |
+
+SQL reutilizado porque a página consome a mesma RPC/RLS sem alteração de schema:
+50 casos de consistência dentro dos 288 incluem isolamento por conta e o papel
+editorial; 29 OWNER mantêm negação a leitores/editorial. A base existente foi
+consultada somente para DDL/metadados pelo verificador; não houve novo histórico,
+aplicação de migração, grant/revoke ou alteração/exclusão de dados preexistentes.
+
+Chromium utiliza perfil novo, módulo Supabase sintético e bloqueio de destinos
+fora do frontend loopback. Os dez cenários 22.2 continuam e oito verificam Jornada:
+menu ativo, vazio, movimento conjunto calendário/histórico, perda real de
+visibilidade por troca de aba, retorno/foco mais sessão, reload, histórico com
+dois dias/três textos e 390px sem overflow. Capturas desktop/mobile fictícias
+ficam no cache ignorado, inspecionadas visualmente. Não é login HTTP positivo,
+Alt+Tab nativo ou uso de sessão pessoal. A pendência manual do Prompt 44 foi
+encerrada apenas para os oito cenários informados no Prompt 46; as aprovações
+22.2 permanecem históricas.
+
+Não há pedido de permissão push, registro de service worker, formulário de
+comentário/reação, distintivos ou desafios. O modo falso de transporte e o modelo
+de moderação/conquistas constam somente do planejamento. Limites: evolução mensal,
+F5 volta ao mês atual, dia civil Brasília, bundle grande e retenção/privacidade
+pendentes antes de uso público. Nenhum staging/commit ou acesso Supabase hospedado.
+
 ## Etapa 22.2 — Prompt 43: conferência final
 
 Branch `feat/local-auth`, HEAD/base `31cb42d`. **58 arquivos candidatos: 17
