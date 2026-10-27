@@ -19,7 +19,7 @@ async function reader() {
   const client = local.client()
   const email = `selah-privacy-${randomUUID()}@example.invalid`
   const password = `Fiction-${randomUUID()}!`
-  const signup = await client.auth.signUp({ email, password, options: { emailRedirectTo: local.frontend, data: { username: 'u' + randomUUID().replaceAll('-', '').slice(0,20) } } })
+  const signup = await client.auth.signUp({ email, password, options: { emailRedirectTo: local.frontend, data: { whatsapp: '+5511999990000', username: 'u' + randomUUID().replaceAll('-', '').slice(0,20) } } })
   check(!signup.error && signup.data.user && !signup.data.session, 'minimal signup awaits confirmation')
   check(!['profile', 'name', 'phone', 'age', 'age_range', 'instagram', 'role'].some(key => key in signup.data.user.user_metadata), 'no personal profile draft or role stored by minimal signup')
   let link
@@ -40,10 +40,10 @@ async function reader() {
 }
 try {
   const first = await reader(), second = await reader()
-  check(await first.profile.load(first.id) === null, 'no profile automatically created')
-  const blank = { name: '', phone: null, age_range: null, instagram: null }
-  const saved = await first.profile.save(first.id, blank, false)
-  check(saved.name === null && saved.phone === null && saved.age_range === null && saved.instagram === null, 'all optional profile fields saved as null')
+  check((await first.profile.load(first.id))?.whatsapp_required === true, 'required WhatsApp profile created atomically')
+  const blank = { name: '', phone: '+5511999990000', age_range: null, instagram: null }
+  const saved = await first.profile.save(first.id, blank, true)
+  check(saved.name === null && saved.phone === '+5511999990000' && saved.age_range === null && saved.instagram === null, 'optional fields null while required WhatsApp retained')
   const edited = await first.profile.save(first.id, { ...blank, name: 'Apelido Fictício' }, true)
   check(edited.name === 'Apelido Fictício', 'display name correction persists')
   check((await first.profile.save(first.id, blank, true)).name === null, 'display name can be cleared without deleting profile')

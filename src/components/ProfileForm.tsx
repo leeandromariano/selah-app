@@ -7,6 +7,8 @@ import type { Profile, ProfileFields } from '../profiles/profile'
 import { Heading } from './UI'
 import { AccountPrivacy } from './AccountPrivacy'
 import { UsernameField } from './UsernameField'
+import { FeedbackContact } from './FeedbackContact'
+import { normalizeWhatsApp } from '../profiles/whatsapp'
 
 const repository = createProfileRepository(supabase)
 const blank: ProfileFields = { name: '', phone: null, age_range: null, instagram: null }
@@ -48,7 +50,7 @@ function ReaderProfile({ userId, metadata }: { userId: string; metadata: Record<
     event.preventDefault()
     if (!ready || saving) return
     let allowed: ProfileFields
-    try { allowed = profileFields(fields) } catch (error) { setError((error as Error).message); return }
+    try { allowed = profileFields(fields); if(profile?.whatsapp_required)allowed.phone=normalizeWhatsApp(allowed.phone??'') } catch (error) { setError((error as Error).message); return }
     setSaving(true); setError(''); setMessage('')
     try {
       const saved = await repository.save(userId, allowed, Boolean(profile))
@@ -65,7 +67,8 @@ function ReaderProfile({ userId, metadata }: { userId: string; metadata: Record<
       {message && <div className="success" role="status">{message}</div>}
       <form className="form-grid" onSubmit={submit} noValidate>
         <label className="full-width">Nome de exibição (opcional)<input name="name" autoComplete="nickname" maxLength={150} value={fields.name ?? ''} onChange={e => change('name', e.target.value)} /></label>
-        <label>WhatsApp (opcional)<input name="phone" type="tel" autoComplete="tel" placeholder="(11) 99999-0000 ou +5511999990000" value={fields.phone ?? ''} onChange={e => change('phone', e.target.value)} /></label>
+        <label>{profile?.whatsapp_required?'WhatsApp (obrigatório)':'WhatsApp (preenchimento posterior)'}<input name="phone" type="tel" autoComplete="tel" placeholder="+55 11 99999-0000" value={fields.phone ?? ''} onChange={e => change('phone', e.target.value)} /></label>
+        <p className="full-width">Inclua código do país e DDD. O formato não comprova titularidade. Trocar o número retira a autorização de feedback anterior; autorize novamente se desejar.</p>
         {legacyFields && <><p className="full-width">Faixa etária legada: pode ser corrigida ou limpa. Limpar o perfil não remove cópias antigas de Auth.</p>
         <label>Faixa etária (opcional)<select name="age_range" value={fields.age_range ?? ''} onChange={e => change('age_range', e.target.value)}><option value="">Prefiro não informar</option>{ageRanges.map((range, index) => <option value={range} key={range}>{labels[index]}</option>)}</select></label>
         </>}
@@ -75,5 +78,6 @@ function ReaderProfile({ userId, metadata }: { userId: string; metadata: Record<
     </>}
     <AccountPrivacy userId={userId} />
     <UsernameField userId={userId} />
+    {ready&&<FeedbackContact userId={userId} phone={profile?.phone??null}/>}
   </section></>
 }

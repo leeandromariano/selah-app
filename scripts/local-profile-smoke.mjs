@@ -15,7 +15,7 @@ async function reader() {
   const client = makeClient()
   const email = `selah-profile-${randomUUID()}@example.invalid`
   const password = `Fiction-${randomUUID()}!`
-  const { data, error } = await client.auth.signUp({ email, password, options: { emailRedirectTo: 'http://127.0.0.1:5173', data: { username: 'u' + randomUUID().replaceAll('-', '').slice(0,20), role: 'admin', profile: { name: 'Leitor Fictício', phone: '+5511999990000', age_range: '25_34', instagram: null } } } })
+  const { data, error } = await client.auth.signUp({ email, password, options: { emailRedirectTo: 'http://127.0.0.1:5173', data: { whatsapp: '+5511999990000', username: 'u' + randomUUID().replaceAll('-', '').slice(0,20), role: 'admin', profile: { name: 'Leitor Fictício', phone: '+5511999990000', age_range: '25_34', instagram: null } } } })
   check(!error && data.user && !data.session, 'synthetic reader awaits confirmation')
   let link
   for (let attempt = 0; attempt < 20 && !link; attempt++) {
@@ -39,13 +39,13 @@ try {
   const first = await reader()
   const second = await reader()
   stage = 'profile creation using public session'
-  check(await first.repository.load(first.id) === null, 'missing profile returns null')
-  const original = await first.repository.save(first.id, { name: 'Primeiro Leitor Fictício', phone: '(11) 99999-0000', age_range: '25_34', instagram: '@leitor.ficticio' }, false)
+  check((await first.repository.load(first.id))?.phone === '+5511999990000', 'signup stores required phone in own profile')
+  const original = await first.repository.save(first.id, { name: 'Primeiro Leitor Fictício', phone: '(11) 99999-0000', age_range: '25_34', instagram: '@leitor.ficticio' }, true)
   check(original.id === first.id && original.phone === '+5511999990000', 'profile created for authenticated auth.users.id')
   check(Boolean(original.created_at && original.updated_at), 'server supplies profile timestamps')
-  await second.repository.save(second.id, { name: 'Segundo Leitor Fictício', phone: null, age_range: '35_44', instagram: null }, false)
-  const edited = await first.repository.save(first.id, { name: 'Nome Fictício Atualizado', phone: null, age_range: '45_59', instagram: null, id: second.id, created_at: '2000-01-01', role: 'admin' }, true)
-  check(edited.id === first.id && edited.name === 'Nome Fictício Atualizado' && edited.phone === null && edited.instagram === null && edited.age_range === '45_59', 'update persists allowed fields only')
+  await second.repository.save(second.id, { name: 'Segundo Leitor Fictício', phone: '+5511999990000', age_range: '35_44', instagram: null }, true)
+  const edited = await first.repository.save(first.id, { name: 'Nome Fictício Atualizado', phone: '+5511999990001', age_range: '45_59', instagram: null, id: second.id, created_at: '2000-01-01', role: 'admin' }, true)
+  check(edited.id === first.id && edited.name === 'Nome Fictício Atualizado' && edited.phone === '+5511999990001' && edited.instagram === null && edited.age_range === '45_59', 'update persists allowed fields only')
   check(edited.created_at === original.created_at && new Date(edited.updated_at) > new Date(original.updated_at), 'trigger advances updated_at and preserves created_at')
   const tokens = (await first.client.auth.getSession()).data.session
   const reloaded = makeClient()

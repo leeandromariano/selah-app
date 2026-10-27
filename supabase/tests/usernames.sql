@@ -9,13 +9,13 @@ raise exception 'FAIL: expected rejection'; end $$;
 select pg_temp.rejected($q$insert into auth.users(id,email) values ('72000000-0000-4000-8000-000000000001','username-missing@example.invalid')$q$,'23514');
 select pg_temp.assert_true(not exists(select 1 from auth.users where id='72000000-0000-4000-8000-000000000001'),'missing username rolls back Auth row');
 select pg_temp.rejected($q$insert into auth.users(id,raw_user_meta_data) values ('72000000-0000-4000-8000-000000000001','{"username":123}')$q$,'23514');
-select pg_temp.rejected($q$insert into auth.users(id,raw_user_meta_data) values ('72000000-0000-4000-8000-000000000001','{"username":" ADMIN "}')$q$,'23514');
-select pg_temp.rejected($q$insert into auth.users(id,raw_user_meta_data) values ('72000000-0000-4000-8000-000000000001','{"username":"inválido"}')$q$,'23514');
+select pg_temp.rejected($q$insert into auth.users(id,raw_user_meta_data) values ('72000000-0000-4000-8000-000000000001','{"whatsapp":"+5511999990000","username":" ADMIN "}')$q$,'23514');
+select pg_temp.rejected($q$insert into auth.users(id,raw_user_meta_data) values ('72000000-0000-4000-8000-000000000001','{"whatsapp":"+5511999990000","username":"inválido"}')$q$,'23514');
 insert into auth.users(id,email,raw_user_meta_data) values
-('72000000-0000-4000-8000-000000000001','username-one@example.invalid','{"username":" Sql_User_Name "}'),
-('72000000-0000-4000-8000-000000000002','username-two@example.invalid','{"username":"sql_other_name"}');
+('72000000-0000-4000-8000-000000000001','username-one@example.invalid','{"whatsapp":"+5511999990000","username":" Sql_User_Name "}'),
+('72000000-0000-4000-8000-000000000002','username-two@example.invalid','{"whatsapp":"+5511999990000","username":"sql_other_name"}');
 select pg_temp.assert_true((select username='sql_user_name' from public.account_usernames where user_id='72000000-0000-4000-8000-000000000001'),'normalization in PostgreSQL');
-select pg_temp.rejected($q$insert into auth.users(id,raw_user_meta_data) values ('72000000-0000-4000-8000-000000000003','{"username":"SQL_USER_NAME"}')$q$,'23505');
+select pg_temp.rejected($q$insert into auth.users(id,raw_user_meta_data) values ('72000000-0000-4000-8000-000000000003','{"whatsapp":"+5511999990000","username":"SQL_USER_NAME"}')$q$,'23505');
 select pg_temp.assert_true(not exists(select 1 from auth.users where id='72000000-0000-4000-8000-000000000003'),'duplicate rolls back Auth row');
 select pg_temp.assert_true((select relrowsecurity from pg_class where oid='public.account_usernames'::regclass),'RLS enabled');
 select pg_temp.assert_true((select prosecdef and proconfig @> array['search_path=""'] from pg_proc where oid='private.reserve_signup_username()'::regprocedure),'definer hardened');

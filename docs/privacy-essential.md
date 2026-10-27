@@ -9,6 +9,12 @@ Não constitui parecer jurídico, declaração de conformidade, segurança integ
 ou autorização de publicação. STAGING/PROD continuam bloqueados; nenhum projeto
 remoto foi acessado. “Entre amigos” não significa dispensa das normas aplicáveis.
 
+Atualização aprovada da Etapa 21.4: WhatsApp obrigatório no cadastro novo, com
+opção independente de contato para feedback. Phone continua no perfil; preferências
+guardam UUID, allowed, momento do servidor e propósito feedback-v1, sem copiar
+número. Campos de intake novos são removidos do Auth, sem limpeza dos metadados
+legados. Nome/Instagram opcionais; requisitos e inventário adicional em `whatsapp-local.md`.
+
 ## Inventário com evidências
 
 Schema real inspecionado no PostgreSQL LOCAL antes e depois da migração, somente

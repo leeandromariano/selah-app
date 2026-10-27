@@ -100,14 +100,14 @@ describe('fronteiras dos scripts locais', () => {
     expect(transport).toHaveBeenCalledTimes(1)
     validateLocalEnvironment({ SUPABASE_URL: config.API_URL, DATABASE_URL: config.DB_URL })
   })
-  for (const script of ['configure-local-auth', 'local-auth-smoke', 'local-profile-smoke', 'local-library-smoke', 'local-admin-smoke', 'local-privacy-smoke', 'local-username-smoke', 'provision-local-admin', 'run-local-authorization']) {
+  for (const script of ['configure-local-auth', 'local-auth-smoke', 'local-profile-smoke', 'local-library-smoke', 'local-admin-smoke', 'local-privacy-smoke', 'local-username-smoke', 'local-whatsapp-smoke', 'provision-local-admin', 'run-local-authorization']) {
     it(`${script}: entrypoint recusa Docker remoto, URL remota e contexto malicioso`, () => {
       for (const unsafe of [{ DOCKER_HOST: 'ssh://fiction.invalid' }, { SUPABASE_URL: 'https://fiction.invalid' }, { DOCKER_CONTEXT: '--host=tcp://fiction.invalid' }]) {
         const env = { ...process.env }
         for (const key of ['HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'http_proxy', 'https_proxy', 'all_proxy', 'DOCKER_HOST', 'DOCKER_CONTEXT']) delete env[key]
         const modes = script === 'provision-local-admin'
           ? [['--check-local'], ['grant', '10000000-0000-4000-8000-000000000001'], ['revoke', '10000000-0000-4000-8000-000000000001']]
-          : script === 'local-privacy-smoke' ? [['--check-local'], [], ['--sql'], ['--inventory']] : script === 'local-username-smoke' ? [['--check-local'], [], ['--sql']] : [['--check-local'], []]
+          : script === 'local-privacy-smoke' ? [['--check-local'], [], ['--sql'], ['--inventory']] : ['local-username-smoke','local-whatsapp-smoke'].includes(script) ? [['--check-local'], [], ['--sql']] : [['--check-local'], []]
         for (const args of modes) {
           const result = spawnSync(process.execPath, [`scripts/${script}.mjs`, ...args], { env: { ...env, ...unsafe }, encoding: 'utf8', timeout: 10000 })
           expect(result.status).toBe(1)

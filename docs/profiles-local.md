@@ -128,3 +128,12 @@ resultados atuais em `privacy-essential.md`; as seções anteriores preservam
 o histórico da implementação original e seus testes.
 Username pode ser consultado pelo titular ou escolhido por conta legada; não muda
 após a escolha nesta versão. Login por username é FUTURO. Ver `usernames-local.md`.
+
+## Atualização da Etapa 21.4
+
+WhatsApp é obrigatório para contas novas, armazenado na coluna phone existente;
+nome pessoal/Instagram continuam opcionais. Perfil novo é criado no signup com
+flag whatsapp_required protegida. Legados sem número não perdem acesso e podem
+preencher depois. Autorização de feedback é separada e revogável; trocar número
+retira a autorização anterior. Nada libera leitura de perfis alheios a admins.
+Ver `whatsapp-local.md`; os resultados anteriores acima são históricos.

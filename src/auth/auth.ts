@@ -13,7 +13,7 @@ export function authMessage(error: unknown) {
 
 export function signupMessage(error: unknown) {
   const failure = error as { status?: number; code?: string }
-  if (failure?.status === 500 || failure?.code === 'unexpected_failure' || failure?.code === 'database_error') return 'Cadastro não concluído. O username pode estar indisponível ou houve uma falha temporária. Confira as regras, tente outro username ou tente novamente mais tarde.'
+  if (failure?.status === 500 || failure?.code === 'unexpected_failure' || failure?.code === 'database_error') return 'Cadastro não concluído. O username pode estar indisponível, o WhatsApp pode ser inválido ou houve uma falha temporária. Confira os dados ou tente novamente mais tarde.'
   return authMessage(error)
 }
 

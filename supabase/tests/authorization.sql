@@ -32,12 +32,11 @@ $$;
 
 -- Auth fixtures have no passwords and cannot be used to sign in.
 insert into auth.users (id, email, raw_user_meta_data) values
- ('10000000-0000-4000-8000-000000000001', 'reader-one@example.invalid', jsonb_build_object('username','sql_' || left(replace(gen_random_uuid()::text,'-',''),20))),
- ('10000000-0000-4000-8000-000000000002', 'reader-two@example.invalid', jsonb_build_object('username','sql_' || left(replace(gen_random_uuid()::text,'-',''),20))),
- ('10000000-0000-4000-8000-000000000003', 'admin@example.invalid', jsonb_build_object('username','sql_' || left(replace(gen_random_uuid()::text,'-',''),20)));
+ ('10000000-0000-4000-8000-000000000001', 'reader-one@example.invalid', jsonb_build_object('whatsapp','+5511999990000','username','sql_' || left(replace(gen_random_uuid()::text,'-',''),20))),
+ ('10000000-0000-4000-8000-000000000002', 'reader-two@example.invalid', jsonb_build_object('whatsapp','+5511999990000','username','sql_' || left(replace(gen_random_uuid()::text,'-',''),20))),
+ ('10000000-0000-4000-8000-000000000003', 'admin@example.invalid', jsonb_build_object('whatsapp','+5511999990000','username','sql_' || left(replace(gen_random_uuid()::text,'-',''),20)));
 insert into private.admin_users (user_id) values ('10000000-0000-4000-8000-000000000003');
-insert into public.profiles (id, name, age_range) values
- ('10000000-0000-4000-8000-000000000002', 'Pessoa fictícia dois', '25_34');
+update public.profiles set name='Pessoa fictícia dois',age_range='25_34' where id='10000000-0000-4000-8000-000000000002';
 insert into public.devotionals (id, title, bible_reference, bible_text, content, reflection_question, publish_at, status, author_id)
 select id::uuid, 'Título fictício', 'Referência fictícia', 'Texto fictício', 'Conteúdo fictício', 'Pergunta fictícia?', publish_at, status,
  '10000000-0000-4000-8000-000000000003'::uuid
@@ -74,8 +73,7 @@ reset role;
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated"}', true);
-insert into public.profiles (id, name, age_range) values
- ('10000000-0000-4000-8000-000000000001', 'Pessoa fictícia um', '18_24');
+update public.profiles set name='Pessoa fictícia um',age_range='18_24' where id='10000000-0000-4000-8000-000000000001';
 select pg_temp.assert_true((select count(*) = 1 from public.profiles), 'reader sees only own profile');
 select pg_temp.affected($q$update public.profiles set name = 'Nome fictício atualizado' where id = '10000000-0000-4000-8000-000000000001'$q$, 1);
 select pg_temp.affected($q$update public.profiles set name = 'Tentativa' where id = '10000000-0000-4000-8000-000000000002'$q$, 0);
@@ -131,7 +129,7 @@ select pg_temp.denied($q$update public.devotionals set author_id = '10000000-000
 select pg_temp.denied('update public.devotionals set created_at = now()');
 select pg_temp.assert_true((select count(*) = 4 from public.devotionals
  where id::text like '20000000-0000-4000-8000-%'), 'admin sees all publication states');
-select pg_temp.assert_true((select count(*) = 0 from public.profiles), 'admin has no bypass to personal profiles');
+select pg_temp.assert_true((select count(*) = 1 and bool_and(id=(select auth.uid())) from public.profiles), 'admin has no bypass to personal profiles');
 select pg_temp.assert_true((select count(*) = 0 from public.devotional_views), 'admin cannot read individual reader events');
 select pg_temp.assert_true((select count(*) = 0 from public.privacy_acknowledgements), 'admin cannot read reader acknowledgements');
 select pg_temp.assert_true((select total_opens = 3 and unique_readers = 2 from public.devotional_open_counts()

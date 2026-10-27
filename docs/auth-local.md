@@ -114,3 +114,12 @@ Nome pessoal opcional é editado em
 Meu perfil. Metadados antigos não foram apagados. Ver `privacy-essential.md` para
 o inventário e as novas verificações; os registros anteriores são históricos.
 Detalhes do trigger, concorrência, legado e testes atuais em `usernames-local.md`.
+
+## Atualização da Etapa 21.4
+
+Novos cadastros exigem WhatsApp com código do país/DDD, além de username/e-mail/
+senha. Escolha opcional de feedback separada e desmarcada; não é pré-condição de
+cadastro. Trigger cria o perfil com phone e registra a escolha. Campos de intake
+são removidos dos metadados Auth antes do fluxo confirmado de emissão de token;
+legados não são bloqueados por ausência de número. E-mails usuais de confirmação
+e recuperação continuam; não há mensagens de WhatsApp/feedback. Ver `whatsapp-local.md`.

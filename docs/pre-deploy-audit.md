@@ -515,3 +515,35 @@ teste parado; runner removido. As três verificações HTTP legadas anteriores n
 foram reexecutadas agora. Essas evidências não liberam implantação pública.
 Nesta preparação, build DEV e lint também passaram, sem avisos de lint;
 builds STAGING/PROD foram novamente recusados com código 1, sem conexão remota.
+
+## 15. Etapa 21.4 — WhatsApp e feedback
+
+Base `366f94a`, árvore inicialmente limpa. Inspeção de schema/RLS/triggers/ACL locais
+e formulários confirmou reutilização de profiles.phone. Novas migrações 00400 e
+00500 aplicadas somente pelo CLI local com Docker validado; anteriores intactas.
+Contas novas exigem número no Auth e perfil; legados preservados sem bloqueio de
+login/recuperação. Cadastro pode recusar feedback sem impedir signup. Momento e
+propósito da escolha são server-side; RPC vincula UUID e número, RLS SELECT própria,
+sem CRUD direto e sem leitura administrativa ampla. Mudança de número retira opt-in.
+
+40 HTTP novos e 8 legados aprovados; regressões 19/29/35/41/30/30 HTTP aprovadas.
+25 novos SQL e 59/16/18 anteriores aprovados com rollback. 189 testes em 22 arquivos,
+build e lint aprovados. Perfis de terceiros continuaram invisíveis por API real,
+inclusive para admin e quando o titular autorizou contato. Métricas sem telefones.
+
+Intake novo retirado dos metadados Auth e ausente do JWT de confirmação testado.
+Metadados legados podem conter telefone e aparecer em tokens implicit antigos;
+não houve limpeza global ou comprovação de todos os logs/URLs históricos. Formato
+não comprova titularidade/número WhatsApp real. Sem fluxo de contato administrativo
+ou envio implementado; planejar escopo mínimo só para autorizados/confirmados.
+Retenção de números sem opt-in, atendimento e obrigações proporcionais seguem
+decisões do responsável antes de uso público. Sem conformidade legal declarada.
+
+No encerramento, o responsável confirmou funcionamento geral de WhatsApp
+obrigatório e autorização de feedback na interface, sem especificar cenários
+individuais ou contagem manual. Não se atribui aprovação a todo o roteiro nem
+se considera essa confirmação uma validação de infraestrutura ou conformidade.
+Preparação do commit repetiu 189 testes em 22 arquivos, build/lint aprovados e
+118 SQL com rollback, além de preflight e metadados reais locais. STAGING/PROD
+recusaram os builds. As verificações HTTP continuam resultados da implementação,
+sem reexecução agora. Migrações/funcionalidades não foram modificadas na preparação.

@@ -1,0 +1,45 @@
+\set ON_ERROR_STOP on
+begin;
+create function pg_temp.assert_true(ok boolean,label text) returns void language plpgsql as $$ begin if ok is distinct from true then raise exception 'FAIL: %',label; end if; end $$;
+create function pg_temp.rejected(statement text,expected text) returns void language plpgsql as $$ begin begin execute statement; exception when others then if sqlstate=expected then return; end if; raise; end; raise exception 'FAIL: expected rejection'; end $$;
+select pg_temp.rejected($q$insert into auth.users(id,raw_user_meta_data) values('74000000-0000-4000-8000-000000000001','{"username":"wa_sql_missing"}')$q$,'23514');
+select pg_temp.assert_true(not exists(select 1 from auth.users where id='74000000-0000-4000-8000-000000000001'),'missing phone rolls back Auth');
+select pg_temp.assert_true(not exists(select 1 from public.account_usernames where username='wa_sql_missing'),'missing phone rolls back username');
+select pg_temp.rejected($q$insert into auth.users(id,raw_user_meta_data) values('74000000-0000-4000-8000-000000000001','{"username":"wa_sql_invalid","whatsapp":"11999990000"}')$q$,'23514');
+select pg_temp.rejected($q$insert into auth.users(id,raw_user_meta_data) values('74000000-0000-4000-8000-000000000001','{"username":"wa_sql_invalid","whatsapp":"+5511999990000","feedback_contact_allowed":"true"}')$q$,'23514');
+insert into auth.users(id,raw_user_meta_data) values
+('74000000-0000-4000-8000-000000000001','{"username":"wa_sql_one","whatsapp":"+55 (11) 99999-0000"}'),
+('74000000-0000-4000-8000-000000000002','{"username":"wa_sql_two","whatsapp":"+5511999990001","feedback_contact_allowed":true}');
+select pg_temp.assert_true((select phone='+5511999990000' and whatsapp_required from public.profiles where id='74000000-0000-4000-8000-000000000001'),'canonical required profile');
+select pg_temp.assert_true((select not allowed and decided_at=now() from public.feedback_contact_preferences where user_id='74000000-0000-4000-8000-000000000001'),'consent omitted defaults false');
+select pg_temp.assert_true((select allowed and purpose_version='feedback-v1' from public.feedback_contact_preferences where user_id='74000000-0000-4000-8000-000000000002'),'explicit consent recorded');
+select pg_temp.assert_true((select not(raw_user_meta_data ? 'whatsapp') and not(raw_user_meta_data ? 'feedback_contact_allowed') from auth.users where id='74000000-0000-4000-8000-000000000001'),'intake removed from durable Auth metadata');
+set local role anon;
+select pg_temp.rejected('select * from public.feedback_contact_preferences','42501');
+select pg_temp.rejected($q$select public.set_feedback_contact('74000000-0000-4000-8000-000000000001',null,false)$q$,'42501');
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claims','{"sub":"74000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+select pg_temp.assert_true((select count(*)=1 from public.feedback_contact_preferences),'only own preference visible');
+select pg_temp.assert_true((select count(*)=0 from public.profiles where id='74000000-0000-4000-8000-000000000002'),'other phone hidden');
+select pg_temp.rejected($q$update public.feedback_contact_preferences set allowed=true$q$,'42501');
+select pg_temp.rejected($q$insert into public.feedback_contact_preferences(user_id,allowed) values('74000000-0000-4000-8000-000000000002',true)$q$,'42501');
+select pg_temp.rejected($q$update public.profiles set whatsapp_required=false where id='74000000-0000-4000-8000-000000000001'$q$,'42501');
+select pg_temp.rejected($q$update public.profiles set phone=null where id='74000000-0000-4000-8000-000000000001'$q$,'23514');
+select pg_temp.rejected($q$select public.set_feedback_contact('74000000-0000-4000-8000-000000000002','+5511999990001',true)$q$,'42501');
+select pg_temp.rejected($q$select public.set_feedback_contact('74000000-0000-4000-8000-000000000001','+5511999990099',true)$q$,'23514');
+select public.set_feedback_contact('74000000-0000-4000-8000-000000000001','+5511999990000',true);
+select pg_temp.assert_true((select allowed from public.feedback_contact_preferences),'explicit own opt-in');
+update public.profiles set phone='+5511999990009' where id='74000000-0000-4000-8000-000000000001';
+select pg_temp.assert_true((select not allowed from public.feedback_contact_preferences),'changing number revokes consent');
+select public.set_feedback_contact('74000000-0000-4000-8000-000000000001',null,false);
+select pg_temp.assert_true((select not allowed from public.feedback_contact_preferences),'withdrawal works without expected phone');
+select pg_temp.assert_true(not has_table_privilege('authenticated','public.feedback_contact_preferences','DELETE'),'no client deletion');
+reset role;
+insert into private.admin_users(user_id) values('74000000-0000-4000-8000-000000000001');
+set local role authenticated;
+select pg_temp.assert_true((select count(*)=0 from public.profiles where id='74000000-0000-4000-8000-000000000002'),'admin still cannot read other phone');
+select pg_temp.assert_true((select count(*)=0 from public.feedback_contact_preferences where user_id='74000000-0000-4000-8000-000000000002'),'admin still cannot read other choice');
+reset role;
+rollback;
+select 'WhatsApp checks passed; fixtures rolled back.' as result;

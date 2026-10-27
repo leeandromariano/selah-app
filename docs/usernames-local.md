@@ -1,5 +1,9 @@
 # Username — ajuste aprovado da Etapa 21.3
 
+> Etapa 21.4: WhatsApp passou a ser obrigatório em novas contas. Autorização de
+> feedback continua opcional; login por username ainda é FUTURO. Ver `whatsapp-local.md`.
+> As regras de username não mudam; os dados opcionais/testes abaixo registram a Etapa 21.3.
+
 Base `76a6e94`, branch `feat/local-auth`. Alterações de privacidade preexistentes
 preservadas. Migrações já aplicadas `20261023000100` e `20261026000100` não foram
 reescritas. Nova migração `20261026000200_account_usernames.sql`, aplicada somente

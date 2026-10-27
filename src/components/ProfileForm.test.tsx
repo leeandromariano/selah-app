@@ -26,6 +26,14 @@ function open() {
 }
 
 describe('perfil do leitor', () => {
+  it('conta nova não pode remover o WhatsApp obrigatório ao editar',async()=>{
+    const table=mockTable({...saved,whatsapp_required:true} as never),user=userEvent.setup()
+    open()
+    await user.clear(await screen.findByLabelText('WhatsApp (obrigatório)'))
+    await user.click(screen.getByRole('button',{name:'Salvar perfil'}))
+    expect(screen.getByRole('alert')).toHaveTextContent('Informe WhatsApp com')
+    expect(table.update).not.toHaveBeenCalled()
+  })
   it('novo perfil permite contatos opcionais e nome vazio, sem perguntar faixa etária', async () => {
     const table = mockTable(null)
     table.single.mockResolvedValueOnce({ data: { ...saved, name: null, phone: null, age_range: null, instagram: null }, error: null } as never)
@@ -35,7 +43,7 @@ describe('perfil do leitor', () => {
     render(<App />)
     expect(await screen.findByLabelText('Nome de exibição (opcional)')).toHaveValue('')
     expect(screen.queryByLabelText(/Faixa etária/i)).not.toBeInTheDocument()
-    expect(screen.getByLabelText('WhatsApp (opcional)')).toHaveValue('')
+    expect(screen.getByLabelText('WhatsApp (preenchimento posterior)')).toHaveValue('')
     expect(screen.getByLabelText('Instagram (opcional)')).toHaveValue('')
     await user.click(screen.getByRole('button', { name: 'Salvar perfil' }))
     expect(await screen.findByRole('status')).toHaveTextContent('Perfil salvo')
@@ -121,7 +129,7 @@ describe('perfil do leitor', () => {
     const user = userEvent.setup()
     open()
     await screen.findByLabelText('Nome de exibição (opcional)')
-    await user.clear(screen.getByLabelText('WhatsApp (opcional)'))
+    await user.clear(screen.getByLabelText('WhatsApp (preenchimento posterior)'))
     await user.clear(screen.getByLabelText('Instagram (opcional)'))
     await user.selectOptions(screen.getByLabelText('Faixa etária (opcional)'), '')
     await user.click(screen.getByRole('button', { name: 'Salvar perfil' }))
@@ -151,8 +159,8 @@ describe('perfil do leitor', () => {
     const user = userEvent.setup()
     open()
     await screen.findByLabelText('Nome de exibição (opcional)')
-    await user.clear(screen.getByLabelText('WhatsApp (opcional)'))
-    await user.type(screen.getByLabelText('WhatsApp (opcional)'), '123')
+    await user.clear(screen.getByLabelText('WhatsApp (preenchimento posterior)'))
+    await user.type(screen.getByLabelText('WhatsApp (preenchimento posterior)'), '123')
     await user.click(screen.getByRole('button', { name: 'Salvar perfil' }))
     expect(screen.getByRole('alert')).toHaveTextContent('Informe celular com DDD')
     expect(table.update).not.toHaveBeenCalled()

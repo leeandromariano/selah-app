@@ -14,7 +14,7 @@ const username=()=> 'u'+randomUUID().replaceAll('-','').slice(0,20)
 const password=`Fiction-${randomUUID()}!`
 async function signup(name,client=local.client()){
  const address=email()
- const result=await client.auth.signUp({email:address,password,options:{emailRedirectTo:local.frontend,...(name===undefined?{}:{data:{username:name}})}})
+ const result=await client.auth.signUp({email:address,password,options:{emailRedirectTo:local.frontend,data:{whatsapp:'+5511999990000',...(name===undefined?{}:{username:name})}}})
  return {result,client,email:address}
 }
 async function confirm(account){

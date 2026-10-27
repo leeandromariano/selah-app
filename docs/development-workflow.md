@@ -8,6 +8,13 @@ O cliente em `src/lib/supabase.ts` é usado pela autenticação e exige DEV em 1
 
 ## Três ambientes
 
+Etapa 21.4: cadastro novo exige também WhatsApp em E.164, validado no servidor.
+Nome/Instagram opcionais; contas legadas podem completar o número depois, sem
+bloqueio de sessão/recuperação. Autorização opcional de feedback é separada e
+revogável, sem diretório administrativo ou envio de mensagens. Migrações locais
+`20261026000400` e `20261026000500`; não reescrever as anteriores. Regras, riscos,
+testes e roteiro em `whatsapp-local.md`. Login segue e-mail/senha.
+
 Na Etapa 21.3 ajustada, cadastro solicita username obrigatório/e-mail/senha/confirmação.
 Nome pessoal, WhatsApp e Instagram são opcionais em Meu perfil; faixa etária legada
 fica disponível para correção/limpeza, sem apagar

@@ -16,7 +16,7 @@ async function reader() {
   const client = makeClient()
   const email = `selah-library-${randomUUID()}@example.invalid`
   const password = `Fiction-${randomUUID()}!`
-  const signup = await client.auth.signUp({ email, password, options: { emailRedirectTo: 'http://127.0.0.1:5173', data: { username: 'u' + randomUUID().replaceAll('-', '').slice(0,20) } } })
+  const signup = await client.auth.signUp({ email, password, options: { emailRedirectTo: 'http://127.0.0.1:5173', data: { whatsapp: '+5511999990000', username: 'u' + randomUUID().replaceAll('-', '').slice(0,20) } } })
   check(!signup.error && signup.data.user && !signup.data.session, 'synthetic reader created with confirmation required')
   let link
   for (let attempt = 0; attempt < 20 && !link; attempt++) {

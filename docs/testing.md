@@ -510,3 +510,63 @@ novo do agente. Nenhuma funcionalidade ou migração foi reescrita nesta prepara
 lint sem avisos. `build:staging` e `build:prod` foram recusados com código 1 por
 variáveis genéricas DEV herdadas; contratos remotos válidos também permanecem
 bloqueados em código, conforme os testes unitários.
+
+## Etapa 21.4 — WhatsApp obrigatório e feedback opcional
+
+Base `366f94a`. Cadastro passou a exigir WhatsApp no servidor; autorizá-lo para
+feedback é escolha separada, opcional e inicialmente false. Nome/Instagram seguem
+opcionais. Novo perfil nasce no signup; perfil antigo sem número continua válido.
+Testes anteriores foram adaptados ao contrato: fixtures Auth incluem WhatsApp,
+perfis criados pelo trigger são atualizados, e admin só pode ver seu próprio
+perfil recém-criado. Nenhuma asserção de isolamento foi removida ou enfraquecida.
+
+`src/profiles/whatsapp.test.ts`, `feedback.test.ts`, `FeedbackContact.test.tsx`
+e os testes de cadastro/perfil verificam formatos, normalização, ausência de
+WhatsApp, opt-in desmarcado/true, alteração/retirada, falhas sem dados privados,
+perfil legado e flag obrigatória. Fronteiras simuladas; sem cliente real/SQL no React.
+O entrypoint de WhatsApp também tem regressões de destino remoto/contexto malicioso.
+
+Execução: **189 testes em 22 arquivos aprovados**, build DEV e lint aprovados,
+lint sem avisos. Nova integração `node scripts/local-whatsapp-smoke.mjs` aprovou
+**40 HTTP locais**, incluindo negações por API real para anon/leitor/admin,
+opt-in separado e revogável, troca de número, JWT confirmado sem campos de intake,
+grants protegidos e persistência. **8 verificações HTTP legadas** passaram com
+fixture criada antes da migração: login/recuperação sem telefone, preenchimento
+posterior, autorização e retirada. Nenhuma senha/número impresso; fixture retida.
+
+Nova SQL `node scripts/local-whatsapp-smoke.mjs --sql`: **25 aprovadas com rollback**.
+SQL anteriores repetidas: **59 autorização + 16 privacidade + 18 username** aprovadas
+com rollback. A primeira tentativa de autorização falhou na expectativa antiga
+de zero perfis para admin; agora exige exatamente o próprio, sem acesso aos demais.
+Um teste de cadastro encontrou o label instável após erro; corrigido no componente
+com nome acessível estável. Resultados finais preservam todos os testes.
+
+HTTP de regressão reexecutados: **19 Auth, 29 perfis, 35 acervo, 41 admin, 30
+privacidade, 30 username**, aprovados. Não houve novo teste manual do agente,
+mensagem de WhatsApp, provedor externo ou infraestrutura remota. Roteiro e limites
+incluindo metadados legados em `whatsapp-local.md`. Migrações 00400/00500 apenas
+locais; histórico e ACL/triggers reais inspecionados. STAGING/PROD seguem bloqueados.
+Os comandos `build:staging` e `build:prod` foram executados nesta etapa e recusados
+com código 1 por configuração genérica DEV herdada, sem conexão remota.
+
+## Encerramento da Etapa 21.4 — preparação do commit
+
+Branch `feat/local-auth`, referência anterior `366f94a`. O responsável confirmou
+que WhatsApp obrigatório e autorização de feedback estão funcionando na interface.
+É uma confirmação manual geral, sem detalhamento de casos ou quantidade de
+cenários individuais aprovados. Não representa execução integral do roteiro
+manual ou aprovação de infraestrutura/produção.
+
+As 40 verificações HTTP novas, oito legadas e 184 de regressão da implementação
+continuam evidências anteriores, sem nova execução nesta preparação. Os comandos
+repetidos e seus resultados finais são registrados separadamente abaixo.
+
+Reexecutados nesta preparação: `npm.cmd run test:run` (**189 aprovados em 22
+arquivos**, sem falhas/omitidos), `npm.cmd run build` e `npm.cmd run lint` (código
+zero, lint sem avisos). Preflight local aprovado; inspeção real READ ONLY/ROLLBACK
+confirmou seis versões de migração, RLS, grants e funções restritas. SQL/RLS
+repetidos integralmente com rollback: **59 autorização, 16 privacidade, 18 username
+e 25 WhatsApp**, total **118 verificações aprovadas**. Builds STAGING/PROD repetidos
+e recusados com código 1 por variáveis genéricas DEV herdadas, sem conexão remota.
+Nenhum teste HTTP, cenário manual específico ou novo banco isolado foi executado
+agora. A confirmação geral do responsável não altera essas distinções.
