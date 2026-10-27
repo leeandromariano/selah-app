@@ -1,5 +1,10 @@
 # Username — ajuste aprovado da Etapa 21.3
 
+> Atualização 21.5: login por username está implementado exclusivamente no
+> Supabase local, com ou sem @, mantendo e-mail/senha e o username permanente.
+> Ver [login e limites](username-login-local.md). Referências a funcionalidade
+> futura abaixo descrevem as entregas anteriores, não o comportamento atual.
+
 > Etapa 21.4: WhatsApp passou a ser obrigatório em novas contas. Autorização de
 > feedback continua opcional; login por username ainda é FUTURO. Ver `whatsapp-local.md`.
 > As regras de username não mudam; os dados opcionais/testes abaixo registram a Etapa 21.3.

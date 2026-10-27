@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { prepareLocalScript, localUrl } from './local-environment.mjs'
 import { createUsernameRepository } from '../src/profiles/username.ts'
+import { passwordLogin } from '../src/auth/passwordLogin.ts'
 const local=prepareLocalScript()
 if(process.argv[2]==='--sql'){
  try{process.stdout.write(local.psql(readFileSync('supabase/tests/usernames.sql','utf8')))}catch{console.error('Local username SQL failed; validation incomplete.');process.exit(1)}
@@ -67,7 +68,9 @@ try{
  check((await first.client.rpc('devotional_open_counts')).error?.code==='42501','username grants no admin privileges')
  check(!(await first.client.auth.signOut()).error&&!(await first.client.auth.signInWithPassword({email:first.email,password})).error,'email login persists after username registration')
  check((await repo.load(first.result.data.user.id))?.username===name,'username persists after new login')
- check(Boolean((await first.client.auth.signInWithPassword({email:name,password})).error),'username login not implemented')
+ check(Boolean((await first.client.auth.signInWithPassword({email:name,password})).error),'official email API does not resolve usernames')
+ await passwordLogin(first.client,name,password)
+ check((await first.client.auth.getSession()).data.session?.user.id===first.result.data.user.id,'server gateway supports real username login without email resolution in client')
  check(!(await first.client.auth.signOut()).error&&!(await second.client.auth.signOut()).error,'synthetic sessions signed out')
  console.log(`${passed} username HTTP checks passed. Two synthetic confirmed accounts retained; no deletions or credentials printed.`)
 }catch{console.error(`Username validation stopped at ${stage}; ${passed} checks passed. Remaining checks NOT executed.`);process.exitCode=1}

@@ -1,5 +1,11 @@
 # Privacidade essencial — Etapa 21.3
 
+> Atualização 21.5: [login com username ou e-mail](username-login-local.md) resolve
+> username somente no servidor local e acrescenta contadores privados com HMAC,
+> janela e quantidade. Nenhum diretório/e-mail de terceiros é exposto; a sessão
+> oficial contém dados do próprio titular após autenticação. Retenção dos novos
+> contadores permanece pendência. Referências a username futuro são históricas.
+
 Referência `76a6e94`, branch `feat/local-auth`, árvore inicialmente limpa.
 O ajuste de produto posterior exige username em novas contas e mantém WhatsApp/
 Instagram opcionais para todos os perfis. Evidências atuais em `usernames-local.md`;

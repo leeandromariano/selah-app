@@ -1,5 +1,11 @@
 # Ambientes do Selah — Etapa 21.2
 
+> Etapa 21.5: a Edge Function de [login por username/e-mail](username-login-local.md)
+> também recusa destinos não locais. O frontend continua em DEV 127.0.0.1:54321;
+> o runtime usa somente os serviços internos do Docker local verificado. Não há
+> fallback remoto. STAGING/PROD continuam bloqueados; seus builds foram recusados
+> novamente nesta etapa. Variáveis e cliente de ambiente anteriores não mudaram.
+
 Referência: `59e2082`, branch `feat/local-auth`. Nenhum projeto remoto foi criado,
 consultado ou vinculado. Esta arquitetura prepara contratos futuros; **STAGING e
 PROD continuam desabilitados em código**, sem flag de ambiente capaz de habilitá-los.

@@ -1,5 +1,10 @@
 # Processo de desenvolvimento do Selah
 
+> Etapa 21.5: login aceita username (com ou sem @) ou e-mail pela Edge Function
+> exclusivamente local. Servir com `node scripts/serve-local-login.mjs`;
+> sessão permanece no SDK oficial. Ver [operação e limites](username-login-local.md).
+> Menções a login por username futuro abaixo descrevem o estado das etapas antigas.
+
 ## Situação atual
 
 Aplicativo React + TypeScript + Vite, navegação por hash. Cadastro, confirmação de e-mail, login, logout e recuperação de senha usam Supabase Auth exclusivamente local. Perfis, publicações e histórico de aberturas persistem no PostgreSQL local. Na Etapa 19, o painel administrativo cria, edita, agenda e publica no acervo local usando a sessão do administrador; privilégios vêm de membership privada provisionada por operador local confiável, nunca do frontend. Cards mostram somente contagens de conteúdo por status, sem métricas de leitores. Não há conclusão de leitura: o schema registra somente aberturas. O devocional do dia usa America/Sao_Paulo. Ver `admin-local.md` e `devotionals-local.md`.

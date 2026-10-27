@@ -1,5 +1,134 @@
 # Inventário e execução de testes
 
+## Encerramento da Etapa 21.5 — Prompt 34
+
+Branch `feat/local-auth`, commit-base `1bc58bd`. O responsável informou nesta
+sessão **13/13 cenários manuais aprovados**, separados de testes unitários,
+HTTP, SQL/RLS e automação Chrome:
+
+1. Login usando apenas username.
+2. Login usando @username.
+3. Login usando username com maiúsculas.
+4. Login por e-mail e senha.
+5. Username inexistente recebe erro genérico.
+6. Senha incorreta não revela dados da conta.
+7. Conta não confirmada não autentica.
+8. Sessão persiste após atualizar a página.
+9. Logout exige nova autenticação.
+10. Acervo, histórico e painel administrativo continuam funcionando.
+11. Recuperação de senha por e-mail funciona.
+12. Conta antiga sem username autentica por e-mail.
+13. Perfil conserva WhatsApp e preferências de feedback.
+
+Não se presume aprovação manual de testes de carga, limites, móvel, teclado,
+infraestrutura ou de qualquer outro cenário não especificado pelo responsável.
+As execuções do Prompt 33 abaixo são históricas. A revisão final de 27/10/2026
+reexecutou os seguintes comandos/cenários, sem presumir cobertura adicional:
+
+| Comando / categoria | Resultado final do Prompt 34 |
+| --- | --- |
+| `npm.cmd run test:run` | **248 testes aprovados em 24 arquivos**, nenhum omitido |
+| `npm.cmd run build` / `npm.cmd run lint` | Ambos aprovados com código zero |
+| `node scripts/local-login-smoke.mjs` | **41 HTTP aprovadas** no runtime atualizado |
+| `node scripts/local-auth-smoke.mjs` | **19 HTTP aprovadas** |
+| `node scripts/local-username-smoke.mjs` | **31 HTTP aprovadas** |
+| `node scripts/local-whatsapp-smoke.mjs` | **40 HTTP aprovadas** |
+| `node scripts/local-login-browser.mjs` | **12 Chrome automatizadas aprovadas**, incluindo recarga com latência local de 300 ms |
+| SQL/RLS no banco local atual | **137 aprovadas**: 59 autorização + 16 privacidade + 18 usernames + 25 WhatsApp + 19 login, todas com rollback |
+| SQL em PostgreSQL novo isolado | Sete migrações aplicadas em ordem e **137 assertions adicionais**, todas as suítes com rollback |
+| Concorrência global no banco isolado | **64 chamadas**, até 16 em paralelo: 60 admitidas e quatro recusadas |
+| `npm.cmd run build:staging` / `build:prod` | Ambos recusados pela configuração de ambientes (código 1 esperado) |
+| `git diff --check` | Aprovado |
+
+As 131 HTTP foram repetidas depois da correção pontual de erros Auth. Por
+identificador, a integração verificou onze chamadas simultâneas normalizadas com
+dez 401 e um 429. A função SQL instalada corresponde ao corpo da migração, com
+owner postgres, SECURITY DEFINER e search_path vazio. RLS/grants permaneceram
+restritos. As suítes HTTP completas de perfis/acervo/admin/privacidade não foram
+repetidas; seus resultados anteriores não entram nesses 131. Os dois conjuntos
+de 137 SQL pertencem a bancos distintos; não se misturam às verificações HTTP.
+
+Correção de regressão: o SDK instalado produz status `0` em erros de transporte.
+O código anterior convertia isso em 401. O teste dirigido reproduziu três falhas
+(status 0, ausente e resposta sem sessão). A correção retorna indisponibilidade
+503, conserva erro genérico 401 para credenciais inválidas e acrescenta oito
+cenários à suíte anterior de 240. Os 33 casos do arquivo e a suíte completa
+passaram depois da correção. Falhas de transporte/respostas inesperadas foram
+simuladas na fronteira; não se derrubou o serviço Auth nem se atribui aceite manual
+a esses casos. Senhas continuam verificadas exclusivamente pelo Auth oficial.
+
+A automação Chrome parou duas vezes após cinco verificações durante recarga.
+O diagnóstico da reprodução mostrou sessão autenticada e painel de username
+recolhido. O teste agora espera um documento novo e garante a expansão do painel,
+incluindo uma verificação de regressão e latência controlada; a rodada final
+aprovou 12/12. Não se enfraqueceram as assertions de sessão/perfil/logout. As
+tentativas parciais e repetições não são contadas como novas aprovações completas.
+
+Instalação isolada: imagem PostgreSQL local, sem rede/portas/volumes existentes,
+com dados temporários em RAM. Somente DDL Auth foi lido, retirando da cópia os três
+triggers do aplicativo que as migrações recriam. Nenhum dado de usuário ou segredo
+foi copiado. Perfil legado fictício permaneceu inalterado pela migração de login.
+Não é uma segunda stack Supabase completa; os HTTP foram feitos na stack local
+existente. Preparações interrompidas antes das assertions não entram nos totais.
+Contêineres temporários foram parados. Detalhes e limites em
+[username-login-local.md](username-login-local.md).
+
+## Etapa 21.5 — username ou e-mail, execução local em 26/10/2026
+
+Base `1bc58bd`, branch `feat/local-auth`. Resultados **reexecutados nesta etapa**:
+
+| Comando / categoria | Resultado |
+| --- | --- |
+| `npm.cmd run test:run` | **240 testes aprovados em 24 arquivos**, zero falhas/omitidos |
+| `npm.cmd run build` | Aprovado, build DEV; não publica |
+| `npm.cmd run lint` | Aprovado, sem avisos/erros |
+| `node scripts/local-login-smoke.mjs` | **41 verificações HTTP aprovadas** |
+| `node scripts/local-auth-smoke.mjs` | **19 verificações HTTP aprovadas** |
+| `node scripts/local-username-smoke.mjs` | **31 verificações HTTP aprovadas**; inclui gateway novo |
+| `node scripts/local-whatsapp-smoke.mjs` | **40 verificações HTTP aprovadas** |
+| `node scripts/local-login-browser.mjs` | **11 verificações em Chrome real isolado aprovadas** |
+| `node scripts/run-local-authorization.mjs` | **59 SQL/RLS aprovadas**, rollback |
+| `node scripts/local-privacy-smoke.mjs --sql` | **16 SQL aprovadas**, rollback |
+| `node scripts/local-username-smoke.mjs --sql` | **18 SQL aprovadas**, rollback |
+| `node scripts/local-whatsapp-smoke.mjs --sql` | **25 SQL aprovadas**, rollback |
+| `node scripts/local-login-smoke.mjs --sql` | **19 SQL novas aprovadas**, rollback |
+| `npm.cmd run build:staging` / `build:prod` | Ambos recusados com código 1, como esperado; continuam bloqueados |
+| `node scripts/apply-local-login-migration.mjs` | Migração já aplicada confirmada; caminho sem novas escritas aprovado |
+
+São **131 verificações HTTP**, **137 SQL** e **11 de navegador** nesta rodada
+completa. Não somar tentativas interrompidas ou repetições para inflar esses totais.
+As suítes HTTP de perfis/acervo/admin/privacidade não foram repetidas integralmente;
+seus números em seções anteriores continuam históricos. A suíte de login nova
+testou diretamente isolamento de perfil/telefone/consentimento, admin e revogação.
+
+Os testes novos simulam SDK/HTTP/SQL na fronteira: normalização, instalação da
+sessão oficial, respostas inválidas, erro genérico, limites persistentes e falha
+fechada. Testam origem local, tamanho do corpo e ausência de dados/logs sensíveis.
+Scripts novos recusam Docker remoto, URLs remotas e contextos maliciosos antes
+de operar, inclusive modos `--check-local`, execução normal e SQL quando aplicável.
+O aplicador de migração também tem testes sem serviços para histórico inesperado,
+migração futura pendente, caminho já aplicado e chamada CLI fixada em `--local`.
+Nenhum SQL ou serviço real é executado por Vitest/build/lint.
+
+Navegador: o conector falhou antes de abrir páginas. O fallback usa Chrome já
+instalado, headless, perfil novo no cache ignorado de `node_modules`, sem leitura
+de cookies/storage pessoal. Passou login por @username/maiúsculas e por e-mail,
+perfil/username, recarga autenticada, logout, recarga desconectada e erro genérico.
+Não é aprovação manual do responsável nem revisão visual/responsiva completa.
+
+As primeiras execuções HTTP/navegador pararam em expectativas do teste (OPTIONS
+atendido pelo Kong e painel de username recolhido); foram corrigidas e repetidas
+integralmente. O build intermediário detectou declaração ausente do script novo;
+foi acrescentada sem ignorar o erro, e o build final passou. Não se removeram
+cenários para obter aprovação. Os tempos HTTP observados não provam tempo constante.
+
+Sem acesso hospedado, link/push/reset/publicação, staging ou commit. Migração nova
+`20261027000100` aplicada somente localmente, sem reescrever as anteriores.
+Sessão oficial contém e-mail do próprio titular após senha válida; não há lookup
+público de e-mail. JWT emitido pode durar até expirar após logout, embora refresh
+tenha sido revogado no teste real. Operação, limites e roteiro manual completo em
+[username-login-local.md](username-login-local.md).
+
 ## Comandos
 
 Após `npm ci`:

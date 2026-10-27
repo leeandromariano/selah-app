@@ -1,5 +1,9 @@
 # Etapa 20 — auditoria técnica antes da implantação
 
+> Atualização 21.5: ver seção 16 e [login local](username-login-local.md) para o
+> endpoint público de senha, sessão oficial e limites de abuso. A auditoria original
+> e seus resultados históricos não constituem liberação para implantação.
+
 > As seções 1–11 preservam o diagnóstico histórico da Etapa 20. A correção de
 > scripts da Etapa 21.1 está na seção 12; ambientes da Etapa 21.2 na seção 13. O estado antigo
 > de B02 e as contagens históricas abaixo não descrevem essa revisão posterior.
@@ -547,3 +551,65 @@ Preparação do commit repetiu 189 testes em 22 arquivos, build/lint aprovados e
 118 SQL com rollback, além de preflight e metadados reais locais. STAGING/PROD
 recusaram os builds. As verificações HTTP continuam resultados da implementação,
 sem reexecução agora. Migrações/funcionalidades não foram modificadas na preparação.
+
+## 16. Etapa 21.5 — autenticação por username no servidor local
+
+Base `1bc58bd`, branch `feat/local-auth`, árvore inicialmente limpa. Username ou
+e-mail entram no mesmo endpoint de Edge Function; só o servidor consulta a
+associação privada. Supabase Auth 2.118.0 valida senha/confirmação e emite os
+tokens; `auth.setSession` preserva os mecanismos oficiais de sessão e eventos.
+Não há RPC pública de resolução, chaves privilegiadas no frontend, senha/hash
+validado manualmente, login por WhatsApp ou mudança de privilégios dos leitores.
+
+Migração incremental `20261027000100`: orçamento privado atômico de 10 tentativas
+por identificador/10 minutos e 60 globais/minuto. HMAC, horário e quantidade,
+sem identificador/IP/senha/token em claro; acesso de API revogado. Falhas de
+infraestrutura recusam acesso, sem fallback. Erros de credenciais/unconfirmed
+têm o mesmo 401/corpo, com piso de tempo e jitter; não se afirma tempo constante.
+
+Endpoint pré-login tem `verify_jwt=false`: a chave pública não autentica leitor.
+CORS local e senha não substituem limites contra abuso. Kong local ainda responde
+OPTIONS com wildcard; o handler recusou POST de origem inesperada no teste real.
+Auth nativo continua acessível, com sua configuração própria; a nova função não
+protege todas as rotas Auth. Não houve ensaio de esgotamento dessas rotas nativas.
+
+Novas evidências reais: 240 testes/24 arquivos, build/lint aprovados; 131 HTTP
+(41 login + 19 Auth + 31 username + 40 WhatsApp), 137 SQL com rollback e 11 cenários
+em Chrome isolado aprovados. Username/senha realmente autenticaram no Auth local;
+sessão persistiu após recarga e logout permaneceu após recarga. Telefone de outro
+leitor ficou invisível inclusive ao admin; concessão/revogação continuou no banco.
+STAGING/PROD recusaram os builds. Migrações anteriores e RLS foram preservadas.
+
+Pendências para qualquer uso hospedado: conexão dedicada com privilégios mínimos
+(runtime local usa PostgreSQL postgres), retenção/limpeza dos contadores, lock
+de dependências da função, TLS/proxy/limites de conexão, IP confiável e medidas
+contra esgotamento global/DoS. Reduzir exposição das portas Docker já identificada
+na auditoria. Requisições locais não comprovam isolamento de rede da máquina.
+JWT contém e-mail do próprio titular autenticado; não se garante ocultá-lo do
+titular. Logout revoga refresh, sem invalidar instantaneamente todo access token.
+Roteiro manual do responsável, limites práticos e comandos em
+[username-login-local.md](username-login-local.md). Produção não está liberada.
+
+### Encerramento do Prompt 34 — 27/10/2026
+
+Responsável aprovou 13 cenários manuais, registrados separadamente em
+`username-login-local.md` e `testing.md`, sem presumir outros aceites.
+Revisão confirmou Auth oficial, resolução apenas no servidor, erros sem dados
+de conta, limites atômicos, grants privados e RLS preservada. Identificou-se uma
+falha de classificação: status 0 de transporte do SDK e resposta sem sessão eram
+tratados como credenciais inválidas. Três testes reproduziram o problema; o
+adaptador corrigido retorna 503 genérico, conservando o contrato de autenticação.
+A automação de navegador também foi sincronizada com recarga/painel expandido,
+sem mudança funcional de tela. Não houve alteração de migrações ou permissões.
+
+Rodada final: 248 testes/24 arquivos, build e lint aprovados; 131 HTTP locais,
+12 Chrome automatizadas e 137 SQL no banco atual com rollback. Em PostgreSQL
+temporário sem rede ou volumes atuais, as sete migrações e outras 137 assertions
+passaram; um perfil legado sintético foi preservado. Teste global com 64 chamadas
+em lotes concorrentes admitiu exatamente 60 e recusou quatro. STAGING/PROD
+continuaram recusando builds. Os números da implementação acima são históricos.
+
+Sem bloqueador de Git remanescente nos cenários locais revisados. Permanecem
+pendentes os controles de infraestrutura, privilégios do runtime, retenção,
+dependências, dados legados e limites contra abuso já descritos. Falhas de rede
+foram simuladas em teste; não se afirma segurança integral ou prontidão pública.

@@ -1,5 +1,10 @@
 # Etapa 21.4 — WhatsApp e autorização de feedback
 
+> Atualização 21.5: login aceita username ou e-mail no servidor local; WhatsApp
+> não é identificador de login. Obrigatoriedade do número no cadastro e feedback
+> opcional/revogável permanecem. Ver [login local](username-login-local.md).
+> Referências a username futuro abaixo são históricas.
+
 Base `366f94a`, branch `feat/local-auth`, árvore inicialmente limpa. Implementação
 e testes somente no Supabase LOCAL. Nenhum envio de WhatsApp, publicação, commit,
 reset ou acesso remoto. STAGING/PROD continuam bloqueados.

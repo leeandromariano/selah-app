@@ -3,7 +3,7 @@ import type { Session } from '@supabase/supabase-js'
 
 export function authMessage(error: unknown) {
   const code = (error as { code?: string })?.code
-  if (code === 'invalid_credentials') return 'E-mail ou senha incorretos.'
+  if (code === 'invalid_credentials') return 'Usuário, e-mail ou senha inválidos. Confira os dados e a confirmação do e-mail.'
   if (code === 'email_not_confirmed') return 'Confirme seu e-mail antes de entrar.'
   if (code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit') return 'Muitas tentativas. Aguarde um pouco e tente novamente.'
   if (code === 'weak_password') return 'Escolha uma senha mais forte, com pelo menos 8 caracteres.'

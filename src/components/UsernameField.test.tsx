@@ -10,12 +10,14 @@ function mock(data: unknown = null) {
  return q
 }
 describe('username no perfil',()=>{
- it('mostra username existente sem oferecer alteração ou login personalizado',async()=>{
+ it('mostra username permanente e instrução atual de login sem oferecer alteração',async()=>{
   const q=mock({user_id:'reader',username:'pessoa_01'}),user=userEvent.setup()
   render(<UsernameField userId="reader" />)
   expect(supabase.from).not.toHaveBeenCalled()
   await user.click(screen.getByRole('button',{name:'Consultar meu username'}))
   expect(await screen.findByRole('status')).toHaveTextContent('pessoa_01')
+  expect(screen.getByRole('status')).toHaveTextContent('Use este nome ou seu e-mail para entrar')
+  expect(screen.queryByText(/funcionalidade futura|Não é usado para login/)).not.toBeInTheDocument()
   expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
   expect(q.insert).not.toHaveBeenCalled()
  })

@@ -1,5 +1,10 @@
 # Etapa 16 — autenticação exclusivamente local
 
+> Atualização 21.5: o formulário atual aceita username (com ou sem @) ou e-mail
+> pela função de servidor local, usando a mesma senha e sessão oficial. Ver
+> [arquitetura, operação e validações](username-login-local.md). As descrições e
+> resultados da Etapa 16 abaixo permanecem registros históricos.
+
 Branch: `feat/local-auth`, baseada no estado de referência `2e26222`.
 Não houve commit automático, publicação, migração, reset ou acesso remoto.
 
