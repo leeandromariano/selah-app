@@ -390,3 +390,123 @@ Verificações repetidas na preparação do commit: `npm.cmd run test:run` aprov
 com código 1 por variáveis genéricas herdadas de DEV, sem produzir artefato remoto.
 Os testes unitários também confirmam o bloqueio em código com contratos futuros
 válidos. Não houve mudança funcional durante esta preparação.
+
+## Etapa 21.3 — privacidade essencial
+
+Primeira implementação, depois ajustada abaixo, referência `76a6e94`: cadastro reduzido a e-mail/senha/confirmação, sem rascunho
+pessoal em Auth. Nome de exibição opcional/null em perfis; dados legados continuam
+editáveis/limpáveis. As expectativas antigas de campos obrigatórios foram adaptadas
+ao contrato aprovado, preservando os testes de validação de legados preenchidos.
+Migração incremental aplicada somente no banco local; inicial/RLS existentes intactos.
+
+`src/profiles/privacy.test.ts` e `src/components/AccountPrivacy.test.tsx` cobrem
+confirmação obrigatória, payload próprio mínimo, duplicidade, negações, erros sem
+diagnósticos privados, persistência simulada ao remontar, envio repetido pendente
+e desmontagem/troca de conta. Testes de perfil acrescentam nome null, nova UI sem
+campos legados e negação de resposta com ID estranho. O novo script tem regressão
+de entrypoint com destino remoto/contexto malicioso, sem rede real.
+
+Execuções desta etapa: **162 testes em 17 arquivos aprovados**, sem falhas/skip;
+`npm.cmd run build` e `npm.cmd run lint` aprovados, sem avisos de lint. Fronteiras
+Supabase simuladas nos testes React, sem importar cliente real ou executar SQL.
+
+Integrações realmente executadas novamente, exclusivamente locais com fixtures:
+Auth **19**, perfis **29**, acervo **35**, admin **41**, privacidade **30** verificações
+HTTP aprovadas. SQL: **59** existentes e **16** novas aprovadas, ambas com ROLLBACK.
+`node scripts/local-privacy-smoke.mjs --sql` executa a nova suíte; `--inventory`
+consulta somente metadados em READ ONLY/ROLLBACK; `--check-local` faz preflight.
+Sem flags, executa os 30 cenários HTTP. Nenhuma dessas ações integra test/build/lint.
+
+Os testes deixaram nove contas, sete devocionais e um pedido fictícios locais;
+grant de teste revogado, sem apagar contas/dados existentes. Registro de pedido
+não executa exclusão. Não houve validação nova de navegador, retenção ou atendimento
+humano/exclusão real. Ver inventário, impactos e roteiro em `privacy-essential.md`.
+`build:staging` e `build:prod` também foram executados: ambos recusados com código
+1 por variáveis genéricas DEV herdadas. Nenhum destino remoto foi configurado.
+
+## Ajuste aprovado da Etapa 21.3 — username obrigatório
+
+As decisões atuais substituem o contrato inicial acima: novas contas exigem
+username/e-mail/senha; nome pessoal opcional, WhatsApp e Instagram opcionais em
+Meu perfil para todos. Login por username é FUTURO. A primeira migração incremental
+de privacidade permanece intacta; nova `20261026000200` reserva username por trigger
+Auth transacional e UNIQUE, com RLS própria e sem modificar contas legadas.
+
+`src/profiles/username.test.ts`, `src/components/UsernameField.test.tsx` e os testes
+de Auth cobrem regras/normalização, payload mínimo, isolamento de resposta, legado,
+duplicidade, imutabilidade, erros genéricos e HTTP 500 sem code (comportamento
+observado no Auth local). Cadastro sem username não chama a fronteira Auth. Os
+testes antigos foram adaptados ao contrato aprovado, sem retirar validações de
+senha/e-mail ou validações de perfil legado. Entrypoint novo testa recusas de
+destinos remotos também em `--sql`; não há rede real na suíte React.
+
+Nesta revisão, SQL/RLS de username aprovou **18** verificações com ROLLBACK;
+autorização **59** e privacidade **16** passaram novamente com ROLLBACK. As fixtures
+Auth agora fornecem usernames válidos; nenhum trigger foi desligado ou assert
+removido. `node scripts/local-username-smoke.mjs` aprovou **30** verificações HTTP
+reais locais, incluindo duas requisições simultâneas com username canônico igual:
+um vencedor, rejeição do outro e somente uma conta gravada. Outras **3** verificações
+HTTP comprovaram conta legada criada antes da migração: login depois da migração,
+ausência de backfill e escolha pela própria sessão. Auth **19**, perfis **29**,
+acervo **35**, admin **41** e privacidade **30** HTTP passaram novamente neste ajuste.
+
+Duas execuções HTTP intermediárias pararam após nove verificações por asserção
+incompatível com o Auth local: HTTP 500 sem code, não o code esperado. O teste foi
+corrigido para exigir status 500, excluir rate limit e verificar unicidade/rollback
+real no banco, sem tratar falha como sucesso. Há duas fixtures não confirmadas
+retidas dessas tentativas; não foram apagadas. Na implementação, o agente não
+validou manualmente navegador, carga ou recuperação específica de conta legada não confirmada.
+Veja regras, restrições, riscos residuais e roteiro em `usernames-local.md`.
+
+Validação final do ajuste: `npm.cmd run test:run` aprovou **171 testes em 19
+arquivos**; `npm.cmd run build` e `npm.cmd run lint` aprovados, lint sem avisos.
+As contagens anteriores de 162/170 são etapas intermediárias, não testes omitidos.
+A migração adicional `20261026000300` permite UUID explícito na reserva, ainda
+exigindo igualdade com auth.uid() por RLS. SQL/HTTP de usernames foram repetidos
+após o reforço, aprovados (18/30). Um teste SQL de fixture legada existente comprovou
+reserva com seu próprio UUID, revertida com ROLLBACK. Não houve reescrita de migração.
+
+## Encerramento da Etapa 21.3 — validação manual do responsável
+
+Branch `feat/local-auth`, referência estável anterior `76a6e94`. O responsável
+informou **11/11 testes manuais aprovados**:
+
+1. Cadastro exige username, e-mail e senha.
+2. Cadastro com username válido funciona.
+3. Username inválido ou duplicado é rejeitado.
+4. E-mail de confirmação chega ao Mailpit.
+5. Confirmação e login funcionam.
+6. Username aparece em Meu perfil.
+7. Username não pode ser alterado após cadastro.
+8. Nome, WhatsApp e Instagram permanecem opcionais e editáveis.
+9. Campos opcionais persistem após recarga e novo login.
+10. Conta antiga pode entrar e escolher username.
+11. Acervo, histórico, administração e privacidade continuam funcionando.
+
+Essa validação manual é distinta dos testes React com fronteiras simuladas, dos
+testes HTTP reais locais, das assertions SQL com rollback e dos ensaios de
+infraestrutura. Username é obrigatório em novas contas, único/normalizado no
+banco e permanente; contatos/nome pessoal opcionais; login por username é FUTURO.
+Não há aprovação de infraestrutura remota, produção ou conformidade legal.
+
+Na preparação final foram executados novamente: **171 testes em 19 arquivos**;
+HTTP local **184** verificações (30 username, 29 perfis, 30 privacidade, 19 Auth,
+35 acervo e 41 admin); SQL **93** verificações (59 autorização, 16 privacidade
+e 18 username), todas aprovadas e com ROLLBACK nas suítes SQL.
+
+Também se validou a sequência completa em um PostgreSQL novo isolado: migração
+inicial e os três incrementos em ordem, as mesmas **93** verificações SQL com
+ROLLBACK e **4** verificações extras de preservação/reserva legada. Sem rede,
+portas ou volumes compartilhados; imagem existente sem pull, armazenamento tmpfs.
+Bootstrap de DDL Auth local sem dados, owners/ACL originais não copiados, roles de
+teste explícitas; não houve uma segunda pilha Supabase/HTTP completa. O contêiner
+novo foi parado e o runner temporário removido. Limites em `usernames-local.md`.
+
+As 3 verificações HTTP de legado registradas na implementação são anteriores,
+não repetidas nesta preparação. O legado atual foi exercitado por SQL no novo
+banco e pela validação manual do responsável. Não atribuir esses resultados a HTTP
+novo do agente. Nenhuma funcionalidade ou migração foi reescrita nesta preparação.
+`npm.cmd run build` e `npm.cmd run lint` também passaram novamente, código zero,
+lint sem avisos. `build:staging` e `build:prod` foram recusados com código 1 por
+variáveis genéricas DEV herdadas; contratos remotos válidos também permanecem
+bloqueados em código, conforme os testes unitários.

@@ -438,3 +438,80 @@ aprovação explícita para habilitação, infraestrutura exclusiva, callbacks/S
 HTTPS/headers/CORS/MFA, privacidade/menores, backup/restore e plano de implantação
 autorizado. Build recusado pode deixar `dist` DEV anterior intacto; não confundir
 presença de artefato com aprovação nem reutilizá-lo como produção.
+
+## 14. Etapa 21.3 — minimização e pedidos não destrutivos
+
+Referência `76a6e94`, árvore inicialmente limpa. Inventário real local de colunas,
+RLS, triggers/FKs e fluxos registrado em `privacy-essential.md`. Não se leram
+valores de contas/logs preexistentes para auditoria nem arquivos secretos.
+
+Na primeira implementação, o cadastro foi reduzido a e-mail/senha/confirmação, sem rascunho pessoal
+em Auth. Nome de exibição opcional por migração incremental local; campos legados
+preservados para acesso/correção/limpeza. Pedidos próprios de exclusão persistem
+com UUID e timestamp do servidor, RLS e grants mínimos; confirmação explícita,
+sem excluir/suspender contas, prazo prometido, notificações ou processamento automático.
+Inicial e políticas existentes não alteradas. Na primeira implementação de
+privacidade não houve nova função privilegiada; o ajuste de username abaixo
+acrescenta um trigger Auth com função SECURITY DEFINER restrita.
+
+Verificações executadas: 162 testes em 17 arquivos, build DEV e lint aprovados;
+HTTP locais 19 Auth / 29 perfis / 35 acervo / 41 admin / 30 privacidade aprovados;
+59 SQL existentes + 16 novos aprovados com ROLLBACK. Nove contas, sete devocionais
+e um pedido fictícios retidos localmente; grant temporário revogado. Sem apagar
+contas/dados preexistentes, commit, reset, migração ou acesso remoto. STAGING/PROD
+continuam bloqueados. Nenhuma validação manual nova de navegador foi declarada.
+
+B03/M01 avançam tecnicamente, mas **não estão encerrados para implantação**:
+metadados legados, retenção/logs/backup, público/menores, finalidade do histórico,
+aviso/canal/responsável e atendimento de pedidos exigem decisões proporcionais
+do responsável. Cadastro local continua habilitado sem novo controle de convites.
+A fila local não é serviço de exclusão completo; remoção de autores tem FK RESTRICT.
+M02 (métricas) e demais riscos de sessão/infraestrutura permanecem. Não há parecer
+de conformidade legal, dispensa normativa por uso entre amigos ou liberação pública.
+
+### Ajuste de produto da Etapa 21.3 — usernames
+
+Decisões aprovadas implementadas: username obrigatório em novas contas, nome
+pessoal opcional, WhatsApp/Instagram opcionais em Meu perfil; login por username
+permanece FUTURO. Migração adicional `20261026000200`, aplicada somente localmente,
+sem reescrever as anteriores. Trigger de INSERT Auth com SECURITY DEFINER, dono
+postgres, search_path vazio, sem EXECUTE público e sem SQL dinâmico; reserva
+atômica em tabela RLS com UNIQUE/CHECK. Cadastros diretos sem username falham,
+inclusive antes da confirmação. Legados continuam entrando sem backfill destrutivo.
+Não há diretório público, associação pública a e-mail, customização de autenticação
+ou privilégio derivado de username/metadata. Username imutável nesta versão.
+O reforço incremental `20261026000300` vincula o INSERT ao UUID explícito da
+conta de origem, com RLS contra troca de identidade durante sessão pendente;
+SQL/HTTP de usernames foram repetidos e passaram, incluindo UUID alheio negado.
+
+SQL/RLS 18 novos + 59 autorização + 16 privacidade aprovados com ROLLBACK.
+HTTP local 30 usernames (inclui concorrência real de dois signups), 3 de legado,
+19 Auth/29 perfis/35 acervo/41 admin/30 privacidade aprovados. Duas execuções
+intermediárias pararam por expectativa incorreta de code de erro; identificou-se
+HTTP 500 sem code e criou-se regressão/mensagem segura. Reservas não confirmadas
+dessas fixtures foram preservadas. Inventário e limites em `usernames-local.md`.
+Ocupação de nomes antes da confirmação, retenção, convites, atendimento de pedidos,
+metadados legados e infraestrutura continuam decisões/riscos pendentes. A condição
+de segurança de frontend não substitui RLS, servidor confiável ou análise normativa.
+
+Validação final do ajuste: 171 testes em 19 arquivos, build DEV e lint aprovados,
+sem avisos de lint. STAGING/PROD recusaram build com código 1 por configuração
+genérica DEV herdada, sem destino remoto. Após o reforço de vínculo à sessão,
+18 SQL de username e 30 HTTP foram repetidos e passaram; reserva de legado com
+UUID próprio passou em transação revertida. Também se repetiram os 59/16 SQL
+existentes com rollback. Migrações anteriores não reescritas, nenhuma conta apagada.
+
+### Encerramento da Etapa 21.3
+
+Responsável informou 11/11 testes manuais locais aprovados, registrados em
+`usernames-local.md` e `testing.md`. Preparação final repetiu 171 testes em 19
+arquivos, 184 verificações HTTP no stack local e 93 SQL com rollback. Sequência
+inicial + três migrações incrementais também passou num PostgreSQL novo, separado,
+sem rede/portas/volumes compartilhados: 93 SQL com rollback e quatro verificações
+extras de preservação/registro de legado. O schema Auth foi copiado apenas como
+DDL sem dados e sem owners/ACL originais; bootstrap de roles explícito. Não foi
+ensaiada outra pilha Supabase completa ou HTTP no banco isolado. Contêiner de
+teste parado; runner removido. As três verificações HTTP legadas anteriores não
+foram reexecutadas agora. Essas evidências não liberam implantação pública.
+Nesta preparação, build DEV e lint também passaram, sem avisos de lint;
+builds STAGING/PROD foram novamente recusados com código 1, sem conexão remota.

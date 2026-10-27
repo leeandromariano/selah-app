@@ -26,6 +26,21 @@ function open() {
 }
 
 describe('perfil do leitor', () => {
+  it('novo perfil permite contatos opcionais e nome vazio, sem perguntar faixa etária', async () => {
+    const table = mockTable(null)
+    table.single.mockResolvedValueOnce({ data: { ...saved, name: null, phone: null, age_range: null, instagram: null }, error: null } as never)
+    location.hash = 'perfil'
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id, user_metadata: {} } } }, error: null } as never)
+    const user = userEvent.setup()
+    render(<App />)
+    expect(await screen.findByLabelText('Nome de exibição (opcional)')).toHaveValue('')
+    expect(screen.queryByLabelText(/Faixa etária/i)).not.toBeInTheDocument()
+    expect(screen.getByLabelText('WhatsApp (opcional)')).toHaveValue('')
+    expect(screen.getByLabelText('Instagram (opcional)')).toHaveValue('')
+    await user.click(screen.getByRole('button', { name: 'Salvar perfil' }))
+    expect(await screen.findByRole('status')).toHaveTextContent('Perfil salvo')
+    expect(table.insert).toHaveBeenCalledWith({ id, name: null, phone: null, age_range: null, instagram: null })
+  })
   it('bloqueia visitante sem consultar o banco', async () => {
     location.hash = 'perfil'
     render(<App />)
@@ -37,11 +52,11 @@ describe('perfil do leitor', () => {
     const table = mockTable()
     const user = userEvent.setup()
     const view = open()
-    expect(await screen.findByLabelText('Nome completo')).toHaveValue(saved.name)
+    expect(await screen.findByLabelText('Nome de exibição (opcional)')).toHaveValue(saved.name)
     expect(table.eq).toHaveBeenCalledWith('id', id)
     expect(screen.getAllByRole('textbox')).toHaveLength(3)
-    await user.clear(screen.getByLabelText('Nome completo'))
-    await user.type(screen.getByLabelText('Nome completo'), 'Nome Atualizado')
+    await user.clear(screen.getByLabelText('Nome de exibição (opcional)'))
+    await user.type(screen.getByLabelText('Nome de exibição (opcional)'), 'Nome Atualizado')
     const updated = { ...saved, name: 'Nome Atualizado' }
     table.single.mockResolvedValueOnce({ data: updated, error: null })
     await user.click(screen.getByRole('button', { name: 'Salvar perfil' }))
@@ -51,7 +66,7 @@ describe('perfil do leitor', () => {
     table.maybeSingle.mockResolvedValue({ data: updated, error: null })
     view.unmount()
     open()
-    expect(await screen.findByLabelText('Nome completo')).toHaveValue(updated.name)
+    expect(await screen.findByLabelText('Nome de exibição (opcional)')).toHaveValue(updated.name)
   })
 
   it('perfil ausente usa apenas rascunho permitido e cria explicitamente com id da sessão', async () => {
@@ -59,7 +74,7 @@ describe('perfil do leitor', () => {
     const user = userEvent.setup()
     open()
     expect(await screen.findByText(/perfil ainda não foi criado/)).toBeVisible()
-    expect(screen.getByLabelText('Nome completo')).toHaveValue('Rascunho Fictício')
+    expect(screen.getByLabelText('Nome de exibição (opcional)')).toHaveValue('Rascunho Fictício')
     expect(table.insert).not.toHaveBeenCalled()
     await user.click(screen.getByRole('button', { name: 'Salvar perfil' }))
     expect(await screen.findByRole('status')).toHaveTextContent('Perfil salvo')
@@ -74,7 +89,7 @@ describe('perfil do leitor', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('não tem autorização')
     expect(screen.queryByRole('button', { name: 'Salvar perfil' })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Tentar novamente' }))
-    expect(await screen.findByLabelText('Nome completo')).toHaveValue(saved.name)
+    expect(await screen.findByLabelText('Nome de exibição (opcional)')).toHaveValue(saved.name)
     expect(table.insert).not.toHaveBeenCalled()
   })
 
@@ -83,7 +98,7 @@ describe('perfil do leitor', () => {
     table.maybeSingle.mockRejectedValueOnce(new Error('offline'))
     open()
     expect(await screen.findByRole('alert')).toHaveTextContent('Verifique sua conexão')
-    expect(screen.queryByLabelText('Nome completo')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Nome de exibição (opcional)')).not.toBeInTheDocument()
     expect(table.insert).not.toHaveBeenCalled()
   })
 
@@ -92,10 +107,10 @@ describe('perfil do leitor', () => {
     table.single.mockResolvedValueOnce({ data: null, error: { code: '42501' } })
     const user = userEvent.setup()
     open()
-    await screen.findByLabelText('Nome completo')
+    await screen.findByLabelText('Nome de exibição (opcional)')
     await user.click(screen.getByRole('button', { name: 'Salvar perfil' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('não tem autorização')
-    expect(screen.getByLabelText('Nome completo')).toHaveValue(saved.name)
+    expect(screen.getByLabelText('Nome de exibição (opcional)')).toHaveValue(saved.name)
     expect(screen.queryByText('Perfil salvo com sucesso.')).not.toBeInTheDocument()
   })
 
@@ -105,8 +120,8 @@ describe('perfil do leitor', () => {
     table.single.mockReturnValueOnce(new Promise(resolve => { finish = resolve }))
     const user = userEvent.setup()
     open()
-    await screen.findByLabelText('Nome completo')
-    await user.clear(screen.getByLabelText('Celular com DDD (opcional)'))
+    await screen.findByLabelText('Nome de exibição (opcional)')
+    await user.clear(screen.getByLabelText('WhatsApp (opcional)'))
     await user.clear(screen.getByLabelText('Instagram (opcional)'))
     await user.selectOptions(screen.getByLabelText('Faixa etária (opcional)'), '')
     await user.click(screen.getByRole('button', { name: 'Salvar perfil' }))
@@ -127,7 +142,7 @@ describe('perfil do leitor', () => {
     await screen.findByText('Carregando seu perfil…')
     act(() => { vi.mocked(supabase.auth.onAuthStateChange).mock.calls.at(-1)![0]('SIGNED_OUT', null) })
     await act(async () => { finish({ data: saved, error: null }) })
-    expect(screen.queryByLabelText('Nome completo')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Nome de exibição (opcional)')).not.toBeInTheDocument()
     expect(screen.getByRole('alert')).toHaveTextContent('Entre na sua conta')
   })
 
@@ -135,9 +150,9 @@ describe('perfil do leitor', () => {
     const table = mockTable()
     const user = userEvent.setup()
     open()
-    await screen.findByLabelText('Nome completo')
-    await user.clear(screen.getByLabelText('Celular com DDD (opcional)'))
-    await user.type(screen.getByLabelText('Celular com DDD (opcional)'), '123')
+    await screen.findByLabelText('Nome de exibição (opcional)')
+    await user.clear(screen.getByLabelText('WhatsApp (opcional)'))
+    await user.type(screen.getByLabelText('WhatsApp (opcional)'), '123')
     await user.click(screen.getByRole('button', { name: 'Salvar perfil' }))
     expect(screen.getByRole('alert')).toHaveTextContent('Informe celular com DDD')
     expect(table.update).not.toHaveBeenCalled()

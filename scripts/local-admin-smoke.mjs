@@ -19,7 +19,7 @@ try {
     const client = makeClient()
     const email = `selah-editor-${randomUUID()}@example.invalid`
     const password = `Fiction-${randomUUID()}!`
-    const result = await client.auth.signUp({ email, password, options: { emailRedirectTo: 'http://127.0.0.1:5173', data: { role: 'admin' } } })
+    const result = await client.auth.signUp({ email, password, options: { emailRedirectTo: 'http://127.0.0.1:5173', data: { username: 'u' + randomUUID().replaceAll('-', '').slice(0,20), role: 'admin' } } })
     check(!result.error && result.data.user && !result.data.session, 'synthetic account awaits confirmation')
     let link
     for (let attempt = 0; attempt < 20 && !link; attempt++) {

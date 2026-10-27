@@ -15,7 +15,7 @@ async function reader() {
   const client = makeClient()
   const email = `selah-profile-${randomUUID()}@example.invalid`
   const password = `Fiction-${randomUUID()}!`
-  const { data, error } = await client.auth.signUp({ email, password, options: { emailRedirectTo: 'http://127.0.0.1:5173', data: { role: 'admin', profile: { name: 'Leitor Fictício', phone: '+5511999990000', age_range: '25_34', instagram: null } } } })
+  const { data, error } = await client.auth.signUp({ email, password, options: { emailRedirectTo: 'http://127.0.0.1:5173', data: { username: 'u' + randomUUID().replaceAll('-', '').slice(0,20), role: 'admin', profile: { name: 'Leitor Fictício', phone: '+5511999990000', age_range: '25_34', instagram: null } } } })
   check(!error && data.user && !data.session, 'synthetic reader awaits confirmation')
   let link
   for (let attempt = 0; attempt < 20 && !link; attempt++) {

@@ -116,3 +116,15 @@ O rascunho do cadastro permanece nos metadados Auth; alterações futuras no per
 usam a tabela, sem sincronizar o rascunho. Na Etapa 18.2, o acervo dos leitores
 e suas aberturas passam a persistir no banco. Na Etapa 19, o painel persiste
 conteúdo usando exclusivamente sessão administrativa local; ver admin-local.md.
+
+## Atualização da Etapa 21.3
+
+Nome pessoal agora é opcional/null. Cadastro novo não envia rascunho de perfil
+para Auth; envia username para reserva única. WhatsApp/Instagram opcionais estão
+disponíveis em todos os perfis; faixa etária só para revisão de dados legados.
+A migração incremental `20261026000100` é necessária antes de usar esse frontend.
+Meu perfil registra pedido confirmado de exclusão, sem apagar dados. Detalhes e
+resultados atuais em `privacy-essential.md`; as seções anteriores preservam
+o histórico da implementação original e seus testes.
+Username pode ser consultado pelo titular ou escolhido por conta legada; não muda
+após a escolha nesta versão. Login por username é FUTURO. Ver `usernames-local.md`.

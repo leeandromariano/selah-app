@@ -11,6 +11,12 @@ export function authMessage(error: unknown) {
   return 'Não foi possível concluir. Verifique sua conexão e tente novamente.'
 }
 
+export function signupMessage(error: unknown) {
+  const failure = error as { status?: number; code?: string }
+  if (failure?.status === 500 || failure?.code === 'unexpected_failure' || failure?.code === 'database_error') return 'Cadastro não concluído. O username pode estar indisponível ou houve uma falha temporária. Confira as regras, tente outro username ou tente novamente mais tarde.'
+  return authMessage(error)
+}
+
 export const AuthContext = createContext<{
   session: Session | null; loading: boolean; recovery: boolean; admin: boolean; adminLoading: boolean; error: string;
   logout: () => Promise<void>; finishRecovery: () => void;

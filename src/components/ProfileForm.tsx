@@ -5,6 +5,8 @@ import { supabase } from '../lib/supabase'
 import { ageRanges, createProfileRepository, profileFields, profileMessage } from '../profiles/profile'
 import type { Profile, ProfileFields } from '../profiles/profile'
 import { Heading } from './UI'
+import { AccountPrivacy } from './AccountPrivacy'
+import { UsernameField } from './UsernameField'
 
 const repository = createProfileRepository(supabase)
 const blank: ProfileFields = { name: '', phone: null, age_range: null, instagram: null }
@@ -21,6 +23,7 @@ function ReaderProfile({ userId, metadata }: { userId: string; metadata: Record<
   const [initialMetadata] = useState(metadata)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [fields, setFields] = useState<ProfileFields>(blank)
+  const [legacyFields, setLegacyFields] = useState(false)
   const [loading, setLoading] = useState(true)
   const [ready, setReady] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -35,6 +38,7 @@ function ReaderProfile({ userId, metadata }: { userId: string; metadata: Record<
       // Metadata is only a draft for this user's editable fields, never authorization.
       const draft = initialMetadata?.profile
       const candidate = draft && typeof draft === 'object' ? draft as Record<string, unknown> : {}
+      setLegacyFields(Boolean(data ? data.age_range : candidate.age_range))
       setFields(data ?? { name: typeof candidate.name === 'string' ? candidate.name : '', phone: typeof candidate.phone === 'string' ? candidate.phone : null, age_range: typeof candidate.age_range === 'string' ? candidate.age_range : null, instagram: typeof candidate.instagram === 'string' ? candidate.instagram : null })
       setReady(true); setError(''); setLoading(false)
     }).catch(error => { if (active) { setError(profileMessage(error)); setLoading(false) } })
@@ -60,12 +64,16 @@ function ReaderProfile({ userId, metadata }: { userId: string; metadata: Record<
       {!profile && <div className="info">Seu perfil ainda não foi criado. Confira seus dados e salve para concluir.</div>}
       {message && <div className="success" role="status">{message}</div>}
       <form className="form-grid" onSubmit={submit} noValidate>
-        <label className="full-width">Nome completo<input name="name" autoComplete="name" maxLength={150} value={fields.name} onChange={e => change('name', e.target.value)} /></label>
-        <label>Celular com DDD (opcional)<input name="phone" type="tel" autoComplete="tel" placeholder="(11) 99999-0000 ou +5511999990000" value={fields.phone ?? ''} onChange={e => change('phone', e.target.value)} /></label>
+        <label className="full-width">Nome de exibição (opcional)<input name="name" autoComplete="nickname" maxLength={150} value={fields.name ?? ''} onChange={e => change('name', e.target.value)} /></label>
+        <label>WhatsApp (opcional)<input name="phone" type="tel" autoComplete="tel" placeholder="(11) 99999-0000 ou +5511999990000" value={fields.phone ?? ''} onChange={e => change('phone', e.target.value)} /></label>
+        {legacyFields && <><p className="full-width">Faixa etária legada: pode ser corrigida ou limpa. Limpar o perfil não remove cópias antigas de Auth.</p>
         <label>Faixa etária (opcional)<select name="age_range" value={fields.age_range ?? ''} onChange={e => change('age_range', e.target.value)}><option value="">Prefiro não informar</option>{ageRanges.map((range, index) => <option value={range} key={range}>{labels[index]}</option>)}</select></label>
+        </>}
         <label>Instagram (opcional)<input name="instagram" maxLength={31} value={fields.instagram ?? ''} onChange={e => change('instagram', e.target.value)} /></label>
         <button className="button primary full-width" disabled={saving}>{saving ? 'Salvando…' : 'Salvar perfil'}</button>
       </form>
     </>}
+    <AccountPrivacy userId={userId} />
+    <UsernameField userId={userId} />
   </section></>
 }

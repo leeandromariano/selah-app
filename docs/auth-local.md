@@ -104,3 +104,13 @@ Validação final: 22 testes automatizados aprovados em cinco arquivos,
 
 Referências: [Auth por senha](https://supabase.com/docs/guides/auth/passwords) e
 [eventos de sessão](https://supabase.com/docs/reference/javascript/auth-onauthstatechange).
+
+## Atualização da Etapa 21.3
+
+Cadastro novo solicita username obrigatório, e-mail, senha e confirmação, sem
+nome/WhatsApp/idade/Instagram e sem `options.data.profile`. Apenas username é enviado
+nos metadados para reserva no banco. Login por username é FUTURO; continua e-mail.
+Nome pessoal opcional é editado em
+Meu perfil. Metadados antigos não foram apagados. Ver `privacy-essential.md` para
+o inventário e as novas verificações; os registros anteriores são históricos.
+Detalhes do trigger, concorrência, legado e testes atuais em `usernames-local.md`.

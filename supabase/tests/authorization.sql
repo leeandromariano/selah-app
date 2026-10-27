@@ -31,10 +31,10 @@ end;
 $$;
 
 -- Auth fixtures have no passwords and cannot be used to sign in.
-insert into auth.users (id, email) values
- ('10000000-0000-4000-8000-000000000001', 'reader-one@example.invalid'),
- ('10000000-0000-4000-8000-000000000002', 'reader-two@example.invalid'),
- ('10000000-0000-4000-8000-000000000003', 'admin@example.invalid');
+insert into auth.users (id, email, raw_user_meta_data) values
+ ('10000000-0000-4000-8000-000000000001', 'reader-one@example.invalid', jsonb_build_object('username','sql_' || left(replace(gen_random_uuid()::text,'-',''),20))),
+ ('10000000-0000-4000-8000-000000000002', 'reader-two@example.invalid', jsonb_build_object('username','sql_' || left(replace(gen_random_uuid()::text,'-',''),20))),
+ ('10000000-0000-4000-8000-000000000003', 'admin@example.invalid', jsonb_build_object('username','sql_' || left(replace(gen_random_uuid()::text,'-',''),20)));
 insert into private.admin_users (user_id) values ('10000000-0000-4000-8000-000000000003');
 insert into public.profiles (id, name, age_range) values
  ('10000000-0000-4000-8000-000000000002', 'Pessoa fictícia dois', '25_34');

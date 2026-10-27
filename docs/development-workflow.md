@@ -8,6 +8,18 @@ O cliente em `src/lib/supabase.ts` é usado pela autenticação e exige DEV em 1
 
 ## Três ambientes
 
+Na Etapa 21.3 ajustada, cadastro solicita username obrigatório/e-mail/senha/confirmação.
+Nome pessoal, WhatsApp e Instagram são opcionais em Meu perfil; faixa etária legada
+fica disponível para correção/limpeza, sem apagar
+metadados Auth existentes. Meu perfil permite registrar pedido confirmado de
+exclusão, sem excluir/suspender conta automaticamente. Requer migração incremental
+local `20261026000100`; nenhuma migração remota autorizada. Inventário, decisões
+pendentes, aplicação local protegida e roteiro em `privacy-essential.md`.
+O ajuste de username requer também `20261026000200`, com trigger transacional do
+Auth e índice único, sem backfill destrutivo, e `20261026000300` para vínculo
+explícito da sessão na reserva. Ver `usernames-local.md`; login por
+username não é implementado nesta entrega.
+
 A Etapa 18.1 acrescenta `#perfil`: leitura, criação explícita e atualização do
 próprio perfil pelo cliente público com sessão, persistindo no PostgreSQL local.
 O cadastro envia um rascunho de campos pessoais nos metadados de Auth; depois da

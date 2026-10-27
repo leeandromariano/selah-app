@@ -5,6 +5,35 @@ import { supabase } from '../lib/supabase'
 import { AuthForm } from './AuthForm'
 
 describe('formulários de autenticação', () => {
+  it('erro interno de login continua genérico, sem confundir com cadastro/username', async () => {
+    vi.mocked(supabase.auth.signInWithPassword).mockResolvedValueOnce({ error: { status: 500, code: 'unexpected_failure' } } as never)
+    const user = userEvent.setup()
+    render(<AuthForm register={false} />)
+    await user.type(screen.getByLabelText('E-mail'),'fiction@example.invalid')
+    await user.type(screen.getByLabelText('Senha'),'fiction-password')
+    await user.click(screen.getByRole('button',{name:/Entrar/}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível concluir')
+    expect(screen.queryByText(/Cadastro não concluído/)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Username')).not.toBeInTheDocument()
+  })
+  it('recusa cadastro sem username mesmo com e-mail e senha válidos', async () => {
+    const user = userEvent.setup()
+    render(<AuthForm register />)
+    for(const [label,value] of [['E-mail','fiction@example.invalid'],['Senha','fiction-password'],['Confirmar senha','fiction-password']]) await user.type(screen.getByLabelText(label),value)
+    await user.click(screen.getByRole('button',{name:/Criar conta/}))
+    expect(screen.getByText(/Use de 3 a 24/)).toBeVisible()
+    expect(supabase.auth.signUp).not.toHaveBeenCalled()
+  })
+  it('trata rejeição HTTP 500 sem code do Auth sem expor diagnóstico ou email de terceiros', async () => {
+    vi.mocked(supabase.auth.signUp).mockResolvedValueOnce({ error: { status: 500, message: 'private other@example.invalid' } } as never)
+    const user = userEvent.setup()
+    render(<AuthForm register />)
+    for(const [label,value] of [['Username','pessoa_01'],['E-mail','fiction@example.invalid'],['Senha','fiction-password'],['Confirmar senha','fiction-password']]) await user.type(screen.getByLabelText(label),value)
+    await user.click(screen.getByRole('button',{name:/Criar conta/}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('username pode estar indisponível')
+    expect(screen.queryByText(/other@example/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
   it('rejeita entrada inválida e foca o primeiro campo com erro', async () => {
     const user = userEvent.setup()
     render(<AuthForm register={false} />)
@@ -21,18 +50,18 @@ describe('formulários de autenticação', () => {
   it('cadastra com confirmação, limpa campos e usa somente a fronteira simulada', async () => {
     const user = userEvent.setup()
     render(<AuthForm register />)
+    for (const label of [/Nome/i, /Celular/i, /Idade/i, /Instagram/i]) expect(screen.queryByLabelText(label)).not.toBeInTheDocument()
     for (const [label, value] of [
-      ['Nome completo', 'Pessoa Fictícia'], ['Celular com DDD', '(11) 99999-0000'],
-      ['Idade', '25'], ['E-mail', 'pessoa@example.test'],
+      ['Username', ' Pessoa_01 '], ['E-mail', 'pessoa@example.test'],
       ['Senha', 'senha-ficticia'], ['Confirmar senha', 'senha-ficticia'],
     ]) await user.type(screen.getByLabelText(label), value)
     await user.click(screen.getByRole('button', { name: /Criar conta/ }))
     expect(await screen.findByRole('status')).toHaveTextContent('Confirme seu endereço')
-    expect(supabase.auth.signUp).toHaveBeenCalledWith({ email: 'pessoa@example.test', password: 'senha-ficticia', options: { emailRedirectTo: location.origin, data: { profile: { name: 'Pessoa Fictícia', phone: '+5511999990000', age_range: '25_34', instagram: null } } } })
+    expect(supabase.auth.signUp).toHaveBeenCalledWith({ email: 'pessoa@example.test', password: 'senha-ficticia', options: { emailRedirectTo: location.origin, data: { username: 'pessoa_01' } } })
     expect(screen.getByLabelText('E-mail')).toHaveValue('')
     expect(screen.getByLabelText('Senha')).toHaveValue('')
     expect(fetch).not.toHaveBeenCalled()
-    await user.type(screen.getByLabelText('Nome completo'), 'Outra pessoa')
+    await user.type(screen.getByLabelText('E-mail'), 'outra@example.invalid')
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 
@@ -41,8 +70,7 @@ describe('formulários de autenticação', () => {
     render(<AuthForm register />)
     await user.type(screen.getByLabelText('Senha'), 'senha-ficticia')
     await user.click(screen.getByRole('button', { name: /Criar conta/ }))
-    for (const message of ['Informe nome e sobrenome.', 'Informe DDD e celular com 9 dígitos.',
-      'Informe uma idade entre 1 e 120 anos.', 'As senhas precisam ser iguais.']) {
+    for (const message of ['Informe um e-mail válido.', 'As senhas precisam ser iguais.']) {
       expect(screen.getByText(message)).toBeVisible()
     }
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
@@ -83,7 +111,7 @@ describe('formulários de autenticação', () => {
     vi.mocked(supabase.auth.signUp).mockRejectedValueOnce(new Error('offline'))
     const user = userEvent.setup()
     render(<AuthForm register />)
-    for (const [label, value] of [['Nome completo', 'Pessoa Fictícia'], ['Celular com DDD', '(11) 99999-0000'], ['Idade', '25'], ['E-mail', 'fiction@example.invalid'], ['Senha', 'fiction-password'], ['Confirmar senha', 'fiction-password']]) await user.type(screen.getByLabelText(label), value)
+    for (const [label, value] of [['Username', 'pessoa_02'], ['E-mail', 'fiction@example.invalid'], ['Senha', 'fiction-password'], ['Confirmar senha', 'fiction-password']]) await user.type(screen.getByLabelText(label), value)
     await user.click(screen.getByRole('button', { name: /Criar conta/ }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Verifique sua conexão')
     expect(screen.getByLabelText('E-mail')).toHaveValue('fiction@example.invalid')
