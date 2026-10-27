@@ -5,16 +5,17 @@ import { supabase } from '../lib/supabase'
 import { adminMessage, createAdminRepository, dateTimeInput, publicationInstant, statusLabels } from '../admin/repository'
 import type { AdminDevotional, DevotionalInput, DevotionalStatus } from '../admin/repository'
 import { Heading, Icon } from './UI'
+import { CommunityPanel } from './CommunityPanel'
 
 const repository = createAdminRepository(supabase)
 const blank: DevotionalInput = { title: '', bible_reference: '', bible_text: '', content: '', reflection_question: '', publish_at: null, status: 'draft' }
-export function AdminPanel() {
+export function AdminPanel({ community = false }: { community?: boolean }) {
   const { session, loading, adminLoading, admin, recovery } = useAuth()
   if (loading || adminLoading) return <p role="status">Verificando acesso administrativo…</p>
   if (!session || !admin || recovery) return <div className="info" role="alert">Acesso restrito a administradores.</div>
-  return <EditorialPanel key={session.user.id} userId={session.user.id} />
+  return <EditorialPanel key={session.user.id} userId={session.user.id} community={community} />
 }
-function EditorialPanel({ userId }: { userId: string }) {
+function EditorialPanel({ userId, community }: { userId: string; community: boolean }) {
   const [items, setItems] = useState<AdminDevotional[]>([])
   const [loading, setLoading] = useState(true)
   const [ready, setReady] = useState(false)
@@ -49,6 +50,8 @@ function EditorialPanel({ userId }: { userId: string }) {
   function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); void save(false) }
   const format = (instant: string) => new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' }).format(new Date(instant))
   return <><Heading eyebrow="CUIDANDO DE CADA MENSAGEM" title="Painel administrativo" description="Crie, revise e publique mensagens para o acervo local." />
+    <button className="button secondary" aria-expanded={community} onClick={() => { location.hash = community ? 'admin' : 'admin/comunidade' }}>Comunidade e ofensivas</button>
+    {community && <CommunityPanel />}
     <div className="info">Agendados permanecem ocultos até uma publicação explícita. As datas da lista usam o horário de Brasília.</div>
     {loading ? <p role="status">Carregando painel…</p> : <>
       {error && <div className="info" role="alert">{error}</div>}

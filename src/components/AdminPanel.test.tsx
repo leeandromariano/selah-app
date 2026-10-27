@@ -15,6 +15,24 @@ async function fill(user: ReturnType<typeof userEvent.setup>) {
   for (const [label, value] of [['Título', 'Novo Texto Fictício'], ['Referência bíblica', 'Ref fictícia'], ['Texto bíblico', 'Texto fictício'], ['Reflexão', 'Reflexão fictícia'], ['Para refletir', 'Pergunta fictícia?']]) await user.type(screen.getByLabelText(label), value)
 }
 describe('painel administrativo real', () => {
+  it('preserva comunidade após foco e renovação de sessão e remontagem', async () => {
+    adminBoundary()
+    const user = userEvent.setup()
+    const view = openAdmin()
+    await user.click(await screen.findByRole('button', { name: 'Comunidade e ofensivas' }))
+    expect(location.hash).toBe('#admin/comunidade')
+    fireEvent(window, new Event('blur'))
+    fireEvent(document, new Event('visibilitychange'))
+    act(() => { vi.mocked(supabase.auth.onAuthStateChange).mock.calls.at(-1)![0]('SIGNED_IN', { user: { id: editorialFixture.author_id } } as never) })
+    fireEvent(window, new Event('focus'))
+    expect(await screen.findByRole('heading', { name: 'COMUNIDADE E OFENSIVAS' })).toBeVisible()
+    view.unmount()
+    render(<App />)
+    expect(await screen.findByRole('heading', { name: 'COMUNIDADE E OFENSIVAS' })).toBeVisible()
+    vi.mocked(supabase.rpc).mockResolvedValueOnce({ data: null, error: { code: '42501' } } as never)
+    act(() => { vi.mocked(supabase.auth.onAuthStateChange).mock.calls.at(-1)![0]('TOKEN_REFRESHED', { user: { id: editorialFixture.author_id } } as never) })
+    await waitFor(() => expect(screen.queryByRole('heading', { name: 'COMUNIDADE E OFENSIVAS' })).not.toBeInTheDocument())
+  })
   it('exibe verificação de acesso durante autorização pendente, sem falso acesso negado', async () => {
     adminBoundary()
     let finish!: (value: unknown) => void

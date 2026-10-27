@@ -43,3 +43,37 @@ describe('aplicação incremental protegida da leitura', () => {
     } finally { process.exitCode=exit }
   })
 })
+
+describe('migração de consistência sem destino remoto ou alteração anterior', () => {
+  const base = [...previous, '20261028000100', '20261028000200']
+  const file = '20261028000300_reader_consistency.sql'
+  it('preflight bloqueado impede até consulta de histórico', async () => {
+    boundary.prepare.mockImplementation(() => { throw Error('unsafe target') })
+    await expect(import('../../scripts/apply-local-consistency-migration.mjs')).rejects.toThrow('unsafe target')
+    expect(boundary.psql).not.toHaveBeenCalled();expect(boundary.spawn).not.toHaveBeenCalled()
+  })
+  it('aplica somente a migração revisada via CLI local com Docker fixado', async () => {
+    setup(base);boundary.list.mockReturnValue([...files,file])
+    await import('../../scripts/apply-local-consistency-migration.mjs')
+    expect(boundary.spawn).toHaveBeenCalledExactlyOnceWith(process.execPath,['node_modules/supabase/dist/supabase.js','migration','up','--local'],{env:{DOCKER_HOST:'npipe:////./pipe/dockerDesktopLinuxEngine'},encoding:'utf8'})
+  })
+  it('migração já aplicada não dispara outra execução', async () => {
+    setup([...base,'20261028000300']);boundary.list.mockReturnValue([...files,file])
+    await import('../../scripts/apply-local-consistency-migration.mjs')
+    expect(boundary.spawn).not.toHaveBeenCalled()
+  })
+  it.each([[],['20261028000500']].map(versions=>[versions]))('incrementos OWNER conhecidos já aplicados não reaplicam consistência (%j)', async additional => {
+    setup([...base,'20261028000300','20261028000400',...additional]);boundary.list.mockReturnValue([...files,file,'20261028000400_owner_community.sql',...(additional.length?['20261028000500_owner_provision_audit.sql']:[])])
+    await import('../../scripts/apply-local-consistency-migration.mjs')
+    expect(boundary.spawn).not.toHaveBeenCalled()
+  })
+  it.each(['history','future-file'])('estado inesperado exige revisão: %s', async kind => {
+    setup(kind==='history'?previous:base)
+    boundary.list.mockReturnValue([file,...(kind==='future-file'?['20990101000000_unknown.sql']:[])])
+    const exit=process.exitCode
+    try {
+      await import('../../scripts/apply-local-consistency-migration.mjs')
+      expect(boundary.spawn).not.toHaveBeenCalled();expect(process.exitCode).toBe(1)
+    } finally { process.exitCode=exit }
+  })
+})

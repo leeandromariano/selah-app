@@ -17,8 +17,11 @@ const migrations = [
   '20261027000100_password_login_limits.sql',
   '20261028000100_reading_completions.sql',
   '20261028000200_reading_claims_access.sql',
+  '20261028000300_reader_consistency.sql',
+  '20261028000400_owner_community.sql',
+  '20261028000500_owner_provision_audit.sql',
 ]
-const suites = ['authorization','privacy-essential','usernames','whatsapp-feedback','password-login','reading-completions']
+const suites = ['authorization','privacy-essential','usernames','whatsapp-feedback','password-login','reading-completions','reader-consistency','owner-community','owner-provision-audit']
 let containerId, stage='local metadata preflight', databaseRole='supabase_admin'
 function command(args, options={}) {
   const result=docker.run(args,{encoding:'utf8',...options})
@@ -56,20 +59,22 @@ try {
     begin read only;
     select json_build_object('versions',(select json_agg(version order by version) from supabase_migrations.schema_migrations),
       'operation',(select prosrc from pg_proc where oid='private.reading_operation(uuid,text,uuid,bigint,uuid,bigint)'::regprocedure),
-      'identity',(select prosrc from pg_proc where oid='private.reading_identity()'::regprocedure));
+      'identity',(select prosrc from pg_proc where oid='private.reading_identity()'::regprocedure),
+      'consistency',(select prosrc from pg_proc where oid='public.get_my_consistency(date)'::regprocedure));
     rollback;`)
   const installed=JSON.parse(metadata.split(/\r?\n/).find(line=>line.startsWith('{'))??'null')
-  function body(name) {
-    const source=readFileSync('supabase/migrations/'+migrations.at(-1),'utf8').replaceAll('\r\n','\n')
-    const offset=source.indexOf('function private.'+name+'(')
+  function body(name,schema='private',file='20261028000200_reading_claims_access.sql') {
+    const source=readFileSync('supabase/migrations/'+file,'utf8').replaceAll('\r\n','\n')
+    const offset=source.indexOf('function '+schema+'.'+name+'(')
     const value=source.slice(offset).match(/as \$\$([\s\S]*?)\$\$;/)?.[1]
     if(offset<0||!value)throw Error('Missing candidate function')
     return value
   }
   if(installed?.versions.join(',')!==migrations.map(f=>f.slice(0,14)).join(',')
     ||installed.operation.replaceAll('\r\n','\n')!==body('reading_operation')
-    ||installed.identity.replaceAll('\r\n','\n')!==body('reading_identity'))throw Error('Installed local SQL differs from candidates')
-  console.log('PASS current local migration history and reading function bodies match candidates (read only)')
+    ||installed.identity.replaceAll('\r\n','\n')!==body('reading_identity')
+    ||installed.consistency.replaceAll('\r\n','\n')!==body('get_my_consistency','public','20261028000300_reader_consistency.sql'))throw Error('Installed local SQL differs from candidates')
+  console.log('PASS current local migration history and reading/consistency function bodies match candidates (read only)')
   const image=command(['inspect','--format','{{.Image}}','supabase_db_devocionais-app'])
   if(!/^sha256:[0-9a-f]{64}$/.test(image))throw Error('Invalid local image ID')
   const volumes=JSON.parse(command(['image','inspect','--format','{{json .Config.Volumes}}',image]))
@@ -146,7 +151,8 @@ try {
     const source=readFileSync('supabase/tests/'+suite+'.sql','utf8')
     const output=sql(source)
     if(!output.includes('ROLLBACK'))throw Error('Missing suite rollback')
-    const count=suite==='reading-completions' ? Number(output.match(/(\d+) reading SQL checks passed/)?.[1])
+    const dynamic=suite==='reading-completions'?'reading':suite==='reader-consistency'?'consistency':suite==='owner-community'?'owner':suite==='owner-provision-audit'?'owner audit':null
+    const count=dynamic ? Number(output.match(new RegExp('(\\d+) '+dynamic+' SQL checks passed'))?.[1])
       : (source.match(/select pg_temp\.(?:assert_true|denied|affected|rejected)\(/g)||[]).length
     if(!Number.isInteger(count)||count<1)throw Error('Invalid isolated check count')
     checks+=count;console.log(`PASS isolated ${suite}: ${count} SQL checks with rollback`)

@@ -1,5 +1,272 @@
 # Inventário e execução de testes
 
+## Etapa 22.2 — Prompt 43: conferência final
+
+Branch `feat/local-auth`, HEAD/base `31cb42d`. **58 arquivos candidatos: 17
+modificados e 41 novos**, incluindo os cinco arquivos individuais de
+`src/consistency`. Nenhum staging/commit. Esta rodada altera somente documentação
+versionável; código, testes e migrações candidatos preservados.
+
+Validação manual comunicada pelo responsável nesta sessão: **4/4 aprovados**:
+
+1. Calendário pessoal avança e retrocede vários meses.
+2. O mês selecionado permanece estável durante atualizações assíncronas.
+3. Alt+Tab não fecha a seção Comunidade e Ofensivas.
+4. F5 preserva a seção Comunidade e Ofensivas.
+
+São aprovações humanas, não casos executados pelo agente. Encerram a pendência
+manual das duas correções do Prompt 42. Não atribuímos aprovação a outros cenários.
+
+| Comando realmente repetido no Prompt 43 | Resultado |
+| --- | --- |
+| `npm.cmd run test:run` | **387 aprovados em 35 arquivos**, sem falhas/omitidos |
+| `npm.cmd run build` | DEV aprovado; JS 513,07 kB, gzip 146,04 kB; aviso acima de 500 kB |
+| `npm.cmd run lint` | Aprovado, sem avisos/erros |
+| `npm.cmd run build:staging` | Recusado, código 1: variáveis genéricas Supabase DEV não configuram STAGING/PROD |
+| `npm.cmd run build:prod` | Recusado, código 1, mesma proteção |
+| `node scripts/provision-local-owner.mjs --check-local` | Preflight aprovado; nenhuma conta inspecionada ou permissão concedida |
+| `node scripts/local-community-readonly-http.mjs` | **8 HTTP locais negativos** aprovados; sem login, leitura de token ou mutação |
+| `node scripts/verify-local-reading-install.mjs` | **12 migrações e 288 SQL/RLS** aprovadas em PostgreSQL novo isolado; rollback nas suítes; contêiner temporário encerrado |
+| `node scripts/audit-local-community.mjs` | READ ONLY/REPEATABLE READ/ROLLBACK aprovado: 192 contas, 15 com conclusão hoje; OWNER único auditado/ativo; RPC igual à candidata |
+| `git diff --check` | Aprovado após atualização documental; somente avisos LF/CRLF do Git no Windows |
+
+A auditoria agregada teve uma primeira execução restrita recusada/falha, sem
+diagnóstico sensível. A repetição com permissão de execução local passou; não se
+atribuem resultados à tentativa inicial. Os testes SQL incluem 29 OWNER e 13
+auditoria do provisionador, com negação a editorial sem OWNER (fronteira atual do
+PUBLISHER futuro), leitor, anon e metadados forjados. A stack existente foi apenas
+consultada; não teve migração, promoção/revogação ou novos históricos sintéticos.
+
+**Não repetidos nesta rodada:** as 10 verificações Chromium com integração
+simulada, cujo resultado é histórico do Prompt 42; HTTP positivo de sessão OWNER;
+provisionamento mutável e integrações que exigem OWNER vazio ou criam fixtures
+persistentes. As quatro validações manuais não foram refeitas pelo agente.
+
+As nove migrações da base foram comparadas ao conteúdo Git (normalizando somente
+CRLF/LF): nenhuma diferença. Os três incrementos novos e todos os candidatos
+passaram pela revisão de caminhos/assinaturas sensíveis; nenhum `.env`, segredo,
+cookie, log, cache ou artefato temporário identificado entre os 58. Não foram
+lidos arquivos de credenciais. Varredura por assinaturas não é prova universal de
+ausência de dados reais. Riscos de privacidade, retenção, dados sintéticos, tamanho
+do bundle e limites de testes: [consistency-local.md](consistency-local.md).
+Lista completa e comandos CMD agrupados: [owner-community-review.md](owner-community-review.md#versionamento-cmd--prompt-43).
+
+## Etapa 22.2 — Prompt 42: regressões de navegação
+
+As duas regressões novas falharam antes das correções: cliques com resposta mensal
+pendente não chegavam ao segundo mês; comunidade não tinha rota persistente.
+Depois, o Chromium identificou ainda o agrupamento de cliques no mesmo render,
+corrigido com atualização funcional e coberto por terceiro teste React.
+Os 23 casos dos dois arquivos afetados passaram na rodada intermediária; a suíte
+completa intermediária passou 386 testes. Resultados finais abaixo substituem
+essa evidência intermediária para o código final.
+
+| Comando executado | Resultado final desta rodada |
+| --- | --- |
+| `npm.cmd run test:run` | **387 aprovados em 35 arquivos**, sem falhas/omitidos, no código final |
+| `npm.cmd run build` | DEV aprovado; aviso de chunk acima de 500 kB |
+| `npm.cmd run lint` | Aprovado, sem avisos/erros |
+| `node scripts/local-community-readonly-http.mjs` | 8 HTTP locais negativos aprovados; sem login/mutação |
+| `node scripts/verify-local-reading-install.mjs` | 12 migrações e 288 SQL/RLS aprovadas em PostgreSQL novo isolado; rollback nas suítes |
+| `node scripts/audit-local-community.mjs` | READ ONLY/ROLLBACK aprovado: 192/15; OWNER único auditado; projeção e RPC coerentes |
+| `node scripts/local-navigation-browser.mjs` | 10 verificações Chromium aprovadas, integração Supabase simulada na fronteira |
+| `npm.cmd run build:staging` | Recusado, código 1: variáveis genéricas DEV não podem configurar STAGING/PROD |
+| `npm.cmd run build:prod` | Recusado, código 1, mesma proteção |
+| `git diff --check` | Aprovado; avisos LF/CRLF do Git no Windows |
+
+Chromium testa calendário atual, dois cliques rápidos com atraso, retorno de foco
+por troca real de abas, Enter, reload para mês atual, bloqueio futuro, deep link
+comunitário, foco mais renovação, refresh da seção e revogação OWNER simulada.
+Não acessa banco nem sessão existente. Não representa Alt+Tab nativo nem HTTP
+positivo do OWNER provisionado. O servidor Vite já estava em 5173; tentativa de
+iniciar outro foi recusada por porta ocupada e não substituiu o servidor existente.
+Os sete cenários aprovados pelo responsável e as duas falhas relatadas estão
+registrados em [owner-community-review.md](owner-community-review.md), separados
+dos testes automatizados. A pendência humana registrada nesta rodada foi encerrada
+pelas quatro aprovações comunicadas no Prompt 43 acima.
+Nenhum staging/commit ou operação remota executado.
+
+## Etapa 22.2 — Prompt 41: revisão dos dados e layout OWNER
+
+Branch `feat/local-auth`, HEAD `31cb42d`, 56 candidatos totais preservados.
+Diagnóstico, limitações e roteiro em [owner-community-review.md](owner-community-review.md).
+Nenhuma mudança persistente em dados, permissões, sessões ou migrações na stack
+existente. Não houve limpeza; os totais permaneceram 192/15 e um OWNER.
+
+| Comando executado nesta rodada | Resultado |
+| --- | --- |
+| `node scripts/provision-local-owner.mjs --check-local` | Aprovado, sem inspeção de contas ou concessão |
+| `node scripts/audit-local-community.mjs` | Auditoria READ ONLY/REPEATABLE READ/ROLLBACK: 192 contas, 15 com conclusão hoje; duas assinaturas completas de fixture de 1005 dias; OWNER único auditado/ativo; RPC instalada igual à candidata; ordenação, desempates, repetição, busca, paginação e projeção mínima coerentes |
+| `node scripts/local-community-readonly-http.mjs` | **8 verificações HTTP locais** aprovadas: anon negado em ranking, métricas próprias, membership, diário, conclusões e progresso; token inválido 401; parâmetro OWNER não concede acesso |
+| `node scripts/verify-local-reading-install.mjs` | **12 migrações e 288 SQL/RLS** aprovadas em PostgreSQL novo isolado; suítes com rollback |
+| `npm.cmd run test:run` | **384 aprovados em 35 arquivos**, sem omitidos, execução final |
+| `npm.cmd run build` | DEV aprovado; aviso de bundle acima de 500 kB |
+| `npm.cmd run lint` | Aprovado, sem avisos/erros |
+| `git diff --check` | Aprovado; avisos LF/CRLF do Git no Windows |
+
+As 288 SQL/RLS cobrem autorização, privacidade, username, WhatsApp, login, leitura,
+consistência, OWNER e auditoria. O banco existente foi consultado apenas para
+metadados/DDL e auditoria agregada, sem copiar contas ou credenciais. A execução
+isolada preservou dados existentes e descartou somente seu contêiner temporário.
+Não se executaram na stack atual os testes que exigem OWNER vazio; não se removeu
+o OWNER legítimo para acomodá-los. Não houve novas fixtures persistidas na stack
+atual, nem repetição de testes HTTP que acrescentariam outro histórico de 1005 dias.
+
+A primeira rodada React passou 382 testes antes de acrescentar os dois testes
+de recusa dos novos entrypoints. A rodada final passou 384, preservando toda a
+cobertura anterior. Os fluxos React da comunidade (busca Enter, páginas, loading,
+vazio/erro, conta zero, recorde e resposta atrasada) passaram após reorganizar os
+elementos e aplicar estilos somente à seção. Não alteramos regras de ordenação,
+busca/paginação, fórmulas ou permissões. Build e lint foram executados no código final.
+
+Limites: a tentativa de conexão do navegador falhou e a descoberta foi vazia;
+nenhuma captura ou inspeção da sessão autenticada foi realizada. A autorização
+positiva do OWNER configurado foi exercitada por SQL em READ ONLY com claims de
+transação e role authenticated, sem JWT criado ou token lido. Isso **não é** uma
+validação HTTP positiva da sessão aberta. Oito HTTP são testes negativos, sem
+login ou mutação. Perguntamos ao responsável se Atualizar ranking retorna HTTP
+200; confirmação independente da sessão e revisão visual desktop/390px ficam
+pendentes. Não houve Chromium ou builds STAGING/PROD nesta rodada.
+
+O diagnóstico não classifica todas as contas como fictícias: 185 têm padrão de
+gerador conhecido, sete permanecem sem classificação. Dos 148 usernames gerados,
+147 têm evidência do gerador; um não. Não existe flag de proveniência confiável
+para todos os registros, e não houve backfill, filtro ou exclusão por aparência.
+Nenhum contato, UUID ou credencial foi emitido na auditoria ou no ranking.
+
+## Etapa 22.2 — Prompt 40: provisionamento seguro do OWNER local
+
+Branch `feat/local-auth`, HEAD/base `31cb42d`. Nenhuma conta preexistente escolhida
+ou promovida. Procedimento, identidade, comandos CMD e limites em
+[owner-local-provisioning.md](owner-local-provisioning.md). Nenhuma autorização
+humana ou UUID do responsável foram presumidos. Os resultados do Prompt 39 abaixo
+permanecem históricos, sem somá-los às execuções desta rodada.
+
+| Comando executado | Resultado nesta rodada |
+| --- | --- |
+| `node scripts/provision-local-owner.mjs --check-local` | Aprovado, sem inspecionar contas nem conceder privilégios |
+| `node scripts/apply-local-owner-audit-migration.mjs --check-local` | Aprovado |
+| `node scripts/apply-local-owner-audit-migration.mjs` | Migração incremental 00500 aplicada somente localmente; apenas diário privado, sem promoção |
+| `npm.cmd run test:run -- src/test/localOwnerTools.test.ts` | 24 testes aprovados na validação inicial, sem serviços externos |
+| `npm.cmd run test:run -- src/components/AdminPanel.test.tsx` | 11 aprovados, diagnóstico isolado do timeout |
+| `npm.cmd run test:run` | **382 aprovados em 35 arquivos**, sem omitidos, execução final |
+| `npm.cmd run build` | DEV aprovado; aviso de bundle acima de 500 kB |
+| `npm.cmd run lint` | Aprovado sem avisos na execução final |
+| `node scripts/local-owner-provision-smoke.mjs` | **27 verificações CLI/API locais** aprovadas na execução completa final |
+| `node scripts/run-local-owner-audit-sql.mjs` | **13 SQL/RLS** aprovadas com rollback |
+| `node scripts/run-local-owner-sql.mjs` | **29 SQL/RLS** aprovadas com rollback |
+| `node scripts/run-local-consistency-sql.mjs --regression` | **246 SQL/RLS** aprovadas, todas com rollback |
+| `node scripts/verify-local-reading-install.mjs` | **12 migrações e 288 SQL/RLS** aprovadas em banco novo isolado, sem copiar contas/segredos |
+| `git diff --check` | Aprovado; somente avisos LF/CRLF |
+
+Os 288 SQL/RLS da stack atual são 246 + 29 + 13. Os mesmos 288 no banco novo são
+uma segunda execução, sem contagem de novos casos. O verificador descartou somente
+seu contêiner novo, sem rede/portas/volumes compartilhados, sem pull ou reset.
+
+As 27 verificações de provisionamento incluem ações por subprocesso do CLI real
+e chamadas HTTP autenticadas: inspecionar alvo exato sem promover; recusar UUID
+inexistente, leitor comum, não confirmado, confirmação ausente/divergente; negar
+editorial/leitor antes da concessão; conceder somente ao alvo confirmado; negar
+segundo OWNER e revogação de alvo divergente; recusar transferência inelegível;
+reverter mudança quando a referência de auditoria duplica; transferir e revogar
+com o mesmo JWT antigo; preservar editorial; impedir acesso de cliente ao diário;
+manter projeção mínima do ranking; persistir três transições auditadas; rejeitar
+revogação repetida; concorrer duas concessões com um único vencedor e removê-lo
+pelo CLI auditado. Todos os vínculos temporários foram removidos. Contas fictícias
+e eventos privados de auditoria permanecem locais; nenhum dado preexistente apagado.
+
+Testes sem rede acrescentam validação de argumentos e referências, revalidação
+na fronteira SQL, ambiente sanitizado e subprocessos com destinos recusados. Todos
+os modos do provisionador são testados contra Docker/URL remotos, proxies,
+credenciais injetadas e configuração PROD. Nenhum desses testes chama serviços.
+
+Tentativas intermediárias: preflights novos foram inicialmente recusados pela
+execução restrita e passaram após aprovação para executar os comandos locais.
+A primeira integração passou 25 verificações; a ampliação com concorrência passou
+27, depois repetidas integralmente após ajustar a limpeza. Duas rodadas completas
+Vitest tiveram 381 aprovados e timeout de 5s no mesmo teste de formulário editorial.
+O arquivo isolado passou seus 11 testes. Com novos testes de subprocessos, a
+concorrência automática pressionava CPU/memória; `vitest.config.ts` agora limita
+a dois workers. A rodada final passou os 382, mantendo timeouts, assertions e
+todos os casos. Um aviso de lint no tratamento de limpeza foi corrigido sem
+suprimir a regra. Rodadas incompletas não são declaradas como aprovadas.
+
+Consulta READ ONLY/ROLLBACK final confirmou **zero OWNER**, sem retornar UUIDs.
+Não foram executados nesta rodada Chromium, STAGING/PROD ou suites HTTP gerais
+de leitura/login/perfil: aplicativo/UI e protocolo de leitura não foram alterados.
+As coberturas SQL correspondentes e a suíte React completa foram repetidas.
+Pendente: confirmação humana do UUID exato, futura autorização de concessão,
+validação manual pelo responsável e revisão para commit. Nenhum git add/commit.
+
+## Etapa 22.2 — Prompt 39 (execuções desta sessão)
+
+Branch `feat/local-auth`, base `31cb42d`. Alterações anteriores preservadas.
+Roteiro completo, fórmula, universo de leitores, modelo de autorização e questões
+de privacidade em [consistency-local.md](consistency-local.md). Política local
+acessível por `#privacidade`, com links no cadastro e no perfil.
+
+| Comando / categoria | Resultado |
+| --- | --- |
+| `npm.cmd run test:run` | **353 testes em 33 arquivos**, todos aprovados, sem omitidos |
+| `npm.cmd run build` | DEV aprovado; aviso de chunk acima de 500 kB, sem publicação |
+| `npm.cmd run lint` | Aprovado, sem avisos/erros |
+| `node scripts/run-local-consistency-sql.mjs --regression` | 246 SQL/RLS: 59 autorização, 16 privacidade, 18 username, 25 WhatsApp, 19 login, 59 leitura, 50 consistência; rollback em todas |
+| `node scripts/run-local-owner-sql.mjs` | 29 SQL/RLS OWNER aprovadas com rollback |
+| `node scripts/verify-local-reading-install.mjs` | Onze migrações em ordem e 275 SQL/RLS aprovadas em PostgreSQL NOVO isolado; fixtures revertidas, contêiner descartado |
+| `node scripts/local-consistency-smoke.mjs` | 29 HTTP, conclusão após 60 s reais, calendário, recorde, legado e mais de mil dias |
+| `node scripts/local-owner-smoke.mjs` | 13 HTTP, OWNER, editorial sem OWNER, reader/anon, falsificação, projeção mínima e paginação |
+| `node scripts/local-reading-smoke.mjs` | 46 HTTP, inclusive 60 s reais e checkpoints/conclusões concorrentes |
+| `node scripts/local-reading-sessions.mjs` | 19 HTTP, transferência, sessões distintas e legado |
+| `node scripts/local-login-smoke.mjs` | 41 HTTP |
+| `node scripts/local-whatsapp-smoke.mjs` | 40 HTTP |
+| `node scripts/local-profile-smoke.mjs` | 29 HTTP |
+| `node scripts/local-library-smoke.mjs` | 35 HTTP |
+| `node scripts/local-admin-smoke.mjs` | 41 HTTP |
+| `node scripts/local-privacy-smoke.mjs` | 30 HTTP |
+| `node scripts/local-username-smoke.mjs` | 31 HTTP |
+| `node scripts/local-auth-smoke.mjs` | 19 HTTP, inclusive recuperação de senha |
+| `node scripts/local-reading-browser.mjs` | 35 Chromium aprovadas: calendário por Enter, pausa/retomada/recarga, 60 s reais, conclusão por teclado, persistência, OWNER, busca por teclado e viewport móvel |
+| `npm.cmd run build:staging` / `build:prod` | Recusa esperada, código 1: configuração genérica exclusiva de DEV; destinos continuam bloqueados em código |
+| `git diff --check` | Aprovado; avisos de normalização LF/CRLF no Windows |
+
+São **373 verificações HTTP** nesta sessão, sem somar SQL, navegador ou rodadas
+anteriores. Os 275 SQL na stack atual e 275 no banco isolado são execuções de
+mesmos casos em bancos diferentes. A tabela não soma rodadas repetidas.
+
+A regressão de foco já preparada no trabalho anterior agora passa: atualização ao
+foco não desabilita a navegação mensal e resposta antiga não sobrescreve o mês.
+Não alteramos o protocolo de conclusão. Fronteiras Supabase simuladas em React;
+Vitest/build/lint não executam migrações/SQL ou serviços externos.
+
+Novos testes de comunidade verificam loading/vazio/erro, busca Enter, paginação,
+zero, recorde, resposta atrasada, projeção de campos e limites. SQL verifica
+empates, classificações, universo, negações e ACL/RLS. Os testes de publisher
+representam a fronteira editorial atual sem OWNER; PUBLISHER é futuro, sem nova
+concessão editorial nesta etapa. Testes de política verificam transparência pública
+sem RPC de ranking e somente um checkbox opcional (feedback) no cadastro.
+
+Tentativas intermediárias: o primeiro Chromium parou antes do login com servidor
+frontend/gateway indisponível. Depois de iniciar ambos, a rodada pessoal passou
+29 verificações. Ao ampliar para OWNER, outra execução passou as mesmas 29 e
+parou porque o roteiro não recarregava a sessão após grant; corrigiu-se o roteiro
+para revalidar o acesso existente. A execução completa seguinte passou 35.
+Uma tentativa de agrupar HTTP num subprocesso foi recusada pelo preflight antes
+dos testes; todos os scripts da tabela foram depois executados individualmente.
+Essas tentativas incompletas não foram contadas como suítes aprovadas.
+
+As migrações 00300/00400 estão somente locais. Membership OWNER final confirmada
+vazia por consulta READ ONLY/ROLLBACK; grants de fixtures removidos. Não houve
+promoção de administrador preexistente. O banco retém fixtures fictícias dos
+ensaios HTTP; somente fixtures explicitamente criadas pelas suítes podem ser
+alteradas/removidas nelas. Nenhum dado preexistente foi apagado.
+
+Imagens fictícias de desktop/celular foram revistas visualmente e permanecem
+somente no cache ignorado do navegador isolado. Não houve leitor de tela físico,
+teste de carga, celular físico, espera de uma virada de dia real ou avaliação
+jurídica. Limites de meia-noite/fuso e DST foram exercitados por SQL e respostas
+simuladas, sem mudar o relógio do servidor. Política/avisos finais têm testes React;
+a execução Chromium cobre leitura/comunidade. STAGING/PROD não foram liberados.
+
 ## Encerramento da Etapa 22.1 — Prompt 37
 
 Branch `feat/local-auth`, commit-base/HEAD `c2fb5b3`. O responsável informou

@@ -8,6 +8,7 @@ import { useAuth } from './auth/auth'
 import { PasswordForm } from './components/PasswordForm'
 import { ProfileForm } from './components/ProfileForm'
 import { ReaderLibrary } from './components/ReaderLibrary'
+import { PrivacyPolicy } from './components/PrivacyPolicy'
 
 function route() {
   const hash = location.hash.slice(1)
@@ -27,9 +28,10 @@ function AppContent() {
     {(['inicio', 'historico', 'minhas-leituras', 'leitura'].includes(page) || page.startsWith('leitura/')) && <ReaderLibrary page={page} />}
     {(page === 'cadastro' || page === 'login') && <AuthForm key={page} register={page === 'cadastro'} />}
     {page === 'perfil' && <ProfileForm />}
-    {page === 'admin' && ((auth.loading || auth.adminLoading) ? <p role="status">Verificando acesso administrativo…</p> : auth.session && auth.admin && !auth.recovery ? <AdminPanel /> : <div className="info" role="alert">Acesso restrito a administradores. <a href="#login">Entrar</a></div>)}
+    {page === 'privacidade' && <PrivacyPolicy />}
+    {(page === 'admin' || page === 'admin/comunidade') && ((auth.loading || auth.adminLoading) ? <p role="status">Verificando acesso administrativo…</p> : auth.session && auth.admin && !auth.recovery ? <AdminPanel community={page === 'admin/comunidade'} /> : <div className="info" role="alert">Acesso restrito a administradores. <a href="#login">Entrar</a></div>)}
     {(page === 'recuperar-senha' || page === 'nova-senha' || auth.recovery) && <PasswordForm update={page === 'nova-senha' || auth.recovery} />}
-    {!['inicio', 'historico', 'leitura', 'login', 'cadastro', 'admin', 'recuperar-senha', 'nova-senha', 'perfil', 'minhas-leituras'].includes(page) && !page.startsWith('leitura/') && <div className="info">Página não encontrada. <a href="#inicio">Voltar ao início →</a></div>}
+    {!['inicio', 'historico', 'leitura', 'login', 'cadastro', 'admin', 'admin/comunidade', 'recuperar-senha', 'nova-senha', 'perfil', 'minhas-leituras', 'privacidade'].includes(page) && !page.startsWith('leitura/') && <div className="info">Página não encontrada. <a href="#inicio">Voltar ao início →</a></div>}
   </main><footer><span className="footer-logo">selah.</span><span>Um momento de pausa. Uma vida com propósito.</span><small>Conteúdo e administração no ambiente local</small></footer></div></div>
 }
 function SessionContent() {

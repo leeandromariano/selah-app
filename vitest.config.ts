@@ -11,5 +11,8 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
     clearMocks: true,
     unstubGlobals: true,
+    // Guarded CLI tests start real Node subprocesses (with refused targets).
+    // Bound CPU/memory contention so UI keyboard/form tests retain their budget.
+    maxWorkers: 2,
   },
 })

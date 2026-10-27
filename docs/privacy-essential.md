@@ -1,3 +1,7 @@
+> Etapa 22.2: consistência pessoal e ranking administrativo exclusivo do OWNER.
+> Modelo, transparência, limites e roteiro: [consistency-local.md](consistency-local.md).
+> Editorial não herda OWNER; promoção da conta efetiva exige auditoria no servidor.
+
 # Privacidade essencial — Etapa 21.3
 
 > Atualização 22.1: [permanência confirmada e conclusões](reading-local.md)

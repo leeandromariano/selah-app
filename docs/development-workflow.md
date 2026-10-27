@@ -1,3 +1,13 @@
+> Prompt 41: auditoria agregada somente de leitura, origem das fixtures e limites
+> do painel em [owner-community-review.md](owner-community-review.md). Sem limpeza.
+
+> Prompt 40: provisionamento OWNER local por UUID exato e confirmação humana,
+> com auditoria transacional privada. Ver [procedimento](owner-local-provisioning.md).
+
+> Etapa 22.2: consistência pessoal e ranking administrativo exclusivo do OWNER.
+> Modelo, transparência, limites e roteiro: [consistency-local.md](consistency-local.md).
+> Editorial não herda OWNER; promoção da conta efetiva exige auditoria no servidor.
+
 # Processo de desenvolvimento do Selah
 
 > Etapa 21.5: login aceita username (com ou sem @) ou e-mail pela Edge Function
@@ -7,7 +17,7 @@
 
 ## Situação atual
 
-Aplicativo React + TypeScript + Vite, navegação por hash. Cadastro, confirmação de e-mail, login, logout e recuperação de senha usam Supabase Auth exclusivamente local. Perfis, publicações e histórico de aberturas persistem no PostgreSQL local. Na Etapa 19, o painel administrativo cria, edita, agenda e publica no acervo local usando a sessão do administrador; privilégios vêm de membership privada provisionada por operador local confiável, nunca do frontend. Cards mostram somente contagens de conteúdo por status, sem métricas de leitores. Na Etapa 22.1 há conclusão voluntária após 60 segundos confirmados pelo servidor, em registros separados das aberturas. Ver reading-local.md para RPCs, migrações locais, testes e limites. Ofensivas não foram implementadas. O devocional do dia usa America/Sao_Paulo. Ver `admin-local.md` e `devotionals-local.md`.
+Aplicativo React + TypeScript + Vite, navegação por hash. Cadastro, confirmação de e-mail, login, logout e recuperação de senha usam Supabase Auth exclusivamente local. Perfis, publicações e histórico de aberturas persistem no PostgreSQL local. Na Etapa 19, o painel administrativo cria, edita, agenda e publica no acervo local usando a sessão do administrador; privilégios vêm de membership privada provisionada por operador local confiável, nunca do frontend. Cards mostram somente contagens de conteúdo por status, sem métricas de leitores. Na Etapa 22.1 há conclusão voluntária após 60 segundos confirmados pelo servidor, em registros separados das aberturas. Ver reading-local.md para RPCs, migrações locais, testes e limites. Ofensivas pessoais e comunidade do OWNER estão implementadas localmente na Etapa 22.2. O devocional do dia usa America/Sao_Paulo. Ver `admin-local.md` e `devotionals-local.md`.
 
 O cliente em `src/lib/supabase.ts` é usado pela autenticação e exige DEV em 127.0.0.1:54321. STAGING/PROD têm contratos separados, ainda desabilitados em código. Ver `environments.md`. A suíte React simula esse módulo na fronteira, sem importar o cliente real. A suíte SQL local teve 59 verificações aprovadas; não executar SQL ou migrações durante validações do frontend. Ver `auth-local.md` para os fluxos HTTP locais e suas limitações.
 
@@ -80,6 +90,12 @@ Para produção, apresentar o candidato homologado, impacto e plano de retorno �
 Registrar versão publicada e verificar fluxos essenciais depois de um deploy autorizado. Reversão de aplicação deve usar artefato anterior conhecido; reversão de dados exige planejamento próprio, pois rollback do frontend não desfaz migrações.
 
 ## Playwright e evolução
+
+Com os testes protegidos de provisionamento OWNER (Prompt 40), Vitest limita a
+dois workers. Os subprocessos que exercitam recusas de ambiente não acessam
+serviços, mas disputam CPU/memória com testes de formulário. O limite mantém os
+timeouts existentes e não remove cobertura. Não aumentar timeouts para mascarar
+falhas; investigar e repetir a suíte completa após corrigir a causa.
 
 Não instalar Playwright nem navegadores nesta etapa. Quando a suíte local estiver estável, começar com um único projeto Chromium, servidor Vite local e acervo fictício, sem backend remoto. Cobrir navegação, busca/filtro, leitura, validação dos formulários e administração demonstrativa. Usar seletores por papel/nome acessível. Adicionar outros navegadores e CI apenas quando houver necessidade concreta.
 
