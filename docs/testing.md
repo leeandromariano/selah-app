@@ -1,5 +1,56 @@
 # Inventário e execução de testes
 
+## Prompt 73 — elegibilidade OWNER e compatibilidade local
+
+O teste novo `owner-eligibility.sql` primeiro falhou contra as 15 migrações:
+uma sessão com claims existentes e OWNER suspenso acessava a comunidade. Após
+a migração incremental 00900, o runner aplicou 16 migrações em PostgreSQL
+temporário sem rede e passou **464 verificações SQL/RLS**, incluindo **21** de
+elegibilidade e referências de auditoria; também passou 18 testes concorrentes
+existentes. O operador simulado não é superuser, tem CREATEROLE/BYPASSRLS e não
+tem grant option de USAGE no schema Auth. Não equivale ao operador Cloud.
+
+O teste cobre suspensão com claims inalterados, confirmação, exclusão lógica,
+anonimato, pedido de exclusão, revogação da membership, helper privado e prefixos
+LOCAL/STAGING; somente fixtures sintéticas em banco descartável. A fixture da
+suíte de comunidade passou a confirmar e-mail para satisfazer o novo contrato;
+nenhuma asserção anterior foi removida. `node scripts/local-auth-smoke.mjs`
+passou 19 verificações HTTP locais de cadastro, confirmação, login e recuperação
+com uma conta fictícia nova mantida localmente; não houve alteração de contas
+preexistentes. O stack local existente não recebeu a nova migração.
+
+`npm.cmd run test:run`: 506 testes em 48 arquivos aprovados; `npm.cmd run build`
+e `npm.cmd run lint` aprovados, build DEV com aviso de bundle de 556,55 kB.
+Não houve teste de interface novo ou execução de migração hospedada. Os testes
+de concorrência acima são os existentes de lembretes, discussão e desafios,
+não uma prova nova de corrida entre suspensão e consulta OWNER.
+
+## Prompt 71 — pré-instalação de Supabase gerenciado
+
+Branch `feat/local-auth`, base `8fe831c`, árvore limpa no início. Somente
+preparação documental: nenhuma migração, RLS, Auth ou dado existente foi
+alterado e nenhum serviço hospedado foi acessado.
+
+`node scripts/verify-local-reading-install.mjs` instalou as 15 migrações em
+PostgreSQL temporário local sem rede e passou **443 verificações SQL/RLS e 18
+de concorrência**. Contêiner descartado; os dados do banco local existente não
+foram copiados ou alterados. A estrutura Auth é reconstruída a partir de DDL e
+roles de teste, não representa integralmente as permissões do Supabase Cloud.
+
+`npm.cmd run test:run`: 506 testes em 48 arquivos aprovados; `npm.cmd run build`
+e `npm.cmd run lint` aprovados; build DEV com JS 556,55 kB e aviso >500 kB.
+`git diff --check` aprovado. Testes de UI usam integrações simuladas; não há
+nova evidência de Auth, SMTP, Data API ou migrações em ambiente hospedado.
+
+A consulta local `node node_modules/supabase/dist/supabase.js db push --help`
+falhou inicialmente por bloqueio de escrita do arquivo de telemetria da CLI no
+sandbox. Após aprovação para consultar a ajuda local fora do sandbox, terminou
+com sucesso; não executou `db push`, nem conexão hospedada. A CLI 2.122.0 informa
+que `db push` pode atualizar Vault por padrão; o roteiro futuro exige
+`--skip-vault` e aprovação própria para dry-run e aplicação. O comportamento do
+dry-run hospedado e a capacidade de autenticação sem expor segredos não foram
+comprovados nesta rodada.
+
 ## Prompt 70 — auditoria final de STAGING
 
 `npm.cmd run test:run`: 506 testes em 48 arquivos aprovados. `npm.cmd run

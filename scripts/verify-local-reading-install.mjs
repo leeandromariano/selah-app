@@ -23,8 +23,9 @@ const migrations = [
   '20261028000600_smart_reminders.sql',
   '20261028000700_discussion.sql',
   '20261028000800_personal_achievements.sql',
+  '20261028000900_owner_eligibility_staging_audit.sql',
 ]
-const suites = ['authorization','privacy-essential','usernames','whatsapp-feedback','password-login','reading-completions','reader-consistency','owner-community','owner-provision-audit','smart-reminders','discussion','personal-achievements']
+const suites = ['authorization','privacy-essential','usernames','whatsapp-feedback','password-login','reading-completions','reader-consistency','owner-community','owner-provision-audit','smart-reminders','discussion','personal-achievements','owner-eligibility']
 let containerId, stage='local metadata preflight', databaseRole='supabase_admin'
 function command(args, options={}) {
   const result=docker.run(args,{encoding:'utf8',...options})
@@ -125,6 +126,15 @@ try {
   stage='migration operator privileges'
   sql('grant set on parameter session_replication_role to postgres;')
   databaseRole='postgres'
+  stage='limited operator privilege assertions'
+  sql(`do $$begin
+    if not exists(select 1 from pg_roles where rolname='postgres' and not rolsuper and rolcreaterole and rolbypassrls)
+      or not has_schema_privilege('postgres','auth','USAGE')
+      or has_schema_privilege('postgres','auth','USAGE WITH GRANT OPTION') then
+      raise exception 'FAIL: limited operator privilege model';
+    end if;
+  end$$;`)
+  console.log('PASS migration operator is not superuser; auth schema usage has no grant option')
   for(const file of migrations) {
     stage='migration '+file.slice(0,14)
     sql(readFileSync('supabase/migrations/'+file,'utf8'))
@@ -156,7 +166,7 @@ try {
     const source=readFileSync('supabase/tests/'+suite+'.sql','utf8')
     const output=sql(source)
     if(!output.includes('ROLLBACK'))throw Error('Missing suite rollback')
-    const dynamic=suite==='reading-completions'?'reading':suite==='reader-consistency'?'consistency':suite==='owner-community'?'owner':suite==='owner-provision-audit'?'owner audit':suite==='smart-reminders'?'reminder':suite==='discussion'?'discussion':suite==='personal-achievements'?'reward':null
+    const dynamic=suite==='reading-completions'?'reading':suite==='reader-consistency'?'consistency':suite==='owner-community'?'owner':suite==='owner-provision-audit'?'owner audit':suite==='smart-reminders'?'reminder':suite==='discussion'?'discussion':suite==='personal-achievements'?'reward':suite==='owner-eligibility'?'eligibility':null
     const count=dynamic ? Number(output.match(new RegExp('(\\d+) '+dynamic+' SQL checks passed'))?.[1])
       : (source.match(/select pg_temp\.(?:assert_true|denied|affected|rejected)\(/g)||[]).length
     if(!Number.isInteger(count)||count<1)throw Error('Invalid isolated check count')

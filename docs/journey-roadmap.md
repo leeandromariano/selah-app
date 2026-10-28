@@ -1,5 +1,9 @@
 # Etapa 22.3 — Minha Jornada e evolução pessoal
 
+> Prompt 73: elegibilidade OWNER foi unificada em migração incremental testada
+> em PostgreSQL temporário; procedimento hospedado permanece pendente de
+> identidade do projeto vinculada e aprovação. Ver [staging-deployment.md](staging-deployment.md).
+
 > Etapa 23.5.1: build STAGING controlado preparado localmente; PROD segue
 > bloqueado. Nenhuma implantação ou conexão hospedada nesta rodada. Ver
 > [procedimento e pendências](staging-deployment.md). Os bloqueios STAGING

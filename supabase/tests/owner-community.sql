@@ -11,8 +11,8 @@ if sqlstate=expected then insert into pg_temp.owner_checks values('rejected'); r
 raise exception 'FAIL: expected rejection';end $$;
 create temp table owner_fixture(name text, id uuid);
 insert into owner_fixture select name,gen_random_uuid() from unnest(array['owner','a','b','c','d']) name;
-insert into auth.users(id,email,raw_user_meta_data)
-select id,'owner22-'||id::text||'@example.invalid',jsonb_build_object('username','owner22_'||name,'whatsapp','+5511999990000') from owner_fixture;
+insert into auth.users(id,email,email_confirmed_at,raw_user_meta_data)
+select id,'owner22-'||id::text||'@example.invalid',clock_timestamp(),jsonb_build_object('username','owner22_'||name,'whatsapp','+5511999990000') from owner_fixture;
 insert into private.admin_users(user_id) select id from owner_fixture where name in ('owner','d');
 insert into private.app_owner(user_id) select id from owner_fixture where name='owner';
 insert into public.devotional_completions(user_id,source_devotional_id,revision,completed_at,completed_day)
