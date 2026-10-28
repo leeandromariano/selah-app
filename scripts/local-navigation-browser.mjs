@@ -6,7 +6,8 @@ import { randomUUID } from 'node:crypto'
 import { resolve } from 'node:path'
 
 const appearanceRun = process.argv.length === 3 && process.argv[2] === '--appearance'
-if (process.argv.length !== 2 && !appearanceRun) throw Error('Only --appearance is accepted')
+const remindersRun = process.argv.length === 3 && process.argv[2] === '--reminders'
+if (process.argv.length !== 2 && !appearanceRun && !remindersRun) throw Error('Only --appearance or --reminders is accepted')
 const origin = 'http://127.0.0.1:5173', debug = 'http://127.0.0.1:9229'
 const executable = ['C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].find(existsSync)
 if (!executable) throw Error('Installed Chromium unavailable')
@@ -17,7 +18,7 @@ const profile = resolve('node_modules/.cache/selah-navigation-browser', randomUU
 mkdirSync(profile, { recursive: true })
 const child = spawn(executable, ['--headless=new', '--no-first-run', '--disable-extensions', '--disable-sync', '--disable-background-networking', '--remote-debugging-address=127.0.0.1', '--remote-debugging-port=9229', '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1', `--user-data-dir=${profile}`, 'about:blank'], { windowsHide: true, stdio: 'ignore' })
 const sleep = ms => new Promise(r => setTimeout(r, ms))
-let socket, sequence = 0, passed = 0, holdMain = false, heldMain
+let socket, sequence = 0, passed = 0, holdMain = false, heldMain, workerRegistration
 const pending = new Map()
 function send(method, params = {}) {
   const id = ++sequence
@@ -54,12 +55,19 @@ window.__renew = () => callback?.('TOKEN_REFRESHED', { ...session });
 const query = { select(){return this}, eq(){return this}, lte(){return this}, order(){return this}, range:async()=>({data:[],error:null}) };
 const content={id:'theme-fiction',title:'Uma pausa fictícia',bible_reference:'Referência fictícia',bible_text:'Texto fictício para verificar aparência.',content:'Reflexão fictícia para testar legibilidade e cores.',reflection_question:'Uma pergunta fictícia?',publish_at:new Date().toISOString(),reading_revision:1,status:'published',author_id:session.user.id,created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
 window.__themeSignIn=()=>{currentSession=session;callback?.('SIGNED_IN',session)};
+if (${remindersRun}) content.id='10000000-0000-4000-8000-000000000001';
+window.__otherReader=()=>{currentSession={user:{id:'synthetic-other-reader'}};callback?.('SIGNED_IN',currentSession)};
+const reminderState=()=>JSON.parse(localStorage.getItem('__fiction_reminder_'+currentSession?.user.id)||'null')||{enabled:false,mode:'simulation',vapid_public_key:null,device:null,last:null};
 export const supabase = {
  auth: { getSession:async()=>({data:{session:currentSession},error:null}), onAuthStateChange(fn){callback=fn;return {data:{subscription:{unsubscribe(){callback=null}}}}}, signOut:async()=>{currentSession=null;callback?.('SIGNED_OUT',null);return {error:null}} },
  from:(table)=>({...query,select(){return this},eq(){return this},lte(){return this},order(){return this},maybeSingle:async()=>({data:null,error:null}),range:async()=>({data:table==='devotionals'?[content,{...content,id:'theme-previous',title:'Pausa anterior fictícia',publish_at:new Date(Date.now()-86400000).toISOString()}]:[],error:null})}),
  rpc(name,args){
+  if(name==='get_my_reminders')return {abortSignal:async()=>({data:reminderState(),error:null})};
+  if(name==='save_my_reminders')return {abortSignal:async()=>{const state=reminderState();state.enabled=args.p_enabled;state.device={id:args.p_device,binding:'20000000-0000-4000-8000-000000000001',mode:'simulation',state:args.p_subscription?'active':state.device?.state||'inactive',permission:args.p_permission,time:args.p_time,timezone:args.p_timezone,expires_at:null};localStorage.setItem('__fiction_reminder_'+currentSession?.user.id,JSON.stringify(state));return {data:state,error:null}}};
+  if(name==='revoke_my_push_device')return {abortSignal:async()=>{const state=reminderState();if(state.device)state.device.state='revoked';localStorage.setItem('__fiction_reminder_'+currentSession?.user.id,JSON.stringify(state));return {data:null,error:null}}};
   if(name==='devotional_open_counts')return Promise.resolve({data:[],error:null});
-  if(name==='get_my_reading_state')return {abortSignal:async()=>({data:{status:'completed',devotional_id:args.p_devotional_id,revision:1,credited_ms:60000,revision_changed:false,completed_at:'2026-10-28T15:00:00Z',completed_day:'2026-10-28'},error:null})};
+  if(name==='complete_devotional'){window.__sharingBeforeCompletion=false;window.__completedCalls=(window.__completedCalls||0)+1;}
+  if(['get_my_reading_state','complete_devotional','start_reading'].includes(name))return {abortSignal:async()=>({data:{status:window.__sharingBeforeCompletion?'ready':'completed',devotional_id:args.p_devotional_id,revision:1,credited_ms:60000,revision_changed:false,...(window.__sharingBeforeCompletion?{}:{completed_at:'2026-10-28T15:00:00Z',completed_day:'2026-10-28'})},error:null})};
   if(name==='get_owner_community')return {abortSignal:async()=>window.__ownerAllowed ? {data:{server_today:'2026-10-28',time_zone:'America/Sao_Paulo',page:0,size:25,total_readers:1,completed_today:0,matched_readers:1,readers:[{username:'leitor_tema',current_streak:0,best_streak:0,total_days:0,status:'empty'}]},error:null} : {data:null,error:{code:'42501'}}};
   if(name==='get_my_consistency') return {abortSignal:async()=>{
    const month=args.p_month??'2026-10-01'; await new Promise(r=>setTimeout(r,150));
@@ -202,6 +210,7 @@ try {
   await new Promise(r => socket.addEventListener('open', r, { once: true }))
   socket.addEventListener('message', async event => {
     const m = JSON.parse(String(event.data))
+    if (m.method === 'ServiceWorker.workerRegistrationUpdated') workerRegistration=m.params.registrations.find(r=>r.scopeURL===origin+'/')?.registrationId??workerRegistration
     if (m.id) { const p = pending.get(m.id); pending.delete(m.id); if (m.error) p?.reject(Error('CDP failed')); else p?.resolve(m.result) }
     if (m.method === 'Fetch.requestPaused') {
       const { requestId, request } = m.params, u = new URL(request.url)
@@ -213,7 +222,64 @@ try {
     }
   })
   await send('Page.enable'); await send('Runtime.enable'); await send('Fetch.enable', { patterns: [{ urlPattern: '*' }] })
-  if (appearanceRun) {
+  if (remindersRun) {
+    await send('ServiceWorker.enable')
+    await send('Page.navigate',{url:origin+'/#configuracoes'})
+    await check(`Boolean(document.querySelector('#reminder-heading')) && document.querySelector('input[type="checkbox"]')?.checked===false`, 'reminders open without automatic opt in')
+    await check(`!localStorage.getItem('selah.reminder.device.synthetic-navigation')`, 'opening settings creates no device credential')
+    await evaluate(`(()=>{const input=document.querySelector('input[type="time"]');const setter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;setter.call(input,'09:17');input.dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('input[type="checkbox"]').click();})()`)
+    await evaluate(`Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Salvar preferências').click()`)
+    await check(`document.body.textContent.includes('Preferências salvas')`, 'explicit save persists enabled time and timezone')
+    await reloadPage()
+    await check(`document.querySelector('input[type="time"]')?.value==='09:17' && document.querySelector('input[type="checkbox"]')?.checked`, 'refresh preserves own settings')
+    await evaluate(`Array.from(document.querySelectorAll('button')).find(b=>b.textContent.includes('Cadastrar dispositivo fictício')).click()`)
+    await check(`document.body.textContent.includes('active (dispositivo fictício')`, 'test enrollment is explicitly labeled simulation')
+    await evaluate(`window.dispatchEvent(new Event('blur'));window.dispatchEvent(new Event('focus'));window.__renew()`)
+    await check(`location.hash==='#configuracoes' && document.querySelector('input[type="time"]')?.value==='09:17'`, 'focus and renewed session preserve settings')
+    for(const theme of ['light','dark','system']) {
+      await evaluate(`(()=>{const s=document.querySelector('.appearance-control select');s.value='${theme}';s.dispatchEvent(new Event('change',{bubbles:true}));})()`)
+      await check(`document.querySelector('#reminder-heading')?.textContent==='Lembretes' && document.querySelector('.appearance-control select')?.value==='${theme}'`, 'reminders usable in '+theme+' mode')
+    }
+    await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true})
+    await check(`document.documentElement.scrollWidth<=window.innerWidth`, 'reminders fit narrow viewport')
+    await evaluate(`window.__sharingBeforeCompletion=true;location.hash='leitura/10000000-0000-4000-8000-000000000001'`)
+    await check(`Boolean(document.querySelector('[aria-label="Compartilhar devocional"] button')) && Boolean(document.querySelector('article.reading')) && !window.__completedCalls`, 'normal published reading offers sharing before valid completion')
+    await check(`Boolean(document.querySelector('article.reading').compareDocumentPosition(document.querySelector('[aria-label="Compartilhar devocional"]')) & Node.DOCUMENT_POSITION_FOLLOWING)`, 'share actions follow the full reading article')
+    await check(`document.documentElement.scrollWidth<=window.innerWidth`, 'share section fits mobile viewport')
+    await send('Browser.grantPermissions',{origin,permissions:['clipboardReadWrite','clipboardSanitizedWrite']})
+    await send('Page.bringToFront')
+    await send('Runtime.evaluate',{expression:`Array.from(document.querySelectorAll('[aria-label="Compartilhar devocional"] button')).find(b=>b.textContent==='Copiar link').click()`,userGesture:true})
+    await check(`document.querySelector('[aria-label="Compartilhar devocional"] [role="status"]')?.textContent==='Link copiado.' && !window.__completedCalls`, 'copying a real browser link does not conclude reading')
+    await check(`(async()=>await navigator.clipboard.readText()===location.origin+'/#leitura/10000000-0000-4000-8000-000000000001')()`, 'clipboard contains only the actual internal publication route')
+    await check(`(()=>{const a=document.querySelector('[aria-label="Compartilhar devocional"] a');const u=new URL(a.href);return u.origin==='https://wa.me' && u.searchParams.get('text').includes(location.origin+'/#leitura/10000000-0000-4000-8000-000000000001') && a.rel.includes('noopener')})()`, 'WhatsApp is an explicit safe link without automatic contact messages')
+    for(const theme of ['light','dark','system']) {
+      await evaluate(`(()=>{const s=document.querySelector('.appearance-control select');s.value='${theme}';s.dispatchEvent(new Event('change',{bubbles:true}));})()`)
+      await check(`Array.from(document.querySelectorAll('[aria-label="Compartilhar devocional"] button')).some(b=>b.textContent==='Compartilhar' && !b.disabled)`, 'share action available in '+theme+' mode')
+    }
+    await evaluate(`Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Concluir devocional').click()`)
+    await check(`window.__completedCalls===1 && document.querySelector('.reading-progress')?.textContent.includes('Devocional concluído') && document.querySelectorAll('[aria-label="Compartilhar devocional"]').length===1`, 'voluntary valid completion preserves one share section')
+    await evaluate(`location.hash=document.querySelector('[aria-label="Compartilhar devocional"] input').value.split('#')[1]`)
+    await check(`Boolean(document.querySelector('article.reading')) && Boolean(document.querySelector('[aria-label="Compartilhar devocional"]'))`, 'copied link navigates to the published reading')
+    await evaluate(`location.hash='leitura/10000000-0000-4000-8000-000000000001/compartilhar'`)
+    await check(`Boolean(document.querySelector('[aria-label="Compartilhar devocional"]')) && document.body.textContent.includes('exige autenticação')`, 'share deep link opens published content and explains authentication')
+    await check(`document.querySelector('[aria-label="Compartilhar devocional"] input')?.value===location.origin+'/#leitura/10000000-0000-4000-8000-000000000001'`, 'shared link contains only published content id')
+    await evaluate(`location.hash='leitura/90000000-0000-4000-8000-000000000009/compartilhar'`)
+    await check(`!document.querySelector('[aria-label="Compartilhar devocional"]') && document.body.textContent.includes('Devocional não encontrado')`, 'unavailable content never creates share controls')
+    await evaluate(`window.__otherReader();location.hash='configuracoes'`)
+    await check(`document.querySelector('input[type="checkbox"]')?.checked===false && !document.body.textContent.includes('active (dispositivo fictício')`, 'account change does not expose former account device settings')
+    await send('Browser.grantPermissions',{origin,permissions:['notifications']})
+    await evaluate(`(async()=>{await navigator.serviceWorker.register('/selah-sw.js',{scope:'/'});await navigator.serviceWorker.ready;window.__swMessage=async(type,binding)=>{const r=await navigator.serviceWorker.getRegistration('/');return new Promise(resolve=>{const c=new MessageChannel();c.port1.onmessage=e=>resolve(e.data);r.active.postMessage({type,binding},[c.port2]);});};return await window.__swMessage('bind','20000000-0000-4000-8000-000000000001');})()`)
+    if (!workerRegistration) throw Error('Local service worker registration unavailable')
+    const payload={v:1,kind:'reading',binding:'20000000-0000-4000-8000-000000000001',day:new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()),devotional:'10000000-0000-4000-8000-000000000001'}
+    await send('ServiceWorker.deliverPushMessage',{origin,registrationId:workerRegistration,data:JSON.stringify(payload)})
+    await check(`(async()=>{const r=await navigator.serviceWorker.getRegistration('/');return (await r.getNotifications()).some(n=>n.title==='Seu momento com Deus está esperando!')})()`, 'actual local service worker displays CDP-injected reading notification without push provider')
+    await evaluate(`window.__swMessage('clear')`)
+    await check(`(async()=>{const r=await navigator.serviceWorker.getRegistration('/');return (await r.getNotifications()).length===0})()`, 'clearing account binding closes local notifications')
+    await send('ServiceWorker.deliverPushMessage',{origin,registrationId:workerRegistration,data:JSON.stringify(payload)})
+    await sleep(400)
+    await check(`(async()=>{const r=await navigator.serviceWorker.getRegistration('/');return (await r.getNotifications()).length===0})()`, 'unbound service worker rejects queued old-account notification')
+    console.log(passed+' Chromium reminder checks passed; simulated integration, no provider delivery.')
+  } else if (appearanceRun) {
     await appearanceChecks()
   } else {
   await send('Page.navigate', { url: origin + '/#inicio' })

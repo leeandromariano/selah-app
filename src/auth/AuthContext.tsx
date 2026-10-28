@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { AuthContext, authMessage } from './auth'
+import { disconnectReminderDevice, synchronizeReminderSession } from '../notifications/session'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [callbackError] = useState(() => new URLSearchParams(location.hash.slice(1)).has('error') ? 'O link de autenticação é inválido ou expirou. Solicite um novo e-mail.' : '')
@@ -43,9 +44,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     return () => { active = false }
   }, [session, recovery])
+  const reminderUser = session && !recovery ? session.user.id : null
+  useEffect(() => { synchronizeReminderSession(reminderUser) }, [reminderUser])
   async function logout() {
     setError('')
     try {
+      if (session) await disconnectReminderDevice(session.user.id)
       const { error } = await supabase.auth.signOut()
       if (error) throw error
       setSession(null); setAdminAuthorization(null); setRecovery(false); location.hash = 'login'

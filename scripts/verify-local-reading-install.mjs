@@ -20,8 +20,9 @@ const migrations = [
   '20261028000300_reader_consistency.sql',
   '20261028000400_owner_community.sql',
   '20261028000500_owner_provision_audit.sql',
+  '20261028000600_smart_reminders.sql',
 ]
-const suites = ['authorization','privacy-essential','usernames','whatsapp-feedback','password-login','reading-completions','reader-consistency','owner-community','owner-provision-audit']
+const suites = ['authorization','privacy-essential','usernames','whatsapp-feedback','password-login','reading-completions','reader-consistency','owner-community','owner-provision-audit','smart-reminders']
 let containerId, stage='local metadata preflight', databaseRole='supabase_admin'
 function command(args, options={}) {
   const result=docker.run(args,{encoding:'utf8',...options})
@@ -70,7 +71,7 @@ try {
     if(offset<0||!value)throw Error('Missing candidate function')
     return value
   }
-  if(installed?.versions.join(',')!==migrations.map(f=>f.slice(0,14)).join(',')
+  if(![migrations,migrations.slice(0,-1)].some(list=>installed?.versions.join(',')===list.map(f=>f.slice(0,14)).join(','))
     ||installed.operation.replaceAll('\r\n','\n')!==body('reading_operation')
     ||installed.identity.replaceAll('\r\n','\n')!==body('reading_identity')
     ||installed.consistency.replaceAll('\r\n','\n')!==body('get_my_consistency','public','20261028000300_reader_consistency.sql'))throw Error('Installed local SQL differs from candidates')
@@ -107,6 +108,8 @@ try {
     create role service_role nologin bypassrls;
     grant anon,authenticated to postgres;
     create schema extensions; create extension pgcrypto with schema extensions;
+    create extension dblink with schema extensions;
+    grant execute on function extensions.dblink_connect_u(text,text) to postgres;
     grant usage on schema extensions to postgres;
     alter database postgres owner to postgres;`)
   stage='managed Auth DDL and grants'
@@ -151,13 +154,17 @@ try {
     const source=readFileSync('supabase/tests/'+suite+'.sql','utf8')
     const output=sql(source)
     if(!output.includes('ROLLBACK'))throw Error('Missing suite rollback')
-    const dynamic=suite==='reading-completions'?'reading':suite==='reader-consistency'?'consistency':suite==='owner-community'?'owner':suite==='owner-provision-audit'?'owner audit':null
+    const dynamic=suite==='reading-completions'?'reading':suite==='reader-consistency'?'consistency':suite==='owner-community'?'owner':suite==='owner-provision-audit'?'owner audit':suite==='smart-reminders'?'reminder':null
     const count=dynamic ? Number(output.match(new RegExp('(\\d+) '+dynamic+' SQL checks passed'))?.[1])
       : (source.match(/select pg_temp\.(?:assert_true|denied|affected|rejected)\(/g)||[]).length
     if(!Number.isInteger(count)||count<1)throw Error('Invalid isolated check count')
     checks+=count;console.log(`PASS isolated ${suite}: ${count} SQL checks with rollback`)
   }
   console.log(`${migrations.length} migrations and ${checks} SQL checks passed in NEW isolated local PostgreSQL. Auth DDL only; no copied user rows or secrets.`)
+  stage='isolated reminder overlapping transactions'
+  const overlap=sql(readFileSync('supabase/tests/reminder-concurrency.sql','utf8'))
+  if(!overlap.includes('2 overlapping transaction checks passed'))throw Error('Missing concurrency checks')
+  console.log('PASS 2 overlapping transaction checks: locked device skipped and one committed daily reservation')
 } catch {
   console.error(`Isolated installation stopped at ${stage}. Remaining checks NOT validated; existing database and volumes unchanged.`)
   process.exitCode=1

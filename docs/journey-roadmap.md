@@ -1,23 +1,21 @@
 # Etapa 22.3 — Minha Jornada e evolução pessoal
 
-Estado atual — Prompt 48: base `195a9b5`, branch `feat/local-auth`. 22.3.1
-versionada; 22.3.2 implementada com onze aprovações manuais informadas, aguardando
-commit. 22.3.3 é a próxima subetapa, sem implementação autorizada nesta auditoria.
-
-Base: `42e6070`, branch `feat/local-auth`, árvore limpa confirmada no início do
-Prompt 44. Conferência final e numeração definitiva no Prompt 46. Somente ambiente
-local. Implementações entregues: **22.3.1** e **22.3.2** (Prompt 47).
-As seções 22.3.3–22.3.5 são propostas técnicas, sem recursos ativos, migrações,
-dependências, service worker, permissões ou chamadas desses recursos nesta rodada.
+Estado atual — Prompt 51 / Etapa 22.3.3: base `91c81d0`, branch `feat/local-auth`.
+Minha Jornada e Modo Noturno versionados. Notificações inteligentes implementadas
+localmente, pendentes de commit, com transporte simulado por padrão e entrega
+externa não configurada nem validada. Quinze aprovações manuais informadas pelo
+responsável estão transcritas em `smart-reminders-local.md` e `testing.md`.
+Arquitetura, segurança, horários e limites: [smart-reminders-local.md](smart-reminders-local.md).
+Comentários/Reações e Conquistas/Desafios continuam sem implementação.
 
 ## Roadmap oficial — numeração definitiva (Prompt 46)
 
 | Subetapa | Funcionalidade | Estado |
 | --- | --- | --- |
 | 22.3.1 | Minha Jornada | Versionada em `195a9b5` |
-| 22.3.2 | Modo Noturno | Implementado; 11/11 manuais informados no Prompt 48; aguardando commit |
-| 22.3.3 | Notificações Push | Próxima; ainda não iniciada |
-| 22.3.4 | Comentários e Reações | Planejados |
+| 22.3.2 | Modo Noturno | Versionado em `91c81d0`; 11/11 manuais históricos do Prompt 48 |
+| 22.3.3 | Notificações Inteligentes | Implementadas localmente, pendentes de commit; entrega externa não validada |
+| 22.3.4 | Comentários e Reações | Próxima etapa; planejados |
 | 22.3.5 | Conquistas e Desafios | Planejados |
 
 Esta numeração substitui a proposta de quatro subetapas do Prompt 44. Apenas a
@@ -56,7 +54,7 @@ resultado de Modo Noturno, push, comentários/reações ou conquistas foi aprova
 - OWNER é membership privada separada de editorial. A RPC comunitária verifica
   OWNER em cada consulta. Não é usada pela página pessoal; PUBLISHER futuro não
   herda poderes de proprietário. Não alterar essas permissões nesta etapa.
-- Não há infraestrutura push, moderação ou conquistas pronta. Links, estados
+- Diagnóstico anterior à 22.3.3: não havia infraestrutura push, moderação ou conquistas pronta. Links, estados
   fictícios e tabelas vazias não devem sugerir que esses recursos já funcionam.
 
 ## 22.3.1 — implementada nesta rodada
@@ -158,91 +156,25 @@ transcritas em `appearance-local.md` e `testing.md`, sem presumir outros cenári
   fictícios e verificação humana de legibilidade. Nenhum SQL, serviço remoto,
   permissão push, novo papel ou API de recursos futuros nesta entrega.
 
-## 22.3.3 — próxima: Notificações Push (não iniciadas)
+## 22.3.3 — implementadas localmente: Notificações inteligentes
 
-### Fluxo e componentes futuros
+Configurações autenticadas em `#configuracoes`; preferências por conta e horário/fuso
+por dispositivo. Permissão apenas por gesto voluntário. Service worker sem cache
+autenticado e com vínculo revogável por sessão; compartilhamento apenas de publicação
+visível e com aviso de autenticação. RPCs próprias, endpoints privados, RLS e migração
+incremental, sem alteração das regras de 60 segundos ou dos privilégios OWNER.
 
-1. Preferências pessoais acessíveis por ação voluntária; explicar horário,
-   dispositivos e conteúdo genérico antes de pedir permissão. Só o botão de
-   ativar solicita permissão nativa; lidar com `default`, `denied`, API ausente,
-   cancelamento e permissão revogada no sistema. Nunca solicitar ao carregar.
-2. Service worker de escopo mínimo, versionado, com push/notificationclick e
-   notificação persistente. Clique abre rota interna fixa e revalida sessão;
-   não aceita URL arbitrária do payload. Não criar cache de respostas autenticadas.
-3. Backend registra preferência e assinatura por dispositivo, proprietário
-   derivado da sessão. Endpoints/chaves `p256dh`/`auth` são material sensível:
-   não exibir, logar, publicar ou entregar ao OWNER/PUBLISHER. Identificador
-   opaco de instalação não é credencial nem identidade confiável.
-4. VAPID privado exclusivo do backend por ambiente, fora de `VITE_*`; chave
-   pública pode ir ao cliente. Rotação com versão de chave e renovação controlada.
-5. Worker/agendador durável de backend processa próximos horários sem site
-   aberto. Não usar timer do React nem periodic background sync como garantia.
-   Agendador local com relógio injetável e adaptador de entrega falso em testes.
+Agendador Node independente da aba, relógio controlável nos testes, reserva atômica
+e dupla unicidade de dia local/Brasília. Imediatamente antes da tentativa, consulta
+publicação e conclusões válidas no servidor: sem conclusão → LEITURA; com conclusão
+→ COMPARTILHAMENTO. Ausência de publicação, opt-out, revogação ou mudança de dia
+suprimem o envio. Isso substitui a proposta antiga de suprimir toda conclusão.
 
-### Modelo proposto, sem criar tabelas agora
-
-- Preferência por usuário: ativo, hora local `HH:mm`, fuso IANA, versão,
-  próximo disparo UTC. Não confundir fuso com offset fixo.
-- Assinatura por dispositivo: usuário, endpoint protegido/índice de deduplicação,
-  chaves protegidas, versão VAPID, ativo, criação/última validação/expiração.
-  Não compartilhar assinatura de uma conta com outra em dispositivo compartilhado;
-  logout desassocia/invalida entrega e remove notificações pendentes da aplicação.
-- Job privado: usuário, data civil agendada, versão lógica, status/lease e motivo
-  de supressão. Entrega privada por assinatura com unicidade `(job, assinatura)`.
-  Preferências com RLS própria; endpoints só por operações específicas validadas,
-  sem SELECT amplo. Jobs e credenciais inacessíveis aos clientes e editorial.
-
-### Regras de horário e entrega
-
-Salvar fuso IANA e hora local; recalcular próximo UTC a cada disparo ou edição.
-Mudança de fuso exige confirmação do usuário; detectar discrepância ao abrir sem
-alterar silenciosamente preferência. Horário inexistente na transição: próximo
-instante local válido; horário repetido: primeira ocorrência, uma única vez.
-Mudança de horário não recria job do dia já entregue. Ao reativar, somente próximo
-horário futuro; não enviar lote de dias atrasados. TTL curto até fim do dia.
-
-O fuso da preferência agenda o aviso; o dia válido da conclusão continua o dia
-de Brasília da Etapa 22.1/22.2. Informar essa diferença na preferência. Antes de
-adquirir job e imediatamente antes da entrega, verificar conclusão válida do
-dia atual de Brasília. Suprimir se houver, se desativado ou conta sem elegibilidade.
-Corrida inevitável: conclusão após a última checagem pode cruzar mensagem já
-entregue ao serviço push; não prometer cancelamento remoto ou entrega exata.
-
-Unicidade por usuário/data agendada evita dois workers criarem o mesmo lembrete;
-lock/lease e estado de entrega evitam reenvios no mesmo dispositivo. Por padrão,
-cada dispositivo explicitamente inscrito recebe no máximo uma entrega lógica por
-dia; vários dispositivos não representam duplicação acidental. Usar mesmo ID/tag
-opaco para deduplicação adicional. Falha de rede após aceite pode tornar resultado
-ambíguo: não garantir exactly-once; não repetir cegamente resultado desconhecido.
-Retries limitados só para falhas seguras, com backoff; remover/inativar 404/410,
-expiradas e opt-out. Não depender exclusivamente de evento de troca de assinatura.
-
-Payload genérico: convite acolhedor para abrir o aplicativo, sem nome, username,
-contatos, ofensiva, hábito religioso, título do devocional ou token de sessão.
-Sem métricas na tela bloqueada. Desativar cancela jobs futuros e subscriptions
-conforme escolha por dispositivo/conta, com confirmação clara do alcance.
-
-### Testes, compatibilidade e gate
-
-Testar scheduler com relógio falso, DST/fusos, conclusão antes/durante envio,
-opt-out, concorrência, dois dispositivos, expiração, resposta ambígua e RLS.
-Modo DEV usa transport falso e captura local sintética; receber push real pode
-depender do serviço do navegador, mesmo com servidor da aplicação local. Não
-chamar essa integração externa no modo sem rede; validar transporte real somente
-em rodada específica autorizada e sem Supabase hospedado.
-
-Produção requer HTTPS e suporte das APIs; localhost é a exceção de desenvolvimento
-nos navegadores compatíveis. Suporte varia por navegador/OS, instalação, energia,
-rede e políticas do usuário. iOS/iPadOS exige revisar experiência de web app na
-tela inicial; não prometer recebimento em aba comum ou com navegador encerrado
-em todos os sistemas. Matriz manual: Chrome/Edge desktop, Firefox, Safari macOS,
-Android e iOS/iPadOS suportados, com permissão negada/revogada e aparelho offline.
-
-Base técnica consultada para este planejamento: [Push API W3C (Working Draft,
-não norma final)](https://www.w3.org/TR/push-api/),
-[Notifications API MDN](https://developer.mozilla.org/en-US/docs/Web/API/Notifications_API),
-[Web Push em web apps iOS/iPadOS, WebKit](https://webkit.org/blog/13878/).
-Revalidar a matriz no início da implementação. Nenhuma API foi ativada agora.
+Simulação é o padrão. Entrega real exige autorização específica, VAPID privado
+somente no servidor, configuração local correspondente e confirmação criptografada
+da assinatura. Não houve envio externo. Política completa de DST, datas diferentes,
+janela de 15 minutos, deduplicação, resultados incertos, retenção e validações em
+[smart-reminders-local.md](smart-reminders-local.md) e [testing.md](testing.md).
 
 ## 22.3.4 — planejados: Comentários e Reações
 

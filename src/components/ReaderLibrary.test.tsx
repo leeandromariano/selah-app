@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import App from '../App'
@@ -11,6 +11,71 @@ function open(page = 'inicio') {
   return render(<App />)
 }
 describe('acervo persistente do leitor', () => {
+  it.each(olderPublications)('compartilhar aparece ao final de $title antes da conclusão, sem creditar leitura', async publication => {
+    libraryBoundary(olderPublications)
+    const fallback = vi.mocked(supabase.rpc).getMockImplementation()!
+    vi.mocked(supabase.rpc).mockImplementation((name, args) => name === 'get_my_reading_state'
+      ? { abortSignal: async () => ({ data: { status: 'paused', devotional_id: publication.id, revision: 1, credited_ms: 0, revision_changed: false }, error: null }) } as never
+      : fallback(name, args))
+    const copy = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText: copy } })
+    open(`leitura/${publication.id}`)
+    const share = await screen.findByRole('region', { name: 'Compartilhar devocional' })
+    expect(screen.getByRole('article').compareDocumentPosition(share) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(within(share).getByRole('button', { name: 'Compartilhar' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Concluir devocional' })).toBeDisabled()
+    fireEvent.click(within(share).getByRole('button', { name: 'Compartilhar' }))
+    await screen.findByText('Link copiado.')
+    expect(copy).toHaveBeenCalledWith(location.origin + '/#leitura/' + publication.id)
+    expect(supabase.rpc).not.toHaveBeenCalledWith('complete_devotional', expect.anything())
+    const whatsapp = new URL(within(share).getByRole('link', { name: 'Abrir WhatsApp para compartilhar' }).getAttribute('href')!)
+    expect(whatsapp.origin).toBe('https://wa.me')
+    expect(whatsapp.searchParams.get('text')).toContain(location.origin + '/#leitura/' + publication.id)
+    expect(within(share).getByText(/exige autenticação/)).toBeVisible()
+    expect(within(share).getByText(/não é um link público/)).toBeVisible()
+  })
+  it('compartilhar permanece disponível antes e depois da conclusão voluntária de 60000 ms', async () => {
+    const publication = olderPublications[0]
+    libraryBoundary([publication])
+    const fallback = vi.mocked(supabase.rpc).getMockImplementation()!
+    let completed = false
+    vi.mocked(supabase.rpc).mockImplementation((name, args) => {
+      if (name === 'complete_devotional') completed = true
+      if (['get_my_reading_state', 'complete_devotional'].includes(name)) return { abortSignal: async () => ({ data: {
+        status: completed ? 'completed' : 'ready', devotional_id: publication.id, revision: 1, credited_ms: 60000,
+        revision_changed: false, ...(completed ? { completed_at: '2026-10-28T15:00:00Z', completed_day: '2026-10-28' } : {}),
+      }, error: null }) } as never
+      return fallback(name, args)
+    })
+    open(`leitura/${publication.id}`)
+    expect(await screen.findByRole('button', { name: 'Compartilhar' })).toBeVisible()
+    fireEvent.click(await screen.findByRole('button', { name: 'Concluir devocional' }))
+    await screen.findByText(/Devocional concluído em/)
+    expect(completed).toBe(true)
+    expect(screen.getByRole('button', { name: 'Compartilhar' })).toBeVisible()
+    expect(screen.getAllByRole('region', { name: 'Compartilhar devocional' })).toHaveLength(1)
+  })
+  it('destino da notificação e link copiado abrem a mesma publicação sem duplicar compartilhamento', async () => {
+    libraryBoundary(olderPublications)
+    const id = olderPublications[0].id
+    open(`leitura/${id}/compartilhar`)
+    expect(await screen.findByRole('button', { name: 'Compartilhar' })).toBeVisible()
+    expect(screen.getAllByRole('region', { name: 'Compartilhar devocional' })).toHaveLength(1)
+    await act(async () => { location.hash = `leitura/${id}`; window.dispatchEvent(new HashChangeEvent('hashchange')) })
+    expect(screen.getByRole('heading', { name: olderPublications[0].title })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Compartilhar' })).toBeVisible()
+  })
+  it('não oferece compartilhamento para conteúdo ausente, não publicado ou sem autenticação', async () => {
+    libraryBoundary([])
+    const view = open(`leitura/${olderPublications[0].id}/compartilhar`)
+    await screen.findByText(/Devocional não encontrado ou indisponível/)
+    expect(screen.queryByRole('button', { name: 'Compartilhar' })).not.toBeInTheDocument()
+    view.unmount()
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: null }, error: null } as never)
+    render(<App />)
+    await screen.findByText(/Entre na sua conta para acessar os devocionais/)
+    expect(screen.queryByRole('region', { name: 'Compartilhar devocional' })).not.toBeInTheDocument()
+  })
   it('mostra conclusão do dia confirmada pelo banco sem converter aberturas', async () => {
     const today = { ...olderPublications[0], publish_at: new Date().toISOString() }
     const boundary = libraryBoundary([today])

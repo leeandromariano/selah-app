@@ -1,5 +1,203 @@
 # Inventário e execução de testes
 
+## Prompt 51 — auditoria final da Etapa 22.3.3
+
+Branch `feat/local-auth`, HEAD `91c81d0`, 31 candidatos (11 modificados/20 novos),
+sem staging. As doze migrações anteriores foram comparadas byte a byte com a base
+e permanecem íntegras. Nenhum banco existente foi migrado ou alterado nesta auditoria.
+
+Validação manual informada pelo responsável — transcrição literal, 15 aprovações:
+
+CONFIGURAÇÕES — 8 APROVAÇÕES
+
+1. Configurações → Lembretes aparece após login.
+2. É possível escolher o horário e alterar configurações.
+3. A permissão é solicitada somente após ação explícita.
+4. Ativar e desativar lembretes do dispositivo funciona.
+5. F5 e Alt+Tab preservam as configurações.
+6. Permissão negada ou incompatibilidade são explicadas.
+7. Interface funciona nos modos Claro e Escuro.
+8. Configurações são legíveis em janela pequena ou celular.
+
+COMPARTILHAMENTO E PRIVACIDADE — 7 APROVAÇÕES
+
+9. Compartilhar aparece ao final do devocional antes da conclusão.
+10. Copiar link funciona sem tokens ou informações privadas.
+11. WhatsApp prepara compartilhamento sem envio automático.
+12. Compartilhar permanece após conclusão válida de 60 segundos.
+13. A interface informa que destinatários precisam fazer login.
+14. Compartilhamento funciona em janela pequena e nos três temas.
+15. Troca de conta não revela preferências privadas da conta anterior.
+
+Estas aprovações são do responsável, não execuções manuais do agente; não aprovam
+outros navegadores/dispositivos nem envio ou recebimento Web Push remoto. A entrega
+real não está configurada nem validada. O escopo da preferência é separado:
+ativação por conta e horário/assinatura por dispositivo, conforme a interface.
+
+Resultados executados especificamente no Prompt 51 serão registrados abaixo;
+as seções Prompt 50A/22.3.3 seguintes preservam o histórico de rodadas anteriores.
+
+### Resultados realmente repetidos no Prompt 51
+
+| Comando | Resultado desta rodada |
+| --- | --- |
+| `npm.cmd run test:run` | 451 testes aprovados em 42 arquivos; exit 0 |
+| `npm.cmd run build` | DEV aprovado; JS 528,52 kB; aviso acima de 500 kB |
+| `npm.cmd run lint` | Aprovado, sem avisos |
+| `node scripts/local-navigation-browser.mjs --reminders` | 28 verificações aprovadas |
+| `node scripts/local-navigation-browser.mjs` | 18 verificações aprovadas de calendário/Jornada/OWNER |
+| `node scripts/local-navigation-browser.mjs --appearance` | 88 verificações aprovadas |
+| `node scripts/verify-local-reading-install.mjs` | 13 migrações, 331 verificações SQL/RLS + 2 de concorrência aprovadas |
+| `node scripts/local-reminders-readonly-http.mjs` | 4 rejeições HTTP anônimas aprovadas, sem mutações |
+| `node scripts/local-community-readonly-http.mjs` | 8 verificações HTTP negativas aprovadas, sem mutações |
+| `npm.cmd run build:staging` | Bloqueado, exit 1, pelo contrato de ambiente DEV |
+| `npm.cmd run build:prod` | Bloqueado, exit 1, pelo contrato de ambiente DEV |
+| `git diff --check` | Aprovado |
+
+Total Chromium desta rodada: **134 verificações**. UI/backend/sessão são simulados;
+navegação, foco/visibilidade por troca de abas, DOM e clipboard são locais reais.
+No teste do SW, permissão e mensagem são injetadas por CDP, sem provedor push.
+Web Share é validado na fronteira unitária simulada; WhatsApp é inspecionado como
+link voluntário, sem navegação externa/envio de mensagem. Nenhuma aprovação de
+entrega remota ou de dispositivos físicos é deduzida desses resultados.
+
+PostgreSQL é novo/temporário, sem rede ou volumes existentes. Reutiliza somente
+DDL Auth e imagem local; dados são fictícios. As 331 verificações incluem 43 de
+lembretes e 288 regressivas, encerradas em rollback. As duas de concorrência usam
+conexões/transações sobrepostas e fixture fictícia commitada **somente no contêiner
+descartável**, necessário para visibilidade entre conexões. O contêiner desta
+execução foi descartado, sem alterar o banco ou volumes existentes.
+
+Não houve testes reprovados nem encerramento intermitente de subprocessos Windows
+nesta rodada. O incidente Windows `3221226505` do Prompt 50A é histórico, com causa
+não determinada e repetição posterior aprovada. Testes não foram enfraquecidos.
+
+Revisão de arquivos: todos os 31 candidatos inspecionados. `package-lock.json`
+adiciona 17 pacotes para `web-push` 3.6.7; entradas preexistentes de dependências
+permanecem iguais (somente o manifesto raiz recebe a dependência). Sem arquivo
+de ambiente/credencial/cookie/log/cache/artefato temporário entre candidatos.
+Arquivos `.env` foram inventariados por nome, sem ler seu conteúdo; somente
+`.env.example` já é rastreado e não mudou. Chave privada VAPID ausente dos fontes
+frontend e do bundle DEV. Nenhum candidato ignorado nem arquivo fora do escopo.
+
+Limites mantidos: entrega real não configurada/validada, worker precisa permanecer
+ativo, matriz de navegadores/dispositivos incompleta, localhost sem acesso público,
+endpoint/chaves sensíveis protegidos por ACL/RLS mas sem nova criptografia de
+volume, limpeza/retenção dependentes do worker, possível perda de credencial com
+storage apagado e bundle >500 kB. Prova criptografada de inscrição real foi revisada
+no código, sem validação fim a fim com provedor. Sem bloqueador técnico identificado
+para o commit **local com envio externo bloqueado**; essas pendências impedem
+declarar a operação externa pronta. Nenhum ciclo do worker ou migração foi executado
+contra os dados existentes nesta auditoria.
+
+## Prompt 50A — compartilhamento visível no fim da leitura
+
+Relato real: ação ausente ao abrir devocional normalmente. Causa: componente
+condicionado ao sufixo `/compartilhar` e posicionado antes do artigo. Correção:
+uma única seção após o conteúdo/progresso em toda leitura publicada autorizada,
+com botão Compartilhar sempre presente, Web Share se disponível e fallback de
+cópia. Timer/conclusão, banco, RLS e permissões não foram alterados.
+
+Execuções desta correção:
+
+- Testes direcionados `npm.cmd run test:run -- src/components/ReaderLibrary.test.tsx src/notifications/reminders.test.tsx`:
+  **37 aprovados**. Cinco regressões novas cobrem visibilidade em duas publicações,
+  bloqueio a zero segundos, compartilhamento sem conclusão automática, conclusão
+  voluntária aos 60000 ms, destino da notificação/link normal, conteúdo ausente e
+  ausência de autenticação. Cobertura existente verifica Web Share/cópia voluntários.
+- `npm.cmd run build`: aprovado; JS **528,52 kB**, aviso >500 kB mantido.
+- `npm.cmd run lint`: aprovado sem avisos.
+- `node scripts/local-navigation-browser.mjs --reminders`: **28 aprovados**.
+  Integração simulada; clipboard local real com permissão/gesto emulados por CDP,
+  link WhatsApp inspecionado sem abrir/enviar, leitura antes/depois da conclusão,
+  localização após artigo, três temas, mobile, navegação, conteúdo indisponível e
+  isolamento. Nenhuma notificação externa enviada.
+- Primeira suíte completa: 450 aprovados/1 falhou em subprocesso de
+  `localEnvironment.test.ts`, que retornou Windows `3221226505` em vez de rejeição
+  controlada `1`. Nenhum teste foi removido ou flexibilizado; repetição integral
+  sem Chromium simultâneo: **451 testes aprovados em 42 arquivos**. A causa do
+  encerramento intermediário do processo Windows não foi determinada.
+- Tentativas intermediárias Chromium detectaram limitações do harness: alvo de
+  inicialização ausente, permissão/gesto para clipboard, mock de start_reading e
+  retorno DOM não serializável via CDP. Reexecução final passou os 28 cenários.
+- `git diff --check`: aprovado. SQL/HTTP não repetidos: nenhuma mudança de banco,
+  agendador ou autorização nesta correção. Resultados anteriores abaixo são históricos.
+
+Validação manual nova pendente: abrir publicação pelo fluxo normal, rolar até o
+fim e testar Compartilhar/Copiar/WhatsApp antes e depois de concluir; conferir
+aviso de autenticação/localhost, teclado, celular e Claro/Escuro/Sistema.
+Não houve aprovação manual informada para este Prompt. Sem staging/commit.
+
+## Etapa 22.3.3 — notificações inteligentes, base 91c81d0
+
+Somente ambiente local. Implementação e checklist manual em
+[smart-reminders-local.md](smart-reminders-local.md). Resultados abaixo são desta
+rodada; aprovações humanas anteriores de aparência/Jornada não aprovam push.
+Nenhuma aprovação manual nova foi informada para notificações.
+
+Execuções confirmadas nesta rodada:
+
+- `npm.cmd run test:run`: **446 testes aprovados em 42 arquivos** na execução
+  final (execuções intermediárias anteriores: 440 e 443).
+  As integrações React usam fronteira Supabase simulada, sem cliente real/rede/SQL.
+- `npm.cmd run build`: DEV aprovado; bundle JS 528,23 kB (aviso >500 kB).
+- `npm.cmd run lint`: aprovado sem avisos na última execução.
+- `node scripts/verify-local-reading-install.mjs`: **13 migrações, 331 verificações
+  SQL com rollback + 2 verificações de transações sobrepostas** em PostgreSQL NOVO,
+  sem rede/portas/volumes existentes, depois descartado. Dessas 331, 43 são de
+  lembretes, além das 288 anteriores. Fixture legada preservada.
+  Concorrência usa duas conexões com uma reserva ainda bloqueada: segunda ignora
+  dispositivo; após commit só existe uma reserva. Somente nesse contêiner temporário
+  há fixtures fictícias commitadas para visibilidade entre conexões; não no banco
+  existente. A suíte comum e a de lembretes encerram com rollback.
+- `node scripts/local-reminders-readonly-http.mjs`: **4 rejeições HTTP reais locais**
+  para RPCs anônimas; distingue rejeição 42501 de RPC inexistente; sem mutações.
+- `node scripts/local-community-readonly-http.mjs`: **8 verificações HTTP locais**
+  de regressão OWNER, consistência pessoal, tabelas privadas e bearer inválido,
+  todas aprovadas sem mutações. Total HTTP negativo desta rodada: **12**.
+- `node scripts/local-reminder-worker.mjs --once`: processo real em **simulação**,
+  zero elegíveis/zero intenções nessa execução. Cenários A/B com destinatários são
+  validados por SQL isolado e adaptador falso, não por envio externo.
+- `node scripts/local-navigation-browser.mjs --reminders`: **17 verificações**
+  Chromium headless. Preferência/foco/F5/troca de conta/tema/mobile/compartilhamento
+  usam backend simulado. Três verificações finais executam SW/IDB/Notifications API
+  locais reais com permissão emulada e mensagem injetada por CDP: exibe aviso,
+  limpa notificação ao remover vínculo e descarta mensagem antiga sem vínculo.
+  Isso **não confirma entrega por provedor Web Push** nem gesto de permissão real.
+- `node scripts/local-navigation-browser.mjs`: **18 verificações** de regressão
+  calendário/Jornada/OWNER; foco/visibilidade por alternância real de abas Chromium
+  e renovação simulada da sessão, sem provar Alt+Tab físico no Windows.
+- `node scripts/local-navigation-browser.mjs --appearance`: **88 verificações**,
+  regressão Claro/Escuro/Sistema, refresh, login/logout, teclado, responsividade,
+  redução de movimento e contraste de texto parcialmente automatizado.
+- `npm.cmd run build:staging` e `npm.cmd run build:prod`: ambos **bloqueados** com
+  exit 1 pelo contrato de ambiente (variáveis genéricas exclusivas de DEV).
+- `git diff --check`: aprovado. Sem arquivos staged, commit ou publicação.
+
+Cobertura nova: decisão servidor antes do transporte (inclui conclusão entre
+reserva e envio), nunca converter aberturas em conclusão, deduplicação após
+conclusão e resultado incerto, publicação ausente/rascunho, opt-out, permissão
+negada, revogação/expiração/sessão encerrada, dados próprios por RLS/RPC, OWNER e
+editorial sem acesso a inscrições, relógio controlável, DST e dias diferentes
+de Brasília, supressão após indisponibilidade/meia-noite, storage corrompido ou
+bloqueado, assinatura sem opt-in automático, respostas antigas entre contas,
+links internos sem dados privados, clipboard e WhatsApp voluntários.
+
+Falhas intermediárias corrigidas: concorrência inicialmente não pôde conectar
+com dblink sem senha sob papel não superuser; o bootstrap **apenas temporário**
+concede `dblink_connect_u` ao operador isolado. Reexecução completa passou.
+A aplicação local inicialmente foi recusada pelo sandbox; após aprovação de
+execução local, migração incremental aplicada e HTTP negativo confirmado.
+Não houve reset, ajuste de ACL do banco existente para dblink nem mudança de
+migrações anteriores. Instalação de `web-push`: npm reportou zero vulnerabilidades.
+
+Limites: entrega real, VAPID com provedor, inscrição nativa criptografada/prova
+fim a fim, Firefox/Safari, Android/iOS e dispositivos físicos não foram validados.
+Não há serviço supervisor do Windows/cron de produção instalado. Estado de aceite
+não comprova recebimento. Foco e contraste não substituem revisão humana ou leitor
+de tela. Volume Docker não ganha criptografia em repouso; retenção depende do
+worker ativo. Nenhuma chave privada VAPID foi gerada ou exposta no frontend.
+
 ## Etapa 22.3.2 — Prompt 48: auditoria definitiva e preparação de commit
 
 Branch `feat/local-auth`, HEAD `195a9b5`. Mesmos **17 candidatos: nove modificados
