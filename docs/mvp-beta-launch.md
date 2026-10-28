@@ -1,8 +1,15 @@
 # MVP Beta com cadastro aberto — preparação de publicação
 
+> Etapa 23.4 implementada localmente, aguardando commit; não houve publicação
+> nem conexão hospedada. As 12 validações manuais informadas pelo responsável
+> constam em [ambientes hospedados](hosted-environments.md).
+
 > Prompt 63: cadastro público está autorizado como decisão de produto, com
 > confirmação de e-mail. Convites foram dispensados e não são bloqueador.
 > O diagnóstico anterior permanece [arquivado](beta-invitations-local.md).
+> Etapa 23.4.2 integra a validação hospedada à fábrica e prepara login por
+> e-mail, mantendo a recusa de clientes e builds remotos; ver
+> [ambientes hospedados](hosted-environments.md).
 
 Estado em 28/10/2026: diagnóstico local na branch `feat/local-auth`, base
 `96a42abdd357522e20bc72ea5fd0e4dc7424465f`, árvore inicialmente limpa. Nenhum

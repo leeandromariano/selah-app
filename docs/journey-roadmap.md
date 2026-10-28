@@ -1,5 +1,13 @@
 # Etapa 22.3 — Minha Jornada e evolução pessoal
 
+> Etapa 23.4 implementada localmente e aguardando commit, com 12/12 validações
+> manuais informadas pelo responsável. STAGING/PROD permanecem bloqueados; ver
+> [ambientes hospedados](hosted-environments.md).
+
+> Etapa 23.4.2: contrato HTTPS integrado à fábrica e login por e-mail testável
+> em fronteira simulada. STAGING/PROD continuam bloqueados; detalhes e
+> pendências em [hosted-environments.md](hosted-environments.md).
+
 > Etapa 23.3: leitor bíblico local demonstrativo implementado com catálogo de 66
 > livros e arquitetura de provedores. NVI inativa e conteúdo bíblico real ainda
 > dependem de autorização; detalhes em [bible-reader-local.md](bible-reader-local.md).

@@ -8,7 +8,7 @@ import type { AppearanceStore } from '../appearance/store'
 
 const appearanceBootstrap = readFileSync('public/appearance.js', 'utf8')
 
-vi.mock('../lib/supabase', () => ({ supabase: {
+vi.mock('../lib/supabase', () => ({ loginMethod: 'local', supabase: {
   auth: { getSession: vi.fn(), onAuthStateChange: vi.fn(), signUp: vi.fn(), signInWithPassword: vi.fn(), setSession: vi.fn(), signOut: vi.fn(), resetPasswordForEmail: vi.fn(), updateUser: vi.fn() },
   functions: { invoke: vi.fn() },
   rpc: vi.fn(),

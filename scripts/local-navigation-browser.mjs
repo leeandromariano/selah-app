@@ -68,6 +68,7 @@ if (${readingLayoutRun}) {window.__sharingBeforeCompletion=true;window.__layoutC
 const discussionSnapshot=page=>({reaction:reactions.get(currentSession?.user.id)||null,own:reflections.get(currentSession?.user.id)||null,page,total:Array.from(reflections.values()).filter(c=>c.state==='approved').length,comments:Array.from(reflections.entries()).filter(([,c])=>c.state==='approved').map(([who,c])=>({id:c.id,body:c.body,username:${readingLayoutRun}?'u'+'m'.repeat(23):'leitor_ficticio',day:'2026-10-28',own:who===currentSession?.user.id,reported:reportOpen}))});
 const rewardKey=()=>'__fiction_reward_'+currentSession?.user.id;
 const rewards=()=>({server_today:'2026-10-28',time_zone:'America/Sao_Paulo',week_start:'2026-10-26',badges:[3,7,14,30,60,100].map(days=>({days,unlocked:currentSession?.user.id===session.user.id&&days<=7})),challenges:JSON.parse(localStorage.getItem(rewardKey())||'[]')});
+export const loginMethod = 'local';
 export const supabase = {
  auth: { getSession:async()=>({data:{session:currentSession},error:null}), onAuthStateChange(fn){callback=fn;return {data:{subscription:{unsubscribe(){callback=null}}}}}, signOut:async()=>{currentSession=null;callback?.('SIGNED_OUT',null);return {error:null}} },
  from:(table)=>({...query,select(){return this},eq(){return this},lte(){return this},order(){return this},maybeSingle:async()=>({data:null,error:null}),range:async()=>({data:table==='devotionals'?[content,{...content,id:'theme-previous',title:'Pausa anterior fictícia',publish_at:new Date(Date.now()-86400000).toISOString()}]:[],error:null})}),

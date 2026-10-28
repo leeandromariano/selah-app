@@ -37,6 +37,10 @@
 
 # Processo de desenvolvimento do Selah
 
+> Etapa 23.4: validação tipada do contrato hospedado e caminho de login por
+> e-mail preparados e testáveis localmente; cliente/build STAGING e PROD seguem
+> bloqueados. Limites e etapas pendentes em [hosted-environments.md](hosted-environments.md).
+
 > Etapa 23.3: o leitor bíblico local usa conteúdo fictício parcial e catálogo
 > de 66 livros. NVI e integrações externas permanecem inativas, sujeitas a
 > autorização e licença; ver [bible-reader-local.md](bible-reader-local.md).

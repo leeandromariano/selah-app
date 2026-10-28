@@ -8,6 +8,22 @@ export function normalizeLoginIdentifier(input: string) {
   throw { code: 'invalid_identifier' }
 }
 
+export function normalizeEmailLogin(input: string) {
+  const value = input.trim().toLowerCase()
+  if (value.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) throw { code: 'invalid_identifier' }
+  return value
+}
+
+export async function emailPasswordLogin(client: Pick<SupabaseClient, 'auth'>, identifier: string, password: string) {
+  const email = normalizeEmailLogin(identifier)
+  const { data, error } = await client.auth.signInWithPassword({ email, password })
+  if (error) {
+    const code = error.code
+    throw { code: code === 'email_not_confirmed' ? 'invalid_credentials' : code === 'invalid_credentials' || code === 'over_request_rate_limit' ? code : 'login_unavailable' }
+  }
+  if (!data.session) throw { code: 'login_unavailable' }
+}
+
 export async function passwordLogin(client: Pick<SupabaseClient, 'auth' | 'functions'>, identifier: string, password: string) {
   const { data, error } = await client.functions.invoke('password-login', { body: { identifier: normalizeLoginIdentifier(identifier), password } })
   if (error) {

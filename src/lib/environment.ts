@@ -3,6 +3,27 @@ export type Variables = Record<string, string | undefined>
 export type BuildEnvironment = { mode: string; variables: Variables }
 const modes: Record<string, EnvironmentName> = { development: 'DEV', staging: 'STAGING', production: 'PROD' }
 const localUrl = 'http://127.0.0.1:54321'
+export type HostedEnvironment = { name: 'STAGING' | 'PROD'; url: string; key: string; projectRef: string; siteOrigin: string; login: 'email' }
+
+// Validate a future contract without enabling a build or creating a client.
+export function prepareHostedEnvironment(mode: 'staging' | 'production', variables: Variables): HostedEnvironment {
+  resolveEnvironment(mode, variables) // retain all existing key, project and separation checks
+  const name = mode === 'staging' ? 'STAGING' : 'PROD'
+  const prefix = `VITE_${name}_SUPABASE_`
+  const url = variables[`${prefix}URL`], key = variables[`${prefix}PUBLISHABLE_KEY`], projectRef = variables[`${prefix}PROJECT_REF`]
+  const siteOrigin = variables[`VITE_${name}_SITE_ORIGIN`]
+  if (!url || !key || !projectRef || !siteOrigin) throw new Error('Configuração hospedada incompleta.')
+  let site: URL
+  try { site = new URL(siteOrigin) } catch { throw new Error('Origem HTTPS inválida.') }
+  if (site.protocol !== 'https:' || site.origin !== siteOrigin || site.username || site.password || site.port || !site.hostname.includes('.') || site.hostname === 'localhost' || site.hostname.endsWith('.localhost') || site.hostname.endsWith('.local') || /^\d+(?:\.\d+){3}$/.test(site.hostname) || site.hostname.includes(':')) throw new Error('Origem HTTPS hospedada inválida.')
+  const other = name === 'STAGING' ? 'PROD' : 'STAGING'
+  if (variables[`VITE_${other}_SITE_ORIGIN`] === siteOrigin) throw new Error('STAGING e PROD devem usar origens distintas.')
+  return { name, url, key, projectRef, siteOrigin, login: 'email' }
+}
+
+export function validateHostedOrigin(config: HostedEnvironment, origin: string) {
+  if (origin !== config.siteOrigin) throw new Error('Origem não corresponde ao ambiente hospedado.')
+}
 
 export function validatePublicKey(key: string) {
   if (!key || key !== key.trim() || /\s/.test(key)) throw new Error('Informe uma chave pública válida, sem espaços.')
@@ -70,12 +91,25 @@ export function createBuildEnvironment(mode: string, variables: Variables): Buil
   return { mode, variables: { VITE_APP_ENV: config.name, VITE_DEV_SUPABASE_URL: config.url, VITE_DEV_SUPABASE_PUBLISHABLE_KEY: config.key } }
 }
 
+export function prepareClientConfiguration(build: BuildEnvironment, origin: string) {
+  let url: string, key: string, login: 'local' | 'email'
+  if (build.mode === 'staging' || build.mode === 'production') {
+    const config = prepareHostedEnvironment(build.mode, build.variables)
+    validateHostedOrigin(config, origin)
+    url = config.url; key = config.key; login = config.login
+  } else {
+    const config = requireEnabledEnvironment(build.mode, build.variables)
+    let source: URL
+    try { source = new URL(origin) } catch { throw new Error('Origem local inválida; cliente não inicializado.') }
+    if (source.protocol !== 'http:' || !['127.0.0.1', 'localhost'].includes(source.hostname) || !['5173', '4173'].includes(source.port) || source.origin !== origin) throw new Error('O artefato DEV só pode iniciar em uma origem local nas portas 5173/4173.')
+    url = config.url; key = config.key; login = 'local'
+  }
+  return { url, key, login, redirectOrigin: origin, options: { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'implicit' as const } } }
+}
+
 export function createEnvironmentClient<T>(build: BuildEnvironment, factory: (url: string, key: string, options: { auth: { persistSession: boolean; autoRefreshToken: boolean; detectSessionInUrl: boolean; flowType: 'implicit' } }) => T, origin: string) {
-  const config = requireEnabledEnvironment(build.mode, build.variables)
-  let source: URL
-  try { source = new URL(origin) } catch { throw new Error('Origem local inválida; cliente não inicializado.') }
-  if (source.protocol !== 'http:' || !['127.0.0.1', 'localhost'].includes(source.hostname) || !['5173', '4173'].includes(source.port) || source.origin !== origin) throw new Error('O artefato DEV só pode iniciar em uma origem local nas portas 5173/4173.')
-  return factory(config.url, config.key, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'implicit' },
-  })
+  const config = prepareClientConfiguration(build, origin)
+  // The hard gate remains inside the actual factory, before any SDK call.
+  requireEnabledEnvironment(build.mode, build.variables)
+  return factory(config.url, config.key, config.options)
 }

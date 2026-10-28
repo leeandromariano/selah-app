@@ -1,5 +1,104 @@
 # Inventário e execução de testes
 
+## Prompt 68 — validação manual informada pelo responsável: 12/12 aprovados
+
+1. Cadastro de nova conta fictícia funciona no ambiente local.
+2. Confirmação de cadastro pelo Mailpit funciona.
+3. Login com username funciona.
+4. Login com e-mail funciona.
+5. Recuperação e redefinição de senha funcionam.
+6. Logout encerra a sessão corretamente.
+7. Troca de conta não mantém dados da conta anterior.
+8. Leitura e conclusão após 60 segundos continuam funcionando.
+9. Minha Jornada, conquistas e desafios funcionam.
+10. Comentários, reações e moderação continuam funcionando.
+11. Bíblia e navegação interna continuam funcionando.
+12. Temas Claro, Escuro e Sistema continuam funcionando.
+
+Transcrição literal informada pelo responsável; não demonstra hospedagem real,
+SMTP externo, Auth hospedado ou testes adicionais não informados.
+
+Verificações executadas nesta auditoria: `npm.cmd run test:run` passou 504 testes
+em 48 arquivos; `npm.cmd run build` passou em DEV (JS 556,53 kB, aviso acima de
+500 kB); `npm.cmd run lint` passou. `build:staging` e `build:prod` retornaram
+código 1 devido às variáveis genéricas DEV; a suíte também testa recusa antes do
+SDK com contrato hospedado fictício válido. `git diff --check` passou.
+
+Auth HTTP local: `node scripts/local-auth-smoke.mjs` passou 19 verificações,
+incluindo confirmação e recuperação via Mailpit. Com função local servida,
+`node scripts/local-login-browser.mjs` passou 12 verificações Chromium/Auth reais,
+incluindo username, e-mail e logout. Cada teste criou uma conta fictícia nova,
+mantida localmente; nenhuma conta anterior foi alterada ou excluída. Negativas
+HTTP `node scripts/local-community-readonly-http.mjs`: oito aprovadas sem
+modificação de dados. Nenhum SQL/RLS novo foi executado.
+
+Chromium com backend simulado: `--bible` 18, `--reading-layout` 54,
+`--discussion` 45, `--rewards` 27 e sem opção 18 verificações aprovadas. A
+falha histórica de comentários e a intermitência de compartilhamento não se
+reproduziram; as causas originais não foram confirmadas. Preview DEV explícito
+serviu HTML, bundle, service worker, protocolo e `_headers` com HTTP 200 local;
+não valida os cabeçalhos no Cloudflare. Varredura limitada do bundle DEV não
+encontrou prefixo conhecido de chave secreta, JWT `service_role` ou chave privada;
+não comprova ausência de todo segredo possível.
+
+## Prompt 67 — integração protegida da configuração hospedada
+
+`npm.cmd run test:run`: 504 testes em 48 arquivos aprovados; `npm.cmd run build`
+aprovado em DEV (JS 556,53 kB, aviso acima de 500 kB); `npm.cmd run lint`
+aprovado sem avisos. Os testes de configuração hospedada preparam parâmetros
+fictícios e comprovam que a fábrica não chama o SDK após a recusa; não criam
+cliente remoto. O login hospedado é testado com Auth simulado, inclusive
+normalização de erro para e-mail não confirmado. Não comprova política de
+enumeração do endpoint Auth direto de um projeto hospedado.
+
+Com função local servida, `node scripts/local-login-browser.mjs` passou 12
+verificações Chromium com Auth real e conta fictícia nova; `node
+scripts/local-auth-smoke.mjs` passou 19 HTTP reais locais com outra conta
+fictícia nova, incluindo confirmação e recuperação. Ambas foram mantidas;
+nenhuma conta preexistente foi alterada ou apagada e Mailpit permaneceu local.
+`node scripts/local-community-readonly-http.mjs` passou oito negativas HTTP.
+Chromium com integração Supabase simulada: `--reading-layout` 54,
+`--discussion` 45, `--rewards` 27 e `--bible` 18 verificações aprovadas.
+As falhas históricas de compartilhamento e comentários não se reproduziram;
+sua causa original segue não comprovada.
+
+`build:staging` e `build:prod` retornaram exit 1 por variáveis genéricas DEV;
+teste unitário independente confirma que a fábrica recusa contrato hospedado
+fictício válido antes de chamar SDK. Nenhum SQL/RLS novo, serviço hospedado ou
+e-mail externo foi usado. `git diff --check` passou.
+
+## Prompt 66 — preparação hospedada com bloqueios preservados
+
+`npm.cmd run test:run`: 501 testes em 48 arquivos aprovados. Os testes novos de
+configuração e login hospedado usam valores e SDK fictícios, sem rede; os
+anteriores permanecem. `npm.cmd run build` passou em DEV (JS 555,34 kB, aviso
+acima de 500 kB) e `npm.cmd run lint` passou. `build:staging` e `build:prod`
+foram recusados com exit 1 por variáveis genéricas DEV herdadas; os testes
+unitários também confirmam bloqueio com contrato fictício válido.
+
+`node scripts/local-auth-smoke.mjs` passou 19 verificações HTTP reais locais,
+incluindo confirmação, recuperação e logout, com uma conta fictícia nova retida
+e Mailpit local. `node scripts/local-community-readonly-http.mjs` passou oito
+negativas locais sem alteração de registros. O primeiro
+`node scripts/local-login-browser.mjs` passou três verificações e parou no login
+quando a função local não estava servida; depois de iniciar
+`node scripts/serve-local-login.mjs`, a reexecução passou 12 verificações reais
+de navegador/Auth e função, inclusive username e e-mail. Cada execução criou
+uma conta fictícia nova que permaneceu no banco local. Nenhuma conta preexistente
+ou permissão OWNER foi alterada; e-mails ficaram no Mailpit local.
+
+Chromium com Supabase simulado: `--bible` 18, `--reading-layout` 54,
+`--discussion` 45 e `--rewards` 27 verificações aprovadas. Falhas históricas de
+compartilhamento/comentários não se reproduziram; sua causa original não foi
+comprovada. Nenhuma migração foi criada ou executada; SQL/RLS não foi repetido.
+
+`npm.cmd run preview` padrão foi recusado pelo modo de produção; com
+`npm.cmd run preview -- --mode development`, o artefato DEV serviu HTML, bundle,
+service worker e arquivo `_headers` por HTTP local. Inspeção limitada do bundle
+não encontrou prefixo de chave secreta conhecido. Isso não verifica aplicação dos
+cabeçalhos pelo Cloudflare nem comprova ausência de qualquer segredo possível.
+Não houve acesso a provedor hospedado ou envio externo. `git diff --check` passou.
+
 ## Prompt 65 — validação manual informada pelo responsável: 9/9 aprovados
 
 1. A seção Bíblia aparece no menu e abre corretamente.
