@@ -1,5 +1,291 @@
 # Inventário e execução de testes
 
+## Prompt 56 — auditoria final e validação manual 13/13
+
+1. Os textos solicitados nos Prompts 53, 54 e 55 desapareceram.
+2. O subtítulo aparece exatamente como solicitado.
+3. O contador N/1000 funciona e o campo respeita o limite.
+4. Os cartões de leitura, compartilhamento e comentários estão alinhados no desktop.
+5. Gostei/Não gostei funciona, inclusive troca e remoção.
+6. Meu comentário aparece como pendente após o envio.
+7. O Owner consegue aprovar e rejeitar comentários.
+8. Editar um comentário aprovado exige nova moderação.
+9. Um comentário aprovado fica visível a outros leitores autenticados.
+10. Exclusão própria, denúncias e ocultação funcionam.
+11. Contas sem OWNER não acessam a moderação.
+12. A interface funciona no celular e nos três temas.
+13. Comentários e reações não afetam a conclusão de 60 segundos.
+
+Transcrição literal das aprovações informadas pelo responsável. Não são testes
+manuais executados pelo agente nem aprovação de cenários adicionais, certificação
+legal ou recebimento Web Push externo. Registros dos Prompts 52–55 abaixo são
+históricos; suas menções a validação manual pendente não substituem estas aprovações.
+
+### Verificacoes repetidas nesta auditoria
+
+| Execucao local — Prompt 56 | Resultado |
+| --- | --- |
+| npm.cmd run test:run | 466 testes, 43 arquivos aprovados |
+| npm.cmd run build | DEV aprovado; JS 540,66 kB, aviso acima de 500 kB |
+| npm.cmd run lint | Aprovado |
+| node scripts/local-navigation-browser.mjs --reading-layout | 54 verificacoes Chromium aprovadas |
+| node scripts/local-navigation-browser.mjs --discussion | 45 aprovadas |
+| node scripts/local-navigation-browser.mjs --reminders | 28 aprovadas |
+| node scripts/local-navigation-browser.mjs | 18 aprovadas |
+| node scripts/local-navigation-browser.mjs --appearance | 88 aprovadas |
+| node scripts/verify-local-reading-install.mjs | 14 migracoes, 386 SQL/RLS e 12 verificacoes concorrentes aprovadas |
+| node scripts/local-discussion-readonly-http.mjs | 13 negativas HTTP locais aprovadas |
+| node scripts/local-community-readonly-http.mjs | 8 negativas HTTP locais aprovadas |
+| npm.cmd run build:staging / npm.cmd run build:prod | Ambos bloqueados, exit 1 esperado |
+| git diff --check | Aprovado |
+
+Total Chromium: 233 verificacoes. DOM, geometria, clipboard e navegacao locais;
+backend, sessoes e confirmacoes de tempo simulados na fronteira. Service worker
+exercitado via CDP, sem envio/recebimento push remoto. Sem Firefox/Safari,
+dispositivos fisicos ou auditoria completa de acessibilidade/contraste.
+
+SQL usa PostgreSQL temporario isolado e dados sinteticos: 386 verificacoes
+com rollback; concorrencia usa transacoes confirmadas somente no banco descartado
+para permitir visibilidade entre conexoes. Duas verificacoes de lembretes e dez
+de discussao, incluindo edicao concorrente contra aprovacao antiga (40001),
+denuncias simultaneas deduplicadas e quota consumida uma unica vez. Os 13 arquivos
+de migracao anteriores permanecem identicos ao HEAD. Instalador de migracao e
+manutencao nao foram executados no banco existente. HTTP apenas negativo e sem
+mutacoes; nao equivale a fluxo positivo autenticado fim a fim com backend real.
+
+A suite de discussao tambem verifica perda/retorno real de visibilidade de aba,
+renovacao de sessao na rota de moderacao e F5; nao simula teclas fisicas Alt+Tab.
+Nenhuma falha intermitente ou de subprocesso Windows ocorreu nesta rodada.
+Resultados historicos abaixo permanecem identificados por prompt.
+
+Auditoria final: 27 candidatos (15 modificados e 12 novos), staging vazio.
+Sem alteracoes em dependencias, regras de leitura, autenticacao, consistencia,
+transporte push ou nas 13 migracoes anteriores. Sem arquivos de ambiente, logs,
+caches ou artefatos temporarios entre os candidatos; preferencias privadas e
+credenciais locais nao foram incorporadas. Sem bloqueador identificado para
+versionamento local; homologacao/producao continuam bloqueadas.
+
+Moderacao exige supervisao humana; limites por conta nao substituem protecao
+operacional contra abuso distribuido. Retencao depende da manutencao explicita,
+nao agendada nesta rodada: pendentes/ocultos/rejeitados por 30 dias, denuncias
+resolvidas por 30 dias e demais denuncias/auditoria por 90 dias. Aprovados ficam
+ate remocao propria ou exclusao de conta/conteudo; tombstone pode permanecer.
+Revisao legal especifica continua necessaria antes de abertura publica.
+Web Push externo nao validado nem ativado; bundle acima de 500 kB permanece.
+Nenhum staging, commit, envio externo, publicacao ou inicio da Etapa 22.3.5.
+
+
+
+## Prompt 55 — contador preservado, textos e confirmação removidos
+
+Os três textos foram removidos do formulário sem mensagem substituta. A indicação
+do comentário próprio **Pendente de moderação** permanece, pois é um estado
+funcional, não confirmação de envio. Título, subtítulo literal, contador e layout
+dos Prompts 53/54 preservados. Não foram alterados endpoints, RLS, quotas, OWNER,
+autenticação ou regras de leitura/push. Políticas nas páginas próprias intactas.
+
+| Comando executado nesta rodada | Resultado |
+| --- | --- |
+| `npm.cmd run test:run -- src/components/DiscussionSection.test.tsx` | 13 aprovados |
+| `npm.cmd run test:run` | 466 aprovados em 43 arquivos |
+| `npm.cmd run build` | DEV aprovado; JS 540,66 kB, aviso >500 kB mantido |
+| `npm.cmd run lint` | Aprovado sem avisos |
+| Chromium `--reading-layout` | 54 aprovados |
+| Chromium `--discussion` | 43 aprovados |
+| Chromium `--reminders` | 28 aprovados na reexecução final |
+| Chromium sem opção | 18 aprovados |
+| Chromium `--appearance` | 88 aprovados |
+| `git diff --check` | Aprovado |
+
+Novo teste de interface verifica contador ao digitar/limpar, maxlength, exatos
+1000 caracteres aceitos e 1001 programáticos bloqueados, sem chamada de save acima
+do limite; envio válido mantém pendência e não cria role=status de sucesso.
+Teste existente de envio foi ajustado para ausência dos três textos mantendo a
+assertiva da RPC de save e estado pendente. Demais testes de edição, remoção,
+reações, denúncia, conflito/frequência e autorização não foram enfraquecidos.
+
+Total Chromium: **231 verificações aprovadas na reexecução final**. Backend,
+sessões e confirmações de tempo são simulados; DOM, geometria, teclado/viewport e
+clipboard são locais reais. O teste de SW usa CDP, sem provedor externo. Layout
+continua em 690 px no desktop e sem overflow mobile nos três temas; counter e
+limites são exercitados antes da submissão. OWNER aprova/rejeita/oculta nas filas.
+
+Falha intermediária de Chromium: a checagem de mensagem SW local falhou em duas
+tentativas. O mock de foco renovava sempre a sessão fictícia inicial, apesar da
+troca de conta anterior, provocando limpeza do vínculo. Ajustado para renovar a
+sessão fictícia atual (ou SIGNED_OUT quando ausente), sem mudar código de produção
+ou retirar verificações. Suite de lembretes e demais modos repetidos e aprovados.
+Não houve erro de subprocesso Windows nem teste ignorado.
+
+SQL/RLS, HTTP e builds STAGING/PROD não repetidos nesta rodada de apresentação;
+resultados dessas suítes abaixo são históricos. Sem operações em banco/dados,
+envio externo, staging, commit, publicação ou implementação da Etapa 22.3.5.
+Nenhuma aprovação manual nova informada. Candidatos: **27 (15 modificados/12 novos)**.
+
+## Prompt 54 — comunicação da leitura, após Prompt 53
+
+Somente JSX/textos/acessibilidade do progresso; coluna de leitura e CSS do Prompt
+53 preservados. Retirados os textos solicitados do progresso/histórico e os três
+parágrafos do bloco de compartilhamento, sem avisos substitutos. Subtítulo literal:
+`Comente aqui o que você aprendeu e refletiu com essa devocional.` Nenhuma nova
+frase de publicação/visibilidade foi adicionada. Política e documentação próprias
+continuam contendo as regras; RLS, moderação e autenticação não foram alteradas.
+
+Resultados efetivamente executados nesta rodada:
+
+- Testes direcionados (`npm.cmd run test:run -- src/components/ReadingProgress.test.tsx src/components/ReaderLibrary.test.tsx src/components/DiscussionSection.test.tsx src/App.test.tsx`): **43 aprovados**.
+- Execução completa `npm.cmd run test:run`: **465 aprovados em 43 arquivos**.
+- `npm.cmd run build`: DEV aprovado; JS **540,97 kB**, aviso >500 kB mantido.
+- `npm.cmd run lint`: aprovado sem avisos.
+- Chromium `--reading-layout`: **54 aprovados**, incluindo todos os cenários de
+  geometria/estados/temas do Prompt 53 e ausência dos textos, subtítulo exato,
+  barra visual com 59999 ms e botão bloqueado, habilitação após confirmação de
+  60000 ms e conclusão apenas por clique. Nome acessível da barra preservado.
+- Chromium `--discussion`: **39**, `--reminders`: **28**, sem opção: **18**,
+  `--appearance`: **88** aprovados. Total nesta rodada: **227 verificações**.
+- `git diff --check`: aprovado. Sem staging, commit, publicação ou envio externo.
+
+Testes de apresentação antigos passaram a verificar ausência dos textos e nome
+acessível genérico da barra. Valores max/value, bloqueio em 59999, habilitação em
+60000, persistência, histórico sem conclusão automática e proteção do conteúdo
+continuam assertados. Regressões de compartilhamento mantêm validação do link e
+dos handlers; o destino da notificação é testado sem exigir o aviso removido.
+Não foi removido/enfraquecido teste de comportamento ou segurança.
+
+DOM/viewport/clipboard/foco locais reais no Chromium; backend, sessões e tempos
+confirmados são simulados na fronteira. Testes não provam entrega Web Push remota,
+dispositivo físico ou conformidade legal. SQL/RLS, HTTP e builds STAGING/PROD não
+foram repetidos: lógica de servidor, schema, permissões e ambiente não mudaram.
+Não houve operação em dados existentes. Resultados de banco abaixo são históricos.
+Nenhuma nova validação manual foi informada. Total de candidatos: **27**, sendo
+**15 modificados e 12 novos**; manifesto atualizado em `discussion-local.md`.
+
+## Prompt 53 — coluna de leitura e comentários mais limpos
+
+Somente apresentação: os três blocos extensos foram retirados; aviso curto de
+pendência e visibilidade autenticada permanece dentro do formulário e associado
+à textarea. Política de privacidade e regras backend continuam intactas.
+Uma única `.reading-column` controla largura/centro dos cartões; padding responsivo
+é compartilhado. Ordem de conteúdo, pergunta opcional, progresso, compartilhar e
+comentar preservada. Diagnóstico e capturas: [discussion-local.md](discussion-local.md).
+
+Resultados realmente executados nesta rodada:
+
+| Comando | Resultado |
+| --- | --- |
+| `npm.cmd run test:run -- src/components/DiscussionSection.test.tsx src/components/ReaderLibrary.test.tsx` | 33 aprovados |
+| `npm.cmd run test:run` | 465 aprovados em 43 arquivos |
+| `npm.cmd run build` | DEV aprovado; aviso de bundle >500 kB mantido |
+| `npm.cmd run lint` | Aprovado, sem avisos |
+| `node scripts/local-navigation-browser.mjs --reading-layout` | 44 aprovados |
+| `node scripts/local-navigation-browser.mjs --discussion` | 39 aprovados |
+| `node scripts/local-navigation-browser.mjs --reminders` | 28 aprovados |
+| `node scripts/local-navigation-browser.mjs` | 18 aprovados |
+| `node scripts/local-navigation-browser.mjs --appearance` | 88 aprovados |
+| `git diff --check` | Aprovado |
+
+As três regressões novas validam ausência literal dos três parágrafos, aviso
+breve próximo ao envio com descrição acessível, contêiner/ordem comuns e ausência de cartão vazio quando não há pergunta. Teste
+existente de aviso foi atualizado para a apresentação curta, mantendo envio e
+estado pendente. Reações, edição/remoção, denúncia, moderação, HTML seguro e
+conclusão de 60 segundos continuam exercitados, sem enfraquecer testes funcionais.
+
+Reprodução automatizada antes da correção: a nova verificação Chromium de largura
+falhou com 690 px no artigo contra 1085 px nos dois cartões finais. Após a correção,
+versículo/pergunta/progresso/compartilhamento/reflexão medem 690 px, mesma esquerda
+489,5 px no viewport desktop de 1440 px. Nenhuma imagem do responsável veio anexada;
+diagnóstico baseado no código e medição do navegador.
+
+Layout cobre desktop 1440 px/mobile 390 px nos três temas, padding consistente,
+centralização, texto contínuo de 980 caracteres, username de 24 caracteres,
+controles dentro da coluna, foco visível, contraste de texto e estados de
+carregamento/vazio/erro. Seis screenshots sintéticos gerados em
+`node_modules/.cache/selah-reading-layout`, ignorados pelo Git; desktop/mobile
+claros foram inspecionados visualmente. Total Chromium desta rodada: **217**.
+Todos usam backend/sessões fictícios; DOM, viewport e navegação são reais. Mensagens
+SW da regressão são injetadas localmente, sem entrega externa. Firefox/Safari,
+celulares físicos e leitores de tela não foram testados.
+
+Build intermediário apontou tipagem Element/HTMLElement em uma asserção nova;
+querySelector foi tipado corretamente e a repetição de build passou. Nenhuma
+asserção removida para contornar a falha. Não houve falha de subprocesso Windows.
+SQL/RLS, HTTP e bloqueios de build STAGING/PROD não foram repetidos neste ajuste
+visual: nenhuma regra, migração, API, configuração de ambiente ou permissão mudou.
+Resultados desses testes nas seções seguintes pertencem às rodadas anteriores.
+
+Validação manual desta apresentação continua pendente. Lista final: **23 arquivos
+candidatos, 11 modificados/12 novos**. Sem staging, commit ou publicação.
+
+## Prompt 52 — Etapa 22.3.4: comentários, reações e moderação
+
+Base `2a60697`, branch `feat/local-auth`, árvore limpa no início. Arquitetura,
+matriz de permissões, retenção e checklist em [discussion-local.md](discussion-local.md).
+Nenhuma aprovação manual nova informada. Testes abaixo não aprovam publicação,
+conformidade legal ou operação com usuários reais/menores de idade.
+
+Execuções desta rodada (separadas dos resultados históricos abaixo):
+
+- `npm.cmd run test:run -- src/components/DiscussionSection.test.tsx`: **11 testes
+  novos aprovados**, com Supabase simulado na fronteira, sem rede/SQL/credenciais.
+  Reagir/trocar/remover, novo pendente, aviso de visibilidade, edição de aprovado,
+  remoção confirmada, texto HTML escapado, denúncia, limite, rascunho/retry,
+  resposta tardia após logout, RPC sem autoria e moderação exclusiva.
+- `npm.cmd run test:run`: **462 testes aprovados em 43 arquivos** na execução
+  final, após aviso de privacidade e implementação final. Os 451 anteriores também
+  foram executados no primeiro ciclo.
+- `node scripts/verify-local-reading-install.mjs`: **14 migrações, 386 verificações
+  SQL/RLS** (55 de discussão + 331 anteriores) com rollback nas suítes principais;
+  **2 verificações de concorrência de lembretes + 4 de discussão** aprovadas.
+  PostgreSQL novo com rede desabilitada, sem volumes existentes, Auth DDL sem dados,
+  fixtures fictícias e contêiner descartado. Teste de concorrência com duas conexões
+  exige fixtures fictícias commitadas somente nesse contêiner; não no banco existente.
+  Segundo escritor fica aguardando o lock por usuário; após commits há uma reação
+  e um comentário principal, com retry idempotente da mesma intenção.
+- `node scripts/local-navigation-browser.mjs --discussion`: **39 verificações
+  Chromium aprovadas**. Backend/sessões simulados; DOM, navegação e teclado reais.
+  Cobrem reações, pendência, troca de conta, aprovação/rejeição/ocultação, denúncia,
+  histórico, F5, perda de OWNER, texto malicioso seguro, três temas, contraste de
+  texto parcialmente automatizado, foco e viewport mobile para leitor e OWNER. Não são testes de
+  dispositivo físico, leitor de tela ou autenticação HTTP positiva fim a fim.
+- Regressões Chromium: `--reminders` **28**, sem opção **18**, `--appearance`
+  **88** aprovadas. Total com discussão: **173**. Nenhuma entrega externa push;
+  mensagens SW do teste de lembretes são injetadas localmente por CDP.
+- `node scripts/local-discussion-readonly-http.mjs`: **13 verificações HTTP negativas
+  locais aprovadas**, oito RPCs anônimas e cinco tabelas privadas; nenhuma mutação.
+- `npm.cmd run build`: aprovado, JS **542,39 kB**, aviso >500 kB mantido.
+- `npm.cmd run lint`: aprovado sem avisos na execução final.
+- `npm.cmd run build:staging` e `npm.cmd run build:prod`: **bloqueados**, ambos
+  exit 1 pelo contrato de ambiente (variáveis genéricas exclusivas de DEV).
+- `git diff --check`: aprovado. Nenhum arquivo staged ou commit executado.
+
+Instalação: `node scripts/apply-local-discussion-migration.mjs` aplicou apenas a
+incremental `20261028000700` local após validação isolada, criando objetos novos;
+sem backfill, alteração de usuários, leituras, memberships ou dados preexistentes.
+Treze migrações anteriores comparadas byte a byte com `2a60697`, íntegras.
+`local-discussion-maintenance.mjs --cleanup` **não foi executado** contra dados
+existentes; a função foi testada só nas fixtures do PostgreSQL isolado.
+
+Falhas intermediárias corrigidas: primeira execução de concorrência de discussão
+falhou por referência de coluna na montagem do SELECT dblink; ajustada para fonte
+lateral, seguida de repetição integral aprovada. Avisos de lint em cleanup de refs
+foram corrigidos mantendo cancelamento de respostas antigas. Primeiro teste de
+foco Chromium falhou sem interação de teclado prévia; após emular Tab e trazer a
+janela ao foco, o foco visível foi confirmado. Nenhum teste removido/enfraquecido.
+
+Cobertura SQL inclui: autoria/unicidade, valores/limites, estado pendente, ausência
+de pendente alheio, aprovação OWNER e negação editorial, edição que sai do público,
+versão stale rejeitada, denúncia idempotente/cap diário, quotas de edição e reação,
+RLS/ACL bruto inclusive OWNER, remoção própria, limpeza de texto e preservação do
+histórico de leitura por todas as suítes anteriores. Novos comentários não usam
+VAPID nem worker push. Sem novas tabelas públicas, diretório de usuários ou ranking.
+
+Limitações: moderação humana e manutenção precisam de operação definida; approved
+persiste até remoção/conta/devocional, demais textos expiram na manutenção conforme
+política. Não há filtro automático de contato/assédio nem sistema de emergência.
+Bundle >500 kB, cobertura de contraste parcial e Firefox/Safari/dispositivos físicos
+não testados. Sem aprovação de conformidade legal definitiva. Checklist manual de
+leitor/OWNER segue pendente e está no documento técnico.
+
 ## Prompt 51 — auditoria final da Etapa 22.3.3
 
 Branch `feat/local-auth`, HEAD `91c81d0`, 31 candidatos (11 modificados/20 novos),

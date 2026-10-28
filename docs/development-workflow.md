@@ -1,7 +1,12 @@
+> Prompt 52 / Etapa 22.3.4: reflexões, reações privadas e moderação OWNER
+> implementadas localmente. Migração incremental, RLS/projeções, política e
+> retenção em [discussion-local.md](discussion-local.md). Web Push externo
+> permanece desativado; 22.3.5 não foi iniciada.
+
 > Etapa 22.3.3: lembretes inteligentes locais, novas RPCs próprias e agendador
 > Node independente da aba. Simulação por padrão; nenhuma entrega externa validada.
 > Operação, migração incremental, privacidade e limites em
-> [smart-reminders-local.md](smart-reminders-local.md). Etapa 22.3.4 continua futura.
+> [smart-reminders-local.md](smart-reminders-local.md). Etapa 22.3.4 era futura naquele registro; implementação atual descrita acima.
 
 > Etapa 22.3.2 / Prompt 48: Claro/Escuro/Sistema implementados, com preferência
 > local independente da sessão, bootstrap pré-React e tokens CSS semânticos.

@@ -11,6 +11,37 @@ function open(page = 'inicio') {
   return render(<App />)
 }
 describe('acervo persistente do leitor', () => {
+  it('mantém conteúdo, pergunta, progresso, compartilhamento e discussão na mesma coluna e ordem', async () => {
+    libraryBoundary(olderPublications)
+    open(`leitura/${olderPublications[0].id}`)
+    const article=await screen.findByRole('article')
+    const column=article.closest('.reading-column')
+    expect(column).not.toBeNull()
+    const question=article.querySelector<HTMLElement>('.reflection')!
+    const progress=screen.getByRole('region',{name:'Progresso de leitura'})
+    const share=screen.getByRole('region',{name:'Compartilhar devocional'})
+    const discussion=screen.getByRole('region',{name:'Compartilhe sua reflexão'})
+    for(const element of [article,question,progress,share,discussion])expect(column).toContainElement(element)
+    expect(question.compareDocumentPosition(progress)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(article.compareDocumentPosition(share)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(share.compareDocumentPosition(discussion)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    for(const text of [
+      'O tempo mínimo registra permanência confirmada nesta página; não comprova compreensão. A conclusão é uma escolha sua. Você pode continuar lendo pelo tempo que precisar.',
+      'O histórico registra aberturas, sem comprovar conclusão da leitura.',
+      'Convide um amigo, se desejar. Você pode compartilhar antes ou depois de concluir sua leitura.',
+      'O link exige autenticação no Selah. Quem ainda não tem conta precisará se cadastrar. Seu histórico de leitura não é compartilhado.',
+      'Este endereço local funciona apenas neste ambiente; não é um link público disponível para amigos pela internet.',
+    ])expect(column?.textContent).not.toContain(text)
+  })
+  it('sem pergunta não cria cartão vazio nem remove progresso ou ações finais', async () => {
+    const publication={...olderPublications[0],reflection_question:''}
+    libraryBoundary([publication]);open(`leitura/${publication.id}`)
+    const article=await screen.findByRole('article')
+    expect(article.querySelector('.reflection')).toBeNull()
+    expect(screen.getByRole('region',{name:'Progresso de leitura'})).toBeVisible()
+    expect(screen.getByRole('region',{name:'Compartilhar devocional'})).toBeVisible()
+    expect(screen.getByRole('region',{name:'Compartilhe sua reflexão'})).toBeVisible()
+  })
   it.each(olderPublications)('compartilhar aparece ao final de $title antes da conclusão, sem creditar leitura', async publication => {
     libraryBoundary(olderPublications)
     const fallback = vi.mocked(supabase.rpc).getMockImplementation()!
@@ -31,8 +62,8 @@ describe('acervo persistente do leitor', () => {
     const whatsapp = new URL(within(share).getByRole('link', { name: 'Abrir WhatsApp para compartilhar' }).getAttribute('href')!)
     expect(whatsapp.origin).toBe('https://wa.me')
     expect(whatsapp.searchParams.get('text')).toContain(location.origin + '/#leitura/' + publication.id)
-    expect(within(share).getByText(/exige autenticação/)).toBeVisible()
-    expect(within(share).getByText(/não é um link público/)).toBeVisible()
+    expect(within(share).queryByText(/exige autenticação/)).not.toBeInTheDocument()
+    expect(within(share).queryByText(/não é um link público/)).not.toBeInTheDocument()
   })
   it('compartilhar permanece disponível antes e depois da conclusão voluntária de 60000 ms', async () => {
     const publication = olderPublications[0]
@@ -156,7 +187,7 @@ describe('acervo persistente do leitor', () => {
     open(`leitura/${olderPublications[0].id}`)
     const article = await screen.findByRole('article')
     expect(within(article).getByRole('heading', { name: olderPublications[0].title })).toBeVisible()
-    expect(within(article).getByText(/sem comprovar conclusão/)).toBeVisible()
+    expect(within(article).queryByText(/sem comprovar conclusão/)).not.toBeInTheDocument()
     expect(boundary.historyQuery.insert).not.toHaveBeenCalled()
   })
   it('não expõe publicação ausente por URL direta', async () => {

@@ -11,9 +11,6 @@ export function ShareDevotional({ id }: { id: string }) {
     catch { setMessage('Selecione e copie o endereço abaixo.') }
   }
   return <section className="reflection" aria-label="Compartilhar devocional"><h2>Compartilhar este devocional</h2>
-    <p>Convide um amigo, se desejar. Você pode compartilhar antes ou depois de concluir sua leitura.</p>
-    <p>O link exige autenticação no Selah. Quem ainda não tem conta precisará se cadastrar. Seu histórico de leitura não é compartilhado.</p>
-    {['localhost', '127.0.0.1', '[::1]'].includes(location.hostname) && <p>Este endereço local funciona apenas neste ambiente; não é um link público disponível para amigos pela internet.</p>}
     <div className="actions">
       <button className="button" onClick={async () => {
         if (typeof navigator.share !== 'function') { await copy(); return }

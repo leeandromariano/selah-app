@@ -1,0 +1,9 @@
+.discussion{margin-top:28px;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:12px;padding:24px;min-width:0;overflow-wrap:anywhere}
+.discussion .actions{flex-wrap:wrap;align-items:center;gap:10px;margin:14px 0}
+.discussion textarea{width:100%;min-height:130px;resize:vertical;background:var(--surface);color:var(--text);border:1px solid var(--control-border);border-radius:8px;padding:12px;font:inherit}
+.discussion label{display:block;margin:12px 0 6px}.discussion select{max-width:100%}
+.discussion .reflection-list{list-style:none;padding:0;margin:16px 0}
+.discussion .reflection-list>li{padding:18px 0;border-bottom:1px solid var(--border)}
+.discussion .reflection-body{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8}
+.discussion button[aria-pressed=true]{border:2px solid var(--accent);background:var(--accent-bg);color:var(--accent)}
+@media(max-width:650px){.discussion{padding:18px 14px}.discussion .actions>*{max-width:100%}.discussion button{white-space:normal}}

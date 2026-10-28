@@ -6,16 +6,17 @@ import { adminMessage, createAdminRepository, dateTimeInput, publicationInstant,
 import type { AdminDevotional, DevotionalInput, DevotionalStatus } from '../admin/repository'
 import { Heading, Icon } from './UI'
 import { CommunityPanel } from './CommunityPanel'
+import { ModerationLink, ModerationPanel } from './ModerationPanel'
 
 const repository = createAdminRepository(supabase)
 const blank: DevotionalInput = { title: '', bible_reference: '', bible_text: '', content: '', reflection_question: '', publish_at: null, status: 'draft' }
-export function AdminPanel({ community = false }: { community?: boolean }) {
+export function AdminPanel({ community = false, moderation = false }: { community?: boolean; moderation?: boolean }) {
   const { session, loading, adminLoading, admin, recovery } = useAuth()
   if (loading || adminLoading) return <p role="status">Verificando acesso administrativo…</p>
   if (!session || !admin || recovery) return <div className="info" role="alert">Acesso restrito a administradores.</div>
-  return <EditorialPanel key={session.user.id} userId={session.user.id} community={community} />
+  return <EditorialPanel key={session.user.id} userId={session.user.id} community={community} moderation={moderation} />
 }
-function EditorialPanel({ userId, community }: { userId: string; community: boolean }) {
+function EditorialPanel({ userId, community, moderation }: { userId: string; community: boolean; moderation: boolean }) {
   const [items, setItems] = useState<AdminDevotional[]>([])
   const [loading, setLoading] = useState(true)
   const [ready, setReady] = useState(false)
@@ -52,6 +53,8 @@ function EditorialPanel({ userId, community }: { userId: string; community: bool
   return <><Heading eyebrow="CUIDANDO DE CADA MENSAGEM" title="Painel administrativo" description="Crie, revise e publique mensagens para o acervo local." />
     <button className="button secondary" aria-expanded={community} onClick={() => { location.hash = community ? 'admin' : 'admin/comunidade' }}>Comunidade e ofensivas</button>
     {community && <CommunityPanel />}
+    <ModerationLink selected={moderation} />
+    {moderation && <ModerationPanel />}
     <div className="info">Agendados permanecem ocultos até uma publicação explícita. As datas da lista usam o horário de Brasília.</div>
     {loading ? <p role="status">Carregando painel…</p> : <>
       {error && <div className="info" role="alert">{error}</div>}

@@ -50,7 +50,7 @@ export function ReadingProgress({ devotionalId, revision, onCompleted }: { devot
   return <section className="reading-progress" aria-label="Progresso de leitura" aria-busy={view.saving || view.loading}>
     <h2>Sua leitura, no seu tempo</h2>
     <p role="status" aria-live="polite">{label}</p>
-    {!completed && <><label htmlFor={`reading-time-${devotionalId}`}>Tempo confirmado: {Math.floor((state?.credited_ms ?? 0) / 1000)} de 60 segundos mínimos</label><progress id={`reading-time-${devotionalId}`} max={60000} value={state?.credited_ms ?? 0} /></>}
+    {!completed && <progress id={`reading-time-${devotionalId}`} aria-label="Progresso de leitura" max={60000} value={state?.credited_ms ?? 0} />}
     {view.notice && <p className="info">{view.notice}</p>}
     {view.error && <p className="info" role="alert">{view.error}</p>}
     <div className="actions">
@@ -59,6 +59,5 @@ export function ReadingProgress({ devotionalId, revision, onCompleted }: { devot
       {(view.error || state?.status === 'out_of_order') && <button className="button secondary" onClick={() => { void controller.current?.retry() }}>Retomar confirmação</button>}
       {changed && <button className="button secondary" onClick={() => location.reload()}>Recarregar conteúdo atualizado</button>}
     </div>
-    <small>O tempo mínimo registra permanência confirmada nesta página; não comprova compreensão. A conclusão é uma escolha sua. Você pode continuar lendo pelo tempo que precisar.</small>
   </section>
 }

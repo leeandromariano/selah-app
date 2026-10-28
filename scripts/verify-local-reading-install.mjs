@@ -21,8 +21,9 @@ const migrations = [
   '20261028000400_owner_community.sql',
   '20261028000500_owner_provision_audit.sql',
   '20261028000600_smart_reminders.sql',
+  '20261028000700_discussion.sql',
 ]
-const suites = ['authorization','privacy-essential','usernames','whatsapp-feedback','password-login','reading-completions','reader-consistency','owner-community','owner-provision-audit','smart-reminders']
+const suites = ['authorization','privacy-essential','usernames','whatsapp-feedback','password-login','reading-completions','reader-consistency','owner-community','owner-provision-audit','smart-reminders','discussion']
 let containerId, stage='local metadata preflight', databaseRole='supabase_admin'
 function command(args, options={}) {
   const result=docker.run(args,{encoding:'utf8',...options})
@@ -154,7 +155,7 @@ try {
     const source=readFileSync('supabase/tests/'+suite+'.sql','utf8')
     const output=sql(source)
     if(!output.includes('ROLLBACK'))throw Error('Missing suite rollback')
-    const dynamic=suite==='reading-completions'?'reading':suite==='reader-consistency'?'consistency':suite==='owner-community'?'owner':suite==='owner-provision-audit'?'owner audit':suite==='smart-reminders'?'reminder':null
+    const dynamic=suite==='reading-completions'?'reading':suite==='reader-consistency'?'consistency':suite==='owner-community'?'owner':suite==='owner-provision-audit'?'owner audit':suite==='smart-reminders'?'reminder':suite==='discussion'?'discussion':null
     const count=dynamic ? Number(output.match(new RegExp('(\\d+) '+dynamic+' SQL checks passed'))?.[1])
       : (source.match(/select pg_temp\.(?:assert_true|denied|affected|rejected)\(/g)||[]).length
     if(!Number.isInteger(count)||count<1)throw Error('Invalid isolated check count')
@@ -165,6 +166,10 @@ try {
   const overlap=sql(readFileSync('supabase/tests/reminder-concurrency.sql','utf8'))
   if(!overlap.includes('2 overlapping transaction checks passed'))throw Error('Missing concurrency checks')
   console.log('PASS 2 overlapping transaction checks: locked device skipped and one committed daily reservation')
+  stage='isolated discussion concurrent writes'
+  const discussionOverlap=sql(readFileSync('supabase/tests/discussion-concurrency.sql','utf8'))
+  if(!discussionOverlap.includes('10 discussion concurrency checks passed'))throw Error('Missing discussion concurrency checks')
+  console.log('PASS 10 discussion concurrency checks: reactions, principal comment, edit versus stale approval, duplicate reports and quota')
 } catch {
   console.error(`Isolated installation stopped at ${stage}. Remaining checks NOT validated; existing database and volumes unchanged.`)
   process.exitCode=1

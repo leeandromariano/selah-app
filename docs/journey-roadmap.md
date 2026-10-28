@@ -1,12 +1,13 @@
 # Etapa 22.3 — Minha Jornada e evolução pessoal
 
-Estado atual — Prompt 51 / Etapa 22.3.3: base `91c81d0`, branch `feat/local-auth`.
-Minha Jornada e Modo Noturno versionados. Notificações inteligentes implementadas
-localmente, pendentes de commit, com transporte simulado por padrão e entrega
-externa não configurada nem validada. Quinze aprovações manuais informadas pelo
-responsável estão transcritas em `smart-reminders-local.md` e `testing.md`.
-Arquitetura, segurança, horários e limites: [smart-reminders-local.md](smart-reminders-local.md).
-Comentários/Reações e Conquistas/Desafios continuam sem implementação.
+Estado atual — Prompt 56 / auditoria final da Etapa 22.3.4. Branch `feat/local-auth`,
+HEAD `2a60697`. Minha Jornada, Modo Noturno e Notificações Inteligentes versionados;
+entrega Web Push externa não validada e desativada. Comentários e Reações
+implementados localmente, incluindo refinamentos dos Prompts 53–55, aguardando
+commit. Treze aprovações manuais do responsável registradas literalmente em
+[discussion-local.md](discussion-local.md) e [testing.md](testing.md). Elas não
+aprovam cenários adicionais nem equivalem a certificação legal.
+22.3.5 — Conquistas e Desafios é a próxima etapa, não iniciada nesta auditoria.
 
 ## Roadmap oficial — numeração definitiva (Prompt 46)
 
@@ -14,9 +15,9 @@ Comentários/Reações e Conquistas/Desafios continuam sem implementação.
 | --- | --- | --- |
 | 22.3.1 | Minha Jornada | Versionada em `195a9b5` |
 | 22.3.2 | Modo Noturno | Versionado em `91c81d0`; 11/11 manuais históricos do Prompt 48 |
-| 22.3.3 | Notificações Inteligentes | Implementadas localmente, pendentes de commit; entrega externa não validada |
-| 22.3.4 | Comentários e Reações | Próxima etapa; planejados |
-| 22.3.5 | Conquistas e Desafios | Planejados |
+| 22.3.3 | Notificações Inteligentes | Versionadas em `2a60697`; entrega externa não validada/desativada |
+| 22.3.4 | Comentários, Reações e Moderação | Implementados localmente, pendentes de commit |
+| 22.3.5 | Conquistas e Desafios | Próxima etapa; não iniciada |
 
 Esta numeração substitui a proposta de quatro subetapas do Prompt 44. Apenas a
 documentação foi atualizada no Prompt 46; o Prompt 47 implementa somente aparência.
@@ -176,63 +177,25 @@ da assinatura. Não houve envio externo. Política completa de DST, datas difere
 janela de 15 minutos, deduplicação, resultados incertos, retenção e validações em
 [smart-reminders-local.md](smart-reminders-local.md) e [testing.md](testing.md).
 
-## 22.3.4 — planejados: Comentários e Reações
+## 22.3.4 — implementados localmente: Comentários, Reações e Moderação
 
-### Contratos e autorização futuros
+Uma reação privada por leitor/devocional, editável/removível; nenhum placar ou
+ranking. Uma reflexão principal de até **1000 caracteres**, com edição/remoção
+própria. Novos textos e edições ficam pendentes; leitores autenticados só veem
+aprovados, com username e dia aproximado. Texto seguro sem HTML executável, links
+automáticos, mídia, mensagens diretas ou respostas em cadeia.
 
-Comentários ligados ao devocional publicado e autor autenticado no servidor;
-texto simples de 1 a 2.000 caracteres após trim, sem HTML, links automáticos,
-upload, mensagens diretas ou perfis públicos. React escapa o texto; servidor
-normaliza/valida tamanho e caracteres. Paginação por cursor e limite de página.
+OWNER existente revisa Pendentes/Denúncias/Histórico em `#admin/moderacao`. Servidor
+verifica autoria, publicação, versões/transições e membership em cada operação.
+Editorial/PUBLISHER não herda moderação. Nenhuma ampliação da membership OWNER,
+regra de leitura/conclusão, push ou métricas. Denúncias únicas por versão, limites
+de frequência backend e auditoria sem cópias antigas do texto.
 
-Um comentário principal por `(usuário, devocional)`, editável/excluível pelo próprio
-autor. Estados `pending`, `approved`, `hidden`, `deleted`; edição de aprovado volta
-a pending e retira versão anterior da leitura pública. Autoria e status não
-editáveis pelo cliente. Controle de versão impede aprovação de texto substituído.
-Publicação retirada do acervo retira seus comentários da leitura pública.
-
-RLS: somente autor e OWNER podem ler pendentes/ocultos, quando houver sessão
-válida; leitores autenticados veem apenas aprovados de publicação visível.
-Anon não lê nem escreve. Projeção pública autenticada retorna username e texto,
-data/ID opaco do comentário necessário às ações, nunca UUID Auth, contatos ou
-metadados. Conta sem username não publica até regularizar, sem expor identidade
-alternativa. Histórico/moderação não entram na projeção dos leitores.
-
-Uma reação ativa por usuário/devocional, enum `like`/`dislike`, única no banco,
-editável/removível pelo próprio usuário. Sem payload de autoria confiável do
-cliente; atribuir por `auth.uid()`. Leituras de reações individuais privadas;
-eventuais totais públicos só por projeção agregada autorizada. Não inventar
-contagens no cliente ou usar reação como conclusão/conquista.
-
-Denúncia por autor autenticado com categoria e observação limitada; unicidade
-por denunciante/comentário ativo, rate limit servidor. Leitor não vê denunciantes
-ou denúncias de terceiros. Reportar não oculta automaticamente conteúdo, evitando
-brigadas. Rate limit de criação/edição/reação/denúncia e cooldown transacionais;
-nenhum bloqueio depende só de botão desabilitado no frontend.
-
-OWNER exclusivamente pode aprovar/ocultar/excluir por operações de servidor com
-motivo obrigatório e versão esperada. Diário privado transacional: ator, ação,
-instante, motivo/referência e alvo; não copiar conteúdo em logs gerais. Editorial
-e futuro PUBLISHER não herdam moderação. Não ampliar administração existente.
-Definir política de conteúdo acessível antes de publicar comentário: respeito,
-sem assédio, exposição de dados pessoais, spam ou pedidos de contato privado.
-
-### Retenção e validação antes de publicação
-
-Proposta para decisão expressa do responsável, não política já ativa: pendentes
-sem decisão expiram após 30 dias; pedidos de exclusão retiram imediatamente o
-texto da leitura e removem corpo após janela operacional de até 30 dias; denúncias
-resolvidas por 90 dias e diário de moderação por 180 dias com minimização de texto.
-Comentários aprovados permanecem até exclusão/moderação/publicação retirada;
-definir também limite de retenção por inatividade antes do lançamento. Exclusão
-de conta remove corpo/autoria pública e reações; somente referência mínima
-restrita para auditoria pelo prazo aprovado. Avaliar backups e restaurações para
-não ressuscitar exclusões. Essa decisão não altera a retenção atual nesta rodada.
-
-Testar matriz de autor/outro leitor/OWNER/editorial/anon, IDOR, falsificação,
-pendentes, edição concorrente à aprovação, retirada de publicação, texto malicioso,
-tamanhos extremos, spam, dupla reação concorrente, denúncias e expurgo. Entrega
-futura exige fluxo de moderação operacional, política aprovada e migrações novas.
+Migração incremental `20261028000700_discussion.sql`, tabelas privadas com RLS e
+RPCs de projeção restrita, sem alteração das treze migrações anteriores. Retenção,
+política de proteção a adolescentes, responsabilidades operacionais e testes
+executados: [discussion-local.md](discussion-local.md), [testing.md](testing.md).
+Não há aprovação manual nova nem afirmação de conformidade legal definitiva.
 
 ## 22.3.5 — planejados: Conquistas e Desafios
 
