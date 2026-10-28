@@ -81,7 +81,7 @@ describe('Minha Jornada pessoal', () => {
     await screen.findByRole('table', { name: 'agosto de 2026' })
     fireEvent(window, new Event('blur')); fireEvent(document, new Event('visibilitychange'))
     renew('TOKEN_REFRESHED'); fireEvent(window, new Event('focus'))
-    await waitFor(() => expect(supabase.rpc).toHaveBeenLastCalledWith('get_my_consistency', { p_month: '2026-08-01' }))
+    await waitFor(() => expect(vi.mocked(supabase.rpc).mock.calls.filter(([name]) => name === 'get_my_consistency').at(-1)).toEqual(['get_my_consistency', { p_month: '2026-08-01' }]))
     expect(screen.getByRole('table', { name: 'agosto de 2026' })).toBeVisible()
     expect(previous).toHaveFocus()
     expect(location.hash).toBe('#minha-jornada')
@@ -97,8 +97,9 @@ describe('Minha Jornada pessoal', () => {
   it('erro não se torna histórico vazio, diagnóstico privado não aparece e retry funciona', async () => {
     vi.mocked(supabase.rpc).mockImplementation(name => name === 'get_my_consistency' ? { abortSignal: async () => ({ data: null, error: { code: '42501', message: 'private@example.invalid' } }) } as never : Promise.resolve({ data: null, error: { code: '42501' } }) as never)
     const user = userEvent.setup(); openJourney()
-    expect(await screen.findByRole('alert')).toHaveTextContent('Sua sessão não autoriza')
-    expect(screen.getByRole('alert')).not.toHaveTextContent('private@')
+    const alert = (await screen.findByText(/Sua sessão não autoriza/)).closest('[role="alert"]')!
+    expect(alert).toHaveTextContent('Sua sessão não autoriza')
+    expect(alert).not.toHaveTextContent('private@')
     expect(screen.queryByText(/Ainda não há conclusões/)).not.toBeInTheDocument()
     respond(); await user.click(screen.getByRole('button', { name: 'Tentar carregar consistência' }))
     expect(await screen.findByRole('list', { name: 'Dias com conclusões neste mês' })).toBeVisible()

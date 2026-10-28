@@ -22,8 +22,9 @@ const migrations = [
   '20261028000500_owner_provision_audit.sql',
   '20261028000600_smart_reminders.sql',
   '20261028000700_discussion.sql',
+  '20261028000800_personal_achievements.sql',
 ]
-const suites = ['authorization','privacy-essential','usernames','whatsapp-feedback','password-login','reading-completions','reader-consistency','owner-community','owner-provision-audit','smart-reminders','discussion']
+const suites = ['authorization','privacy-essential','usernames','whatsapp-feedback','password-login','reading-completions','reader-consistency','owner-community','owner-provision-audit','smart-reminders','discussion','personal-achievements']
 let containerId, stage='local metadata preflight', databaseRole='supabase_admin'
 function command(args, options={}) {
   const result=docker.run(args,{encoding:'utf8',...options})
@@ -155,7 +156,7 @@ try {
     const source=readFileSync('supabase/tests/'+suite+'.sql','utf8')
     const output=sql(source)
     if(!output.includes('ROLLBACK'))throw Error('Missing suite rollback')
-    const dynamic=suite==='reading-completions'?'reading':suite==='reader-consistency'?'consistency':suite==='owner-community'?'owner':suite==='owner-provision-audit'?'owner audit':suite==='smart-reminders'?'reminder':suite==='discussion'?'discussion':null
+    const dynamic=suite==='reading-completions'?'reading':suite==='reader-consistency'?'consistency':suite==='owner-community'?'owner':suite==='owner-provision-audit'?'owner audit':suite==='smart-reminders'?'reminder':suite==='discussion'?'discussion':suite==='personal-achievements'?'reward':null
     const count=dynamic ? Number(output.match(new RegExp('(\\d+) '+dynamic+' SQL checks passed'))?.[1])
       : (source.match(/select pg_temp\.(?:assert_true|denied|affected|rejected)\(/g)||[]).length
     if(!Number.isInteger(count)||count<1)throw Error('Invalid isolated check count')
@@ -170,6 +171,10 @@ try {
   const discussionOverlap=sql(readFileSync('supabase/tests/discussion-concurrency.sql','utf8'))
   if(!discussionOverlap.includes('10 discussion concurrency checks passed'))throw Error('Missing discussion concurrency checks')
   console.log('PASS 10 discussion concurrency checks: reactions, principal comment, edit versus stale approval, duplicate reports and quota')
+  stage='isolated personal challenge concurrent writes'
+  const rewardOverlap=sql(readFileSync('supabase/tests/personal-achievements-concurrency.sql','utf8'))
+  if(!rewardOverlap.includes('6 reward concurrency checks passed'))throw Error('Missing reward concurrency checks')
+  console.log('PASS 6 reward concurrency checks: overlapping enrollments, cancellations, no restart and no completion writes')
 } catch {
   console.error(`Isolated installation stopped at ${stage}. Remaining checks NOT validated; existing database and volumes unchanged.`)
   process.exitCode=1

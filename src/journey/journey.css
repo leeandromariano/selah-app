@@ -1,0 +1,9 @@
+.journey-rewards { margin-block: 2rem; min-width: 0; overflow-wrap: anywhere; }
+.journey-badges, .journey-challenges { list-style: none; padding: 0; display: grid; gap: 1rem; }
+.journey-badges { grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); }
+.journey-badges li, .journey-challenges li { border: 1px solid var(--border); border-radius: 16px; padding: 1rem; background: var(--surface); min-width: 0; }
+.journey-badges .badge-earned { border-color: var(--accent); }
+.journey-badges h3, .journey-challenges h3 { margin-block: .4rem; }
+.journey-rewards progress { width: 100%; display: block; margin-block: 1rem; accent-color: var(--accent); }
+.journey-rewards select { max-width: 100%; padding: .6rem; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+.journey-rewards .actions { flex-wrap: wrap; align-items: center; }

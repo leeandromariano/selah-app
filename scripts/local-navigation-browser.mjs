@@ -9,7 +9,8 @@ const appearanceRun = process.argv.length === 3 && process.argv[2] === '--appear
 const remindersRun = process.argv.length === 3 && process.argv[2] === '--reminders'
 const discussionRun = process.argv.length === 3 && process.argv[2] === '--discussion'
 const readingLayoutRun = process.argv.length === 3 && process.argv[2] === '--reading-layout'
-if (process.argv.length !== 2 && !appearanceRun && !remindersRun && !discussionRun && !readingLayoutRun) throw Error('Only local UI regression modes are accepted')
+const rewardsRun = process.argv.length === 3 && process.argv[2] === '--rewards'
+if (process.argv.length !== 2 && !appearanceRun && !remindersRun && !discussionRun && !readingLayoutRun && !rewardsRun) throw Error('Only local UI regression modes are accepted')
 const origin = 'http://127.0.0.1:5173', debug = 'http://127.0.0.1:9229'
 const executable = ['C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].find(existsSync)
 if (!executable) throw Error('Installed Chromium unavailable')
@@ -64,10 +65,15 @@ const reflections=new Map(),reactions=new Map();let reportOpen=false;
 if (${readingLayoutRun}) reflections.set('layout-fiction-author',{id:'30000000-0000-4000-8000-000000000001',body:'PALAVRA'.repeat(140),state:'approved',version:2});
 if (${readingLayoutRun}) {window.__sharingBeforeCompletion=true;window.__layoutCredit=59999;}
 const discussionSnapshot=page=>({reaction:reactions.get(currentSession?.user.id)||null,own:reflections.get(currentSession?.user.id)||null,page,total:Array.from(reflections.values()).filter(c=>c.state==='approved').length,comments:Array.from(reflections.entries()).filter(([,c])=>c.state==='approved').map(([who,c])=>({id:c.id,body:c.body,username:${readingLayoutRun}?'u'+'m'.repeat(23):'leitor_ficticio',day:'2026-10-28',own:who===currentSession?.user.id,reported:reportOpen}))});
+const rewardKey=()=>'__fiction_reward_'+currentSession?.user.id;
+const rewards=()=>({server_today:'2026-10-28',time_zone:'America/Sao_Paulo',week_start:'2026-10-26',badges:[3,7,14,30,60,100].map(days=>({days,unlocked:currentSession?.user.id===session.user.id&&days<=7})),challenges:JSON.parse(localStorage.getItem(rewardKey())||'[]')});
 export const supabase = {
  auth: { getSession:async()=>({data:{session:currentSession},error:null}), onAuthStateChange(fn){callback=fn;return {data:{subscription:{unsubscribe(){callback=null}}}}}, signOut:async()=>{currentSession=null;callback?.('SIGNED_OUT',null);return {error:null}} },
  from:(table)=>({...query,select(){return this},eq(){return this},lte(){return this},order(){return this},maybeSingle:async()=>({data:null,error:null}),range:async()=>({data:table==='devotionals'?[content,{...content,id:'theme-previous',title:'Pausa anterior fictícia',publish_at:new Date(Date.now()-86400000).toISOString()}]:[],error:null})}),
  rpc(name,args){
+  if(name==='get_my_journey_rewards')return {abortSignal:async()=>window.__rewardError?{data:null,error:{code:'42501'}}:{data:rewards(),error:null}};
+  if(name==='start_my_personal_challenge')return {abortSignal:async()=>{if(!rewards().challenges.length)localStorage.setItem(rewardKey(),JSON.stringify([{week_start:'2026-10-26',target:args.p_target,days:1,status:'active'}]));return {data:rewards(),error:null}}};
+  if(name==='cancel_my_personal_challenge')return {abortSignal:async()=>{localStorage.setItem(rewardKey(),JSON.stringify(rewards().challenges.map(c=>({...c,status:'cancelled'}))));return {data:rewards(),error:null}}};
   if(name==='get_my_discussion_access')return {abortSignal:async()=>({data:window.__ownerAllowed,error:null})};
   if(name==='get_devotional_discussion')return {abortSignal:async()=>{
     if(window.__layoutLoading)await new Promise(resolve=>{window.__releaseLayout=resolve});
@@ -241,7 +247,51 @@ try {
     }
   })
   await send('Page.enable'); await send('Runtime.enable'); await send('Fetch.enable', { patterns: [{ urlPattern: '*' }] })
-  if (readingLayoutRun) {
+  if (rewardsRun) {
+    await send('Page.navigate', { url: origin + '/#minha-jornada' })
+    await check(`document.querySelectorAll('.journey-badges li').length===6 && document.querySelectorAll('.badge-earned').length===2`, 'six server badges distinguish earned and next milestones')
+    await check(`Boolean(document.querySelector('.journey-rewards select')) && !document.querySelector('.journey-challenges li')`, 'no automatic enrollment')
+    await evaluate(`(()=>{const s=document.querySelector('.journey-rewards select');Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(s,'5');s.dispatchEvent(new Event('change',{bubbles:true}));})()`)
+    await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 })
+    await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 })
+    await evaluate(`Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Iniciar desafio').focus()`)
+    await check(`getComputedStyle(document.activeElement).outlineStyle!=='none' && parseFloat(getComputedStyle(document.activeElement).outlineWidth)>0`, 'challenge start has visible keyboard focus')
+    await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r' })
+    await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 })
+    await check(`document.querySelector('.journey-challenges')?.textContent.includes('1 de 5 dias distintos') && document.querySelector('.journey-rewards progress')?.max===5`, 'keyboard voluntary enrollment and accessible progress')
+    await reloadPage()
+    await check(`location.hash==='#minha-jornada' && document.querySelector('.journey-challenges')?.textContent.includes('1 de 5 dias distintos')`, 'reload reloads private enrollment from simulated server')
+    await check(`document.querySelector('[aria-label="Mês anterior"]')?.disabled===false`, 'calendar ready after independent reward response')
+    await evaluate(`document.querySelector('[aria-label="Mês anterior"]').click()`)
+    await check(`document.querySelector('.consistency-calendar h3')?.textContent==='setembro de 2026'`, 'reward section preserves calendar month navigation')
+    await evaluate(`window.dispatchEvent(new Event('focus'));window.__renew()`)
+    await check(`document.querySelector('.consistency-calendar h3')?.textContent==='setembro de 2026' && document.querySelector('.journey-challenges')?.textContent.includes('1 de 5 dias distintos')`, 'focus session renewal preserves month and private challenge')
+    const rewardTab = await send('Target.createTarget', { url: 'about:blank' })
+    await send('Target.activateTarget', { targetId: rewardTab.targetId })
+    await check(`document.visibilityState==='hidden'`, 'active challenge loses visibility in real Chromium tab switch')
+    await send('Target.activateTarget', { targetId: target.id }); await send('Page.bringToFront')
+    await evaluate(`window.__renew()`)
+    await check(`location.hash==='#minha-jornada' && document.querySelector('.consistency-calendar h3')?.textContent==='setembro de 2026' && document.querySelector('.journey-challenges')?.textContent.includes('1 de 5 dias distintos')`, 'active challenge and selected month survive tab return and session renewal')
+    for (const theme of ['light','dark','system']) {
+      await evaluate(`window.selahAppearance.setPreference('${theme}')`)
+      for (const width of [1440,390]) {
+        await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width===390 })
+        await check(`document.documentElement.scrollWidth<=innerWidth && Array.from(document.querySelectorAll('.journey-badges li,.journey-challenges li,.journey-rewards select')).every(e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth})`, 'rewards fit '+theme+' viewport '+width)
+        await check(`(${renderedContrast.toString()})().length===0`, 'rendered text contrast subset '+theme+' viewport '+width)
+      }
+    }
+    await evaluate(`Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Encerrar desafio').click()`)
+    await check(`document.querySelector('.journey-challenges')?.textContent.includes('Encerrado por você') && !document.querySelector('.journey-rewards select')`, 'cancellation retains private history without penalty or restart')
+    await evaluate(`window.__otherReader()`)
+    await check(`!document.querySelector('.journey-challenges li') && document.querySelectorAll('.badge-earned').length===0 && Boolean(document.querySelector('.journey-rewards select'))`, 'account switch clears previous badges and enrollment')
+    await evaluate(`window.__rewardError=true;window.dispatchEvent(new Event('focus'))`)
+    await check(`document.querySelector('.journey-rewards [role="alert"]')?.textContent.includes('Não foi possível carregar')`, 'RPC denial gives safe retry error')
+    await evaluate(`window.__rewardError=false;Array.from(document.querySelectorAll('.journey-rewards button')).find(b=>b.textContent==='Tentar novamente').click()`)
+    await check(`!document.querySelector('.journey-rewards [role="alert"]')`, 'retry restores own data')
+    await evaluate(`Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Sair').click()`)
+    await check(`!document.querySelector('.journey-rewards')`, 'logout removes private rewards')
+    console.log(passed+' Chromium reward checks passed; server boundary simulated, no database writes.')
+  } else if (readingLayoutRun) {
     await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false})
     await send('Page.navigate',{url:origin+'/#leitura/10000000-0000-4000-8000-000000000001'})
     await check(`Boolean(document.querySelector('.discussion textarea'))`, 'reading layout loaded with synthetic authenticated content')
@@ -416,6 +466,11 @@ try {
     await check(`!document.querySelector('[aria-label="Compartilhar devocional"]') && document.body.textContent.includes('Devocional não encontrado')`, 'unavailable content never creates share controls')
     await evaluate(`window.__otherReader();location.hash='configuracoes'`)
     await check(`document.querySelector('input[type="checkbox"]')?.checked===false && !document.body.textContent.includes('active (dispositivo fictício')`, 'account change does not expose former account device settings')
+    // Exercise the SW on a same-origin static document. The application's account
+    // bridge correctly clears bindings for the unconfigured second reader; it
+    // must not race this separately injected test-only binding.
+    await send('Page.navigate',{url:origin+'/appearance.js'})
+    await check(`!document.querySelector('.app') && document.body?.textContent.includes('setPreference')`, 'service worker harness uses static same-origin document without account bridge')
     await send('Browser.grantPermissions',{origin,permissions:['notifications']})
     await evaluate(`(async()=>{await navigator.serviceWorker.register('/selah-sw.js',{scope:'/'});await navigator.serviceWorker.ready;window.__swMessage=async(type,binding)=>{const r=await navigator.serviceWorker.getRegistration('/');return new Promise(resolve=>{const c=new MessageChannel();c.port1.onmessage=e=>resolve(e.data);r.active.postMessage({type,binding},[c.port2]);});};return await window.__swMessage('bind','20000000-0000-4000-8000-000000000001');})()`)
     if (!workerRegistration) throw Error('Local service worker registration unavailable')

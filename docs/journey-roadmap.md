@@ -1,13 +1,11 @@
 # Etapa 22.3 — Minha Jornada e evolução pessoal
 
-Estado atual — Prompt 56 / auditoria final da Etapa 22.3.4. Branch `feat/local-auth`,
-HEAD `2a60697`. Minha Jornada, Modo Noturno e Notificações Inteligentes versionados;
-entrega Web Push externa não validada e desativada. Comentários e Reações
-implementados localmente, incluindo refinamentos dos Prompts 53–55, aguardando
-commit. Treze aprovações manuais do responsável registradas literalmente em
-[discussion-local.md](discussion-local.md) e [testing.md](testing.md). Elas não
-aprovam cenários adicionais nem equivalem a certificação legal.
-22.3.5 — Conquistas e Desafios é a próxima etapa, não iniciada nesta auditoria.
+Estado atual — Prompt 59 / auditoria final da Etapa 22.3.5. Branch `feat/local-auth`, HEAD `412dc4e`.
+22.3.1 a 22.3.4 versionadas. Conquistas e Desafios implementados localmente,
+validados localmente, com 14/14 aprovações manuais do responsável registradas
+literalmente, ainda sem commit. Regras, privacidade e limites em
+[achievements-local.md](achievements-local.md). Entrega Web Push externa permanece
+não validada e desativada. Nenhum staging, commit ou publicação nesta rodada.
 
 ## Roadmap oficial — numeração definitiva (Prompt 46)
 
@@ -16,8 +14,8 @@ aprovam cenários adicionais nem equivalem a certificação legal.
 | 22.3.1 | Minha Jornada | Versionada em `195a9b5` |
 | 22.3.2 | Modo Noturno | Versionado em `91c81d0`; 11/11 manuais históricos do Prompt 48 |
 | 22.3.3 | Notificações Inteligentes | Versionadas em `2a60697`; entrega externa não validada/desativada |
-| 22.3.4 | Comentários, Reações e Moderação | Implementados localmente, pendentes de commit |
-| 22.3.5 | Conquistas e Desafios | Próxima etapa; não iniciada |
+| 22.3.4 | Comentários, Reações e Moderação | Versionados em `412dc4e` |
+| 22.3.5 | Conquistas e Desafios | Implementados e validados localmente; 14/14 manuais; aguardando commit |
 
 Esta numeração substitui a proposta de quatro subetapas do Prompt 44. Apenas a
 documentação foi atualizada no Prompt 46; o Prompt 47 implementa somente aparência.
@@ -197,25 +195,26 @@ política de proteção a adolescentes, responsabilidades operacionais e testes
 executados: [discussion-local.md](discussion-local.md), [testing.md](testing.md).
 Não há aprovação manual nova nem afirmação de conformidade legal definitiva.
 
-## 22.3.5 — planejados: Conquistas e Desafios
+## 22.3.5 — implementados localmente: Conquistas e Desafios
 
 Distintivos de 3, 7, 14, 30, 60 e 100 dias consecutivos, conquistados somente por
 conclusões válidas. Não usar aberturas, likes, push aberto ou edição de metadados.
 Backend calcula a partir do mesmo ledger; não aceitar contadores do cliente.
 
-Registro privado de conquista `(usuário, código, versão)` único, instante do
-servidor e referência mínima de evidência. Registrar na transação de conclusão
-ou job idempotente de reconciliação; serializar por leitor para concorrência.
-Reconciliação inicial apenas por operação futura revisada, sem nova conclusão
-fictícia. Conquistas são preservadas quando a sequência reinicia. Exclusão ou
-correção excepcional de recibos precisa de política explícita, sem perda silenciosa.
+Decisão final do Prompt 57: distintivos derivados do recorde histórico completo
+pela RPC pessoal existente no backend, sem materializar concessões ou duplicar
+contadores. Isso substitui a proposta inicial de registro/job: o ledger já retém
+a evidência e nenhuma escrita/backfill na leitura é necessária. Conquistas são
+preservadas quando a sequência reinicia. Correção excepcional de recibos precisa
+de política explícita; nenhuma correção de dados foi feita nesta rodada.
 
-Desafio semanal privado, opt-in, exemplo: três dias distintos com conclusão na
-semana de segunda a domingo de Brasília. Escolha/versionamento da regra explícitos;
-adesão só conta eventos após adesão, sem obrigar compensação de dias perdidos.
-Progresso é consulta ao ledger, não coluna editável. Resultado final e conquista
-idempotentes; mudança de regra não reinterpreta desafio em andamento. Sair não
-expõe histórico nem remove distintivos já obtidos; adesão/abandono sem punição.
+Desafios privados opt-in de 3, 5 ou 7 dias distintos na semana de segunda a domingo
+de Brasília. Regra final explícita: dias concluídos desde segunda contam mesmo
+antes da adesão, substituindo a proposta inicial de contar só após adesão. Uma
+meta imutável por semana; desistir mantém a adesão encerrada sem reiniciar naquela
+semana e sem punição. Progresso/resultado são consultas ao ledger, não colunas
+editáveis. Histórico mostra até 52 adesões recentes; dados anteriores permanecem
+privados até exclusão da conta. Sem job, notificações novas ou ranking.
 
 RLS estritamente própria inclusive para editorial; sem nova visão administrativa,
 ranking, notificação automática ou exposição compulsória. Linguagem de convite e

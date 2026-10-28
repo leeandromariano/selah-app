@@ -1,4 +1,9 @@
-> Prompt 52 / Etapa 22.3.4: reflexões, reações privadas e moderação OWNER
+> Prompt 57 / Etapa 22.3.5: distintivos derivados do recorde servidor e desafios
+> semanais privados implementados localmente. Regras, instalação incremental,
+> retenção e checklist em [achievements-local.md](achievements-local.md).
+> Etapas 22.3.1–22.3.4 versionadas; nenhuma publicação ou entrega push externa.
+
+> Registro histórico — Prompt 52 / Etapa 22.3.4: reflexões, reações privadas e moderação OWNER
 > implementadas localmente. Migração incremental, RLS/projeções, política e
 > retenção em [discussion-local.md](discussion-local.md). Web Push externo
 > permanece desativado; 22.3.5 não foi iniciada.

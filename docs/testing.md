@@ -1,5 +1,157 @@
 # Inventário e execução de testes
 
+## Prompt 59 — auditoria definitiva e validação manual 14/14
+
+1. Minhas Conquistas aparece dentro de Minha Jornada.
+2. Os distintivos desbloqueados correspondem ao recorde histórico.
+3. Distintivos alcançados permanecem após interrupção da ofensiva.
+4. É possível iniciar voluntariamente um desafio de 3, 5 ou 7 dias.
+5. O progresso corresponde aos dias distintos concluídos na semana.
+6. Mais de um devocional concluído no mesmo dia não aumenta indevidamente o progresso.
+7. É possível desistir de um desafio sem reiniciá-lo na mesma semana.
+8. F5 e Alt+Tab preservam a tela e o estado do desafio.
+9. Claro, Escuro e Sistema exibem corretamente conquistas e desafios.
+10. Outra conta não consegue acessar desafios privados alheios.
+11. Troca de conta remove os dados da conta anterior da interface.
+12. Navegar entre meses preserva as conquistas e o desafio ativo.
+13. Controles funcionam por teclado e em janela pequena ou celular.
+14. Uma leitura válida de 60 segundos atualiza corretamente o desafio.
+
+Transcrição literal das aprovações informadas pelo responsável. Não corresponde
+a testes manuais executados pelo agente nem aprova cenários adicionais. Não
+comprova entrega Web Push externa ou certificação legal/acessibilidade completa.
+Etapa 22.3.5 implementada e validada localmente, ainda sem commit. Os resultados
+do Prompt 57 abaixo são históricos; suas pendências manuais não substituem o
+registro acima. Nesta auditoria, nenhum instalador/manutenção foi executado no
+banco existente: somente metadados de leitura e HTTP negativo, além do banco
+temporário isolado com fixtures sintéticas.
+
+### Resultados executados no Prompt 59
+
+| Comando local repetido | Resultado desta auditoria |
+| --- | --- |
+| `npm.cmd run test:run` | 477 testes aprovados em 44 arquivos |
+| `npm.cmd run build` | DEV aprovado; JS 545,65 kB, aviso >500 kB |
+| `npm.cmd run lint` | Aprovado sem avisos |
+| `node scripts/local-navigation-browser.mjs --rewards` | 27 verificações Chromium aprovadas na execução final |
+| Mesmo script `--reading-layout` / `--discussion` | 54 / 45 aprovadas |
+| Mesmo script `--reminders` / sem opção / `--appearance` | 29 / 18 / 88 aprovadas |
+| `node scripts/verify-local-reading-install.mjs` | 15 migrações e 443 SQL/RLS aprovadas com rollback; 57 próprias de conquistas/desafios |
+| Mesmo runner, concorrência | 18 verificações aprovadas: 6 de desafios, 10 de discussão e 2 de lembretes |
+| `node scripts/local-achievements-readonly-http.mjs` | 4 negativas HTTP locais aprovadas, sem mutações |
+| `npm.cmd run build:staging` / `npm.cmd run build:prod` | Ambos bloqueados, exit 1 esperado |
+| `git diff --check` | Aprovado |
+
+Total final Chromium: **261 verificações**. A primeira execução SQL passou 434
+verificações; a final passou 443 após acrescentar nove casos de limites inferiores
+dos distintivos, semanas consecutivas, transição de mês e congelamento após
+desistência. Nenhuma assertiva anterior foi removida ou enfraquecida.
+
+Novo arquivo `supabase/tests/personal-achievements-concurrency.sql` exercita duas
+conexões autenticadas simultâneas: uma única adesão, espera pelo índice único,
+desistência concorrente idempotente, proibição de reativação e zero escrita em
+conclusões. Por isso os **16 candidatos anteriores passam a 17: 7 modificados e
+10 novos**. É cobertura da etapa atual; nenhum arquivo está fora do escopo.
+Essa suíte confirma fixtures apenas no banco temporário sem rede, descartado
+depois; as 443 verificações principais usam rollback. Não confundir isso com
+mutação no banco existente, teste com dados reais ou SQL executado pelos testes npm.
+
+Falhas intermediárias desta rodada: a primeira tentativa em lote de regressões
+Chromium terminou em `CDP timeout`, antes de apresentar aprovações. A execução
+individual de layout e os demais modos passaram, sem aumento de timeout ou
+supressão de assertivas. A nova checagem de foco inicialmente usava foco
+programático em modalidade de ponteiro, sem ativar `:focus-visible`; o teste
+passou após enviar Tab real por CDP antes de verificar foco e Enter. Nenhuma
+alteração de produção foi necessária. Não houve falha de subprocesso Windows.
+
+Backend e sessões do Chromium são simulados na fronteira. DOM, geometrias,
+teclado, recarga e troca real de abas/visibilidade são locais reais; troca de abas
+é a simulação automatizada de perda/retorno de foco, sem teclas físicas Alt+Tab.
+SQL é integração real com PostgreSQL isolado e identidades sintéticas. HTTP é
+somente negativo. SW recebe payload via CDP, sem provedor push ou entrega externa.
+Firefox/Safari, dispositivos físicos, leitor de tela real e auditoria completa
+WCAG/legal não foram executados. Bundle acima de 500 kB permanece conhecido.
+
+Auditoria de regras: seis marcos derivados exclusivamente de `best_streak` do
+histórico completo do backend, incluindo 1001 dias e dias duplicados; nenhuma
+escrita em recibos, ofensivas ou contadores de cliente. Semana segunda–domingo
+de Brasília, dias anteriores à adesão incluídos, uma meta por semana imutável,
+desistência sem reinício; progresso por dia distinto do ledger válido.
+Autoria sempre `auth.uid()`, sem parâmetro de conta/resultado; SECURITY DEFINER
+com search_path vazio e identidade confirmada/ativa, tabela privada com RLS,
+sem grants diretos. OWNER/editorial/PUBLISHER não ganham consulta de terceiros.
+Histórico visual de 52 adesões, retenção enquanto a conta existe e exclusão em
+cascata pela conta; desistência não é exclusão. Sem ranking ou ampliação de
+métricas administrativas. Correções excepcionais do ledger exigem política
+própria; não houve correção de dados nesta auditoria.
+
+Todos os candidatos revisados; as 14 migrações anteriores permanecem idênticas
+ao HEAD. Migração da etapa já aplicada no Prompt 57 não foi reescrita. Nenhuma
+dependência, autenticação, regra de 60s, permissão OWNER ou transporte push foi
+alterado nesta auditoria. Sem arquivos de ambiente, credenciais, cookies, logs,+caches ou temporários entre os candidatos; varredura por padrões sem segredos
+identificados, complementada pela revisão de contexto. Arquivos de credenciais
+não foram abertos. Staging vazio. Sem bloqueador técnico identificado para commit
+local; isso não libera STAGING/PROD nem equivale a autorização de publicação.
+
+
+## Prompt 57 — Etapa 22.3.5: conquistas e desafios pessoais
+
+Base `412dc4e`, branch `feat/local-auth`, árvore inicialmente limpa. Nenhuma nova
+aprovação manual informada. Checklist pendente e arquitetura em
+[achievements-local.md](achievements-local.md). Somente ambiente local.
+
+| Comando executado nesta rodada | Resultado |
+| --- | --- |
+| `npm.cmd run test:run` | 477 testes aprovados em 44 arquivos |
+| `npm.cmd run test:run -- src/components/JourneyRewards.test.tsx src/components/JourneyPage.test.tsx` | 22 aprovados na reexecução |
+| `npm.cmd run build` | DEV aprovado; JS 545,65 kB, aviso acima de 500 kB |
+| `npm.cmd run lint` | Aprovado sem avisos na execução final |
+| `node scripts/local-navigation-browser.mjs --rewards` | 24 Chromium aprovadas |
+| Chromium `--reading-layout` / `--discussion` | 54 / 45 aprovadas |
+| Chromium `--reminders` / sem opção / `--appearance` | 29 / 18 / 88 aprovadas nas execuções finais |
+| `node scripts/verify-local-reading-install.mjs` | 15 migrações, 434 SQL/RLS com rollback aprovadas, incluindo 48 de conquistas/desafios |
+| Mesmo runner, concorrência anterior | 2 verificações de lembretes e 10 de discussão aprovadas, apenas no banco descartado |
+| `node scripts/apply-local-achievements-migration.mjs` | Nova estrutura instalada exclusivamente no Supabase local; nenhum backfill/dado anterior modificado |
+| `node scripts/local-achievements-readonly-http.mjs` | 4 negativas HTTP aprovadas; três RPCs negadas ao anônimo e tabela privada inacessível |
+| `npm.cmd run build:staging` / `npm.cmd run build:prod` | Ambos bloqueados, exit 1 esperado |
+| `git diff --check` | Aprovado na revisão final |
+
+Total Chromium: 258 verificações finais. Backend/sessões/resultados são simulados
+na fronteira; DOM, teclado, clipboard, geometria e navegação são locais reais.
+SW recebe injeção CDP, sem provedor push. Isso não comprova entrega remota nem
+fluxo autenticado completo de navegador até PostgreSQL. SQL usa banco temporário
+isolado sem rede, fixtures fictícias e rollback; concorrência anterior confirma
+transações somente no banco descartado. Nenhum usuário real foi copiado para teste.
+
+Cobertura nova: seis marcos, recorde interrompido, 1001 dias com duplicatas por
+dia, ausência de recibos e datas futuras; semana civil de Brasília independente
+do fuso de sessão, metas 3/5/7, adesão/retry/conflito/desistência, histórico e
+semana encerrada. RLS própria inclusive OWNER/editorial, ausência de grants
+diretos e parâmetros de autoria/resultado. Interface verifica estados de erro,
+retry, cliques duplicados, teclado, troca de conta/respostas tardias, logout,
+foco/reload/calendário, três temas e mobile sem overflow. As suítes anteriores
+mantêm regressões de autenticação, leitura de 60s, comentários e notificações.
+
+Falhas intermediárias, sem ocultação: dois testes antigos de Jornada pressupunham
+uma única RPC e um único alerta. Passaram a selecionar a RPC/alerta de consistência
+especificamente, preservando as assertivas de navegação/privacidade. Lint apontou
+referências mutáveis em cleanup; a captura do controle foi movida para dentro dos
+efeitos, sem suprimir regras. Chromium de conquistas clicava no calendário ainda
+carregando após reload; agora aguarda o botão habilitado antes de interagir.
+
+Chromium de lembretes falhou duas vezes ao exibir notificação CDP: a ponte legítima
+de limpeza da segunda conta disputava o binding fictício injetado pelo teste.
+Teste de SW isolado em documento estático da mesma origem, após preservar todas
+as verificações de configurações/troca de conta. Passou com 29 verificações; nenhum
+código de produção de push foi alterado e nenhuma assertiva foi removida.
+Instalador inicialmente recusado pelo sandbox; executado depois com permissão
+local específica e guardas intactas. Nenhuma falha de subprocesso Windows ocorreu.
+
+Limites: amostra de contraste, sem certificação WCAG/legal, leitor de tela real,
+Firefox/Safari ou dispositivo físico. Bundle >500 kB, retenção por vida da conta,
+histórico visual limitado às 52 últimas adesões e custo de agregação completa
+documentados. Sem staging/commit, publicação ou Web Push externo.
+
 ## Prompt 56 — auditoria final e validação manual 13/13
 
 1. Os textos solicitados nos Prompts 53, 54 e 55 desapareceram.
