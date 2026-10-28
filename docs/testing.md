@@ -1,5 +1,102 @@
 # Inventário e execução de testes
 
+## Prompt 65 — validação manual informada pelo responsável: 9/9 aprovados
+
+1. A seção Bíblia aparece no menu e abre corretamente.
+2. Consigo selecionar livros do Antigo e do Novo Testamento.
+3. A navegação entre capítulos funciona, incluindo o primeiro e o último.
+4. O seletor de traduções identifica corretamente versões indisponíveis.
+5. Links internos e destaques de versículos funcionam nos dados demonstrativos.
+6. As referências devocionais não abrem conteúdo fictício como se fosse uma tradução real.
+7. A seleção permanece ao atualizar a página na mesma aba.
+8. Nenhuma alteração prejudicou leitura, comentários ou Minha Jornada.
+9. Teclado, celular e os três temas funcionam corretamente.
+
+Transcrição literal de validação manual informada pelo responsável, distinta de
+testes executados pelo agente e limitada aos nove itens acima.
+
+Validação local repetida nesta rodada: `npm.cmd run test:run` passou 485 testes
+em 46 arquivos; `npm.cmd run build` passou em DEV (JS 554,42 kB, aviso acima de
+500 kB); `npm.cmd run lint` passou sem avisos. Com servidor Vite local existente,
+`node scripts/local-navigation-browser.mjs --bible`, `--discussion`,
+`--reading-layout`, `--rewards` e sem argumento passaram respectivamente 18,
+45, 54, 27 e 18 verificações Chromium. A integração Supabase desses testes é
+simulada e os conteúdos são fictícios. A tentativa de iniciar outro servidor
+Vite foi recusada porque a porta 5173 já estava ocupada; o serviço local existente
+servia o módulo bíblico atual e não foi encerrado. `git diff --check` passou.
+Não houve nova execução SQL/RLS, HTTP real de Auth, teste com fornecedor bíblico
+ou rede hospedada nesta rodada.
+
+As falhas anteriores de comentários e compartilhamento não se reproduziram
+nas verificações acima. A fixture de compartilhamento já havia sido ajustada no
+Prompt 64 para aguardar habilitação e simular início de leitura; isso não prova
+a causa da falha histórica. A causa da falha Chromium de comentários também
+permanece não confirmada. Não foram removidas ou enfraquecidas assertivas nesta
+auditoria. Há 17 candidatos: sete modificados e dez novos; nenhum staged.
+
+## Prompt 64 — Bíblia demonstrativa
+
+Os novos testes `src/bible/catalog.test.ts` e `src/components/BibleReader.test.tsx`
+cobrem catálogo, referências, rotas, estados, versão indisponível e a condição
+para habilitar links apenas por provedor licenciado que valide a passagem. Esse
+provedor é simulado; não há licença nem API real configurada. O teste de
+compartilhamento aguarda o botão de conclusão estar habilitado antes de clicar
+e simula `start_reading` com estado coerente quando a página está ativa,
+mantendo as mesmas verificações. A fixture anterior não simulava essa chamada;
+isso e o clique antes de habilitação são causas possíveis da falha intermitente,
+mas a execução histórica não comprova qual ocorreu.
+
+Com Vite local em execução, `node scripts/local-navigation-browser.mjs --discussion`
+passou 45 verificações e `--bible` passou 18, usando integração Supabase simulada.
+As duas primeiras tentativas do modo `--bible` falharam em `Runtime.evaluate`
+porque a nova expressão retornava um elemento DOM em vez de booleano; corrigida
+a expressão, passou. A falha histórica de discussão ocorreu antes da renderização;
+não se comprovou sua causa apenas pela nova execução aprovada.
+
+Validação final: `npm.cmd run test:run` passou 485 testes em 46 arquivos após o
+ajuste da fixture; `npm.cmd run build` e `npm.cmd run lint` passaram, build DEV
+com aviso de bundle de 554,42 kB. `--reading-layout` passou 54 verificações e
+`--rewards` 27 em Chromium com backend simulado. `git diff --check` passou.
+Não houve teste com provedor bíblico real, conteúdo licenciado ou backend remoto.
+
+## Prompt 63 — decisão de cadastro aberto
+
+O cadastro público com confirmação de e-mail passa a ser o comportamento
+pretendido; a Etapa 23.2 de convites foi dispensada sem implementação. O signup
+direto observado no Prompt 61 não é falha contra o novo produto. Os resultados
+históricos abaixo permanecem inalterados, inclusive a falha Chromium. Continuam
+necessários testes de Auth, confirmação, recuperação, abuso, RLS e permissões
+OWNER na futura homologação. Esta atualização documental não comprova novos
+testes de comportamento.
+
+Validação documental desta rodada: `npm.cmd run test:run` inicialmente teve
+476 aprovados e uma falha em `ReaderLibrary.test.tsx` ao aguardar a conclusão;
+a causa não foi determinada. A reexecução isolada do arquivo passou 21 testes e
+a reexecução da suíte completa passou 477 testes em 44 arquivos. `npm.cmd run
+build` passou em DEV com aviso de bundle acima de 500 kB; `npm.cmd run lint` e
+`git diff --check` passaram. Nenhum teste de Chromium ou integração foi repetido.
+
+## Prompt 61 — diagnóstico de convites, implementação pendente
+
+`node scripts/local-auth-smoke.mjs` passou 19 verificações HTTP locais e criou
+uma conta fictícia sem convite, demonstrando que o cadastro direto continua
+aberto. A conta fictícia foi mantida; Mailpit é local. A confirmação e a
+recuperação exercitadas são as existentes, não um fluxo de convites.
+`node scripts/local-achievements-readonly-http.mjs` passou quatro negativas.
+`node scripts/verify-local-reading-install.mjs` instalou 15 migrações em
+PostgreSQL temporário isolado e passou 443 verificações SQL e 18 verificações
+de concorrência existentes; não havia testes de convite. O contêiner temporário
+foi descartado. Esses testes não usam backend simulado para o SQL/HTTP.
+
+`npm.cmd run test:run` inicialmente falhou em um dos 477 testes, durante
+carregamento do perfil, enquanto outras verificações executavam em paralelo;
+na reexecução isolada passou 477 em 44 arquivos. O teste React simula o backend.
+`npm.cmd run build` e `npm.cmd run lint` passaram; build DEV manteve aviso de
+bundle acima de 500 kB. `node scripts/local-navigation-browser.mjs --discussion`
+falhou duas vezes na verificação de renderização da reflexão publicada com
+limite de 1000 caracteres, inclusive após a suíte terminar; causa não apurada.
+Não alegar validação Chromium ou de convites com esses resultados.
+
 ## Prompt 59 — auditoria definitiva e validação manual 14/14
 
 1. Minhas Conquistas aparece dentro de Minha Jornada.

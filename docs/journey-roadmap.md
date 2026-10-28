@@ -1,5 +1,22 @@
 # Etapa 22.3 — Minha Jornada e evolução pessoal
 
+> Etapa 23.3: leitor bíblico local demonstrativo implementado com catálogo de 66
+> livros e arquitetura de provedores. NVI inativa e conteúdo bíblico real ainda
+> dependem de autorização; detalhes em [bible-reader-local.md](bible-reader-local.md).
+> Cadastro aberto com confirmação continua sendo a decisão do MVP.
+
+> Prioridade atual — disponibilizar o MVP aos primeiros leitores, com cadastro
+> público e confirmação de e-mail. As etapas 22.3.1–22.3.5 estão versionadas, incluindo 22.3.5 em
+> `96a42ab`. A auditoria integrada ampla foi adiada; executar as verificações
+> essenciais de lançamento descritas em [mvp-beta-launch.md](mvp-beta-launch.md).
+> Leitor bíblico nativo demonstrativo implementado para múltiplas versões; NVI
+> somente com fonte e licença autorizadas. Web Push externo permanece desativado.
+> O estado e a ausência de commit descritos a seguir são registros históricos.
+
+> Etapa 23.2 de convites dispensada por decisão do responsável no Prompt 63;
+> não foi implementada. Diagnóstico histórico em
+> [beta-invitations-local.md](beta-invitations-local.md).
+
 Estado atual — Prompt 59 / auditoria final da Etapa 22.3.5. Branch `feat/local-auth`, HEAD `412dc4e`.
 22.3.1 a 22.3.4 versionadas. Conquistas e Desafios implementados localmente,
 validados localmente, com 14/14 aprovações manuais do responsável registradas

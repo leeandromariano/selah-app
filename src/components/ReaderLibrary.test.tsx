@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import App from '../App'
@@ -72,7 +72,7 @@ describe('acervo persistente do leitor', () => {
     let completed = false
     vi.mocked(supabase.rpc).mockImplementation((name, args) => {
       if (name === 'complete_devotional') completed = true
-      if (['get_my_reading_state', 'complete_devotional'].includes(name)) return { abortSignal: async () => ({ data: {
+      if (['get_my_reading_state', 'start_reading', 'complete_devotional'].includes(name)) return { abortSignal: async () => ({ data: {
         status: completed ? 'completed' : 'ready', devotional_id: publication.id, revision: 1, credited_ms: 60000,
         revision_changed: false, ...(completed ? { completed_at: '2026-10-28T15:00:00Z', completed_day: '2026-10-28' } : {}),
       }, error: null }) } as never
@@ -80,7 +80,9 @@ describe('acervo persistente do leitor', () => {
     })
     open(`leitura/${publication.id}`)
     expect(await screen.findByRole('button', { name: 'Compartilhar' })).toBeVisible()
-    fireEvent.click(await screen.findByRole('button', { name: 'Concluir devocional' }))
+    const conclude = await screen.findByRole('button', { name: 'Concluir devocional' })
+    await waitFor(() => expect(conclude).toBeEnabled())
+    fireEvent.click(conclude)
     await screen.findByText(/Devocional concluído em/)
     expect(completed).toBe(true)
     expect(screen.getByRole('button', { name: 'Compartilhar' })).toBeVisible()

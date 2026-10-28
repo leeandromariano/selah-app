@@ -10,7 +10,8 @@ const remindersRun = process.argv.length === 3 && process.argv[2] === '--reminde
 const discussionRun = process.argv.length === 3 && process.argv[2] === '--discussion'
 const readingLayoutRun = process.argv.length === 3 && process.argv[2] === '--reading-layout'
 const rewardsRun = process.argv.length === 3 && process.argv[2] === '--rewards'
-if (process.argv.length !== 2 && !appearanceRun && !remindersRun && !discussionRun && !readingLayoutRun && !rewardsRun) throw Error('Only local UI regression modes are accepted')
+const bibleRun = process.argv.length === 3 && process.argv[2] === '--bible'
+if (process.argv.length !== 2 && !appearanceRun && !remindersRun && !discussionRun && !readingLayoutRun && !rewardsRun && !bibleRun) throw Error('Only local UI regression modes are accepted')
 const origin = 'http://127.0.0.1:5173', debug = 'http://127.0.0.1:9229'
 const executable = ['C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].find(existsSync)
 if (!executable) throw Error('Installed Chromium unavailable')
@@ -27,7 +28,7 @@ function send(method, params = {}) {
   const id = ++sequence
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => { pending.delete(id); reject(Error('CDP timeout')) }, 15000)
-    pending.set(id, { resolve: value => { clearTimeout(timer); resolve(value) }, reject })
+    pending.set(id, { method, resolve: value => { clearTimeout(timer); resolve(value) }, reject })
     socket.send(JSON.stringify({ id, method, params }))
   })
 }
@@ -236,7 +237,7 @@ try {
   socket.addEventListener('message', async event => {
     const m = JSON.parse(String(event.data))
     if (m.method === 'ServiceWorker.workerRegistrationUpdated') workerRegistration=m.params.registrations.find(r=>r.scopeURL===origin+'/')?.registrationId??workerRegistration
-    if (m.id) { const p = pending.get(m.id); pending.delete(m.id); if (m.error) p?.reject(Error('CDP failed')); else p?.resolve(m.result) }
+    if (m.id) { const p = pending.get(m.id); pending.delete(m.id); if (m.error) p?.reject(Error('CDP failed: ' + p.method)); else p?.resolve(m.result) }
     if (m.method === 'Fetch.requestPaused') {
       const { requestId, request } = m.params, u = new URL(request.url)
       try {
@@ -247,7 +248,31 @@ try {
     }
   })
   await send('Page.enable'); await send('Runtime.enable'); await send('Fetch.enable', { patterns: [{ urlPattern: '*' }] })
-  if (rewardsRun) {
+  if (bibleRun) {
+    await send('Page.navigate', { url: origin + '/#biblia/demonstracao/joao/3/16-17' })
+    await check(`Boolean(document.querySelector('#bible-verse-16.highlighted') && document.querySelector('#bible-verse-17.highlighted'))`, 'fictional reference range highlighted')
+    await check(`document.querySelectorAll('.bible-controls optgroup')[0].children.length===39 && document.querySelectorAll('.bible-controls optgroup')[1].children.length===27`, '66 books separated by testament')
+    await check(`document.querySelector('.bible-reader').textContent.includes('Conteúdo fictício') && document.querySelector('.bible-reader option[value=nvi]').disabled`, 'demonstration identified and NVI unavailable')
+    for (const theme of ['light','dark','system']) {
+      await evaluate(`window.selahAppearance.setPreference('${theme}')`)
+      for (const width of [1440,390]) {
+        await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width===390 })
+        await check(`document.documentElement.scrollWidth<=innerWidth && Array.from(document.querySelectorAll('.bible-controls select,.bible-navigation button')).every(e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth})`, 'bible controls fit '+theme+' viewport '+width)
+        await check(`(${renderedContrast.toString()})().length===0`, 'rendered text contrast '+theme+' viewport '+width)
+      }
+    }
+    await evaluate(`document.querySelector('.bible-navigation button:last-child').focus()`)
+    await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 })
+    await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 })
+    await evaluate(`document.querySelector('.bible-navigation button:last-child').focus()`)
+    await check(`getComputedStyle(document.activeElement).outlineStyle!=='none' && parseFloat(getComputedStyle(document.activeElement).outlineWidth)>0`, 'chapter navigation keyboard focus visible')
+    await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r' })
+    await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 })
+    await check(`location.hash==='#biblia/demonstracao/joao/4' && document.querySelector('.bible-reader').textContent.includes('Nenhum conteúdo disponível')`, 'keyboard navigates to empty chapter')
+    await evaluate(`location.hash='biblia'`)
+    await check(`document.querySelector('.bible-chapter h2')?.textContent.includes('João 4')`, 'selection retained in session')
+    console.log(passed+' Chromium bible checks passed; fictional content, synthetic backend.')
+  } else if (rewardsRun) {
     await send('Page.navigate', { url: origin + '/#minha-jornada' })
     await check(`document.querySelectorAll('.journey-badges li').length===6 && document.querySelectorAll('.badge-earned').length===2`, 'six server badges distinguish earned and next milestones')
     await check(`Boolean(document.querySelector('.journey-rewards select')) && !document.querySelector('.journey-challenges li')`, 'no automatic enrollment')

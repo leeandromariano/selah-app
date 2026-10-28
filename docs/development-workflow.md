@@ -37,6 +37,11 @@
 
 # Processo de desenvolvimento do Selah
 
+> Etapa 23.3: o leitor bíblico local usa conteúdo fictício parcial e catálogo
+> de 66 livros. NVI e integrações externas permanecem inativas, sujeitas a
+> autorização e licença; ver [bible-reader-local.md](bible-reader-local.md).
+> O MVP mantém cadastro aberto com confirmação de e-mail.
+
 > Etapa 21.5: login aceita username (com ou sem @) ou e-mail pela Edge Function
 > exclusivamente local. Servir com `node scripts/serve-local-login.mjs`;
 > sessão permanece no SDK oficial. Ver [operação e limites](username-login-local.md).
