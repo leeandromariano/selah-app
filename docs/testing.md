@@ -1,5 +1,49 @@
 # Inventário e execução de testes
 
+## Prompt 70 — auditoria final de STAGING
+
+`npm.cmd run test:run`: 506 testes em 48 arquivos aprovados. `npm.cmd run
+build` e `npm.cmd run lint` aprovados; build DEV com JS 556,55 kB e aviso acima
+de 500 kB. `node scripts/build-staging-fixture.mjs` passou e produziu build
+STAGING fictício de 556,80 kB; o build sem sinal foi recusado com código 1 e
+`build:prod` foi recusado com código 1 por configuração genérica DEV. A suíte
+unitária também confirma recusa de PROD com valores fictícios completos.
+Após inspecionar STAGING, o build DEV foi gerado novamente em `dist`.
+
+Chromium com backend simulado: `--bible` 18, `--reading-layout` 54,
+`--discussion` 45 e `--rewards` 27 verificações aprovadas. Nenhum teste SQL/RLS
+foi repetido nesta auditoria, pois não houve alteração de banco; os 443 testes
+SQL e 18 concorrentes do Prompt 69 são resultados anteriores. A varredura
+limitada do bundle STAGING detectou a chave pública fictícia e não encontrou
+prefixos comuns de segredo, chaves privadas ou JWT service_role. Não é garantia
+exaustiva de ausência de segredos. Não houve acesso hospedado ou deploy.
+`git diff --check` passou; nenhum arquivo foi colocado em staging Git.
+
+## Prompt 69 — build STAGING local controlado
+
+`npm.cmd run test:run`: 506 testes em 48 arquivos aprovados; testes de ambiente
+usam origem e cliente simulados, sem rede. `npm.cmd run build` e lint passaram;
+build DEV produziu JS 556,55 kB, com aviso acima de 500 kB. `node
+scripts/build-staging-fixture.mjs` invocou `npm.cmd run build:staging` com
+valores fictícios e passou, JS 556,80 kB com o mesmo aviso. A execução direta
+sem sinal de build foi recusada com código 1; `build:prod` recusou código 1
+por variável genérica DEV. Testes unitários também recusam PROD com configuração
+fictícia válida e sinal presente. O build DEV foi gerado novamente ao final.
+
+Varredura limitada do bundle STAGING encontrou a chave pública fictícia e não
+detectou prefixo de chave secreta, JWT service_role ou chave privada. O código
+de validação DEV mantém uma string de URL local no bundle, mas o contrato STAGING
+recusa esse backend; a presença literal não é fallback. Essa varredura não prova
+ausência de todos os segredos possíveis. Nenhum serviço hospedado foi acessado
+ou testado e não houve teste do build em domínio HTTPS real.
+
+`node scripts/verify-local-reading-install.mjs`: 15 migrações instaladas em
+PostgreSQL temporário isolado, 443 verificações SQL/RLS e 18 de concorrência
+aprovadas; contêiner descartado. Isso não reproduz integralmente permissões da
+plataforma gerenciada. Chromium com fronteira Supabase simulada: `--bible` 18,
+`--discussion` 45, `--reading-layout` 54 e `--rewards` 27 verificações aprovadas.
+Não foi repetido HTTP real de Auth nesta rodada. `git diff --check` passou.
+
 ## Prompt 68 — validação manual informada pelo responsável: 12/12 aprovados
 
 1. Cadastro de nova conta fictícia funciona no ambiente local.

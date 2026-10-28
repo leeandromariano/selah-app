@@ -76,7 +76,8 @@ export function resolveEnvironment(mode: string, variables: Variables) {
       if (payload.ref !== ref) throw new Error('JWT anon não corresponde ao projeto futuro declarado.')
     }
   }
-  // Deliberately no env switch: enabling remote requires a reviewed code change.
+  // Baseline guard; STAGING's separately validated path is in the build/factory.
+  // PROD has no enabled path.
   return { name, enabled: false as const, reason: `${name} está desabilitado nesta etapa. Nenhuma conexão remota é permitida.` }
 }
 
@@ -86,7 +87,12 @@ export function requireEnabledEnvironment(mode: string, variables: Variables) {
   return config
 }
 
-export function createBuildEnvironment(mode: string, variables: Variables): BuildEnvironment {
+export function createBuildEnvironment(mode: string, variables: Variables, stagingBuildAuthorized = false): BuildEnvironment {
+  if (mode === 'staging') {
+    if (!stagingBuildAuthorized) throw new Error('Build STAGING exige autorização local explícita.')
+    const config = prepareHostedEnvironment('staging', variables)
+    return { mode, variables: { VITE_APP_ENV: config.name, VITE_STAGING_SUPABASE_URL: config.url, VITE_STAGING_SUPABASE_PROJECT_REF: config.projectRef, VITE_STAGING_SUPABASE_PUBLISHABLE_KEY: config.key, VITE_STAGING_SITE_ORIGIN: config.siteOrigin } }
+  }
   const config = requireEnabledEnvironment(mode, variables)
   return { mode, variables: { VITE_APP_ENV: config.name, VITE_DEV_SUPABASE_URL: config.url, VITE_DEV_SUPABASE_PUBLISHABLE_KEY: config.key } }
 }
@@ -109,7 +115,8 @@ export function prepareClientConfiguration(build: BuildEnvironment, origin: stri
 
 export function createEnvironmentClient<T>(build: BuildEnvironment, factory: (url: string, key: string, options: { auth: { persistSession: boolean; autoRefreshToken: boolean; detectSessionInUrl: boolean; flowType: 'implicit' } }) => T, origin: string) {
   const config = prepareClientConfiguration(build, origin)
-  // The hard gate remains inside the actual factory, before any SDK call.
-  requireEnabledEnvironment(build.mode, build.variables)
+  // STAGING accepts only the reviewed HTTPS contract and its exact site origin.
+  // PROD still fails closed before the SDK factory is invoked.
+  if (build.mode !== 'staging') requireEnabledEnvironment(build.mode, build.variables)
   return factory(config.url, config.key, config.options)
 }

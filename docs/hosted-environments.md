@@ -1,5 +1,10 @@
 # Preparação local para hospedagem — Etapa 23.4
 
+> Etapa 23.5.1: o build STAGING agora exige autorização explícita no processo e
+> configuração HTTPS completa; o cliente desse artefato aceita apenas a origem
+> configurada. PROD continua bloqueado. Nenhum deploy ou acesso hospedado foi
+> autorizado nesta rodada. [Procedimento de staging](staging-deployment.md).
+
 ## Validação manual informada pelo responsável — 12/12 aprovados
 
 1. Cadastro de nova conta fictícia funciona no ambiente local.
@@ -19,7 +24,7 @@ Transcrição literal informada pelo responsável, limitada aos itens acima. Nã
 representa testes de hospedagem real, SMTP externo ou Auth hospedado. Etapa
 23.4 implementada localmente e aguardando commit; não há publicação autorizada.
 
-STAGING e PROD continuam deliberadamente bloqueados na fábrica e no build. A
+Registro histórico da Etapa 23.4: STAGING e PROD estavam bloqueados na fábrica e no build. A
 preparação abaixo é código testável com fronteiras simuladas, não habilitação
 de hospedagem nem aprovação para conexão. A branch parte de `40375a5`.
 
@@ -29,13 +34,14 @@ localhost, endereço IP, origem inválida, mistura de projeto/chave e configura�
 genéricas DEV. `validateHostedOrigin` compara a origem recebida com a origem
 aprovada. `prepareClientConfiguration`, usado pela fábrica real, aplica esse
 contrato e a origem correspondente, e define as mesmas opções do Auth para os
-dois caminhos; é uma preparação pura, sem criar cliente ou fazer rede. Em seguida,
-a fábrica chama a guarda obrigatória `requireEnabledEnvironment`, que recusa
-STAGING/PROD antes de chamar o SDK, mesmo para configuração válida. O build
-continua recusando esses modos e injetando somente DEV. Não há flag para contornar
-essas guardas. Antes da homologação é necessária alteração específica revisada e
-autorizada dos bloqueios e do empacotamento de variáveis, além de validação real
-em ambiente isolado. Não se alegou criação real de cliente hospedado nesta etapa.
+dois caminhos; é uma preparação pura, sem criar cliente ou fazer rede. A partir
+da 23.5.1, STAGING usa esse contrato na fábrica e pode criar cliente somente na
+origem HTTPS exata configurada; PROD continua recusado antes do SDK. A criação
+de build STAGING exige `SELAH_STAGING_BUILD=LOCAL_STAGING_BUILD` no processo,
+fora do namespace público, além das variáveis públicas válidas. Esse sinal é
+uma proteção contra acionamento acidental, não autenticação nem autorização de
+deploy. O artefato pode acessar o projeto configurado quando servido na origem
+correta; não publicá-lo nem abri-lo em um ambiente hospedado sem aprovação.
 
 DEV continua usando `.env.development.local` e somente API local fixa; os
 scripts locais e a função `password-login` mantêm suas guardas. Para futura
@@ -51,7 +57,7 @@ Para hospedagem futura, o formulário tem caminho de login por e-mail usando
 `signInWithPassword` oficial, sem consulta de username ou e-mail de terceiros;
 o DEV continua usando a Edge Function local para username ou e-mail. Username
 permanece nome de perfil, sem migração de identidade. Essa seleção hospedada
-foi testada com SDK simulado; o código remoto não está ativo. As telas ainda
+foi testada com SDK simulado; nenhum acesso remoto foi executado. As telas ainda
 contêm avisos e políticas específicos de teste local, que devem ser revisados
 antes da abertura a leitores reais. Confirmar política de enumeração, limites
 de Auth e equivalência de mensagens com a configuração real do provedor.

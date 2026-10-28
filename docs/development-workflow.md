@@ -37,6 +37,11 @@
 
 # Processo de desenvolvimento do Selah
 
+> Etapa 23.5.1: STAGING pode gerar build local mediante sinal explícito e
+> contrato HTTPS completo; PROD continua bloqueado. Não executar deploy por
+> consequência do build. Ver [staging-deployment.md](staging-deployment.md);
+> trechos históricos abaixo que descrevem STAGING bloqueado foram superados.
+
 > Etapa 23.4: validação tipada do contrato hospedado e caminho de login por
 > e-mail preparados e testáveis localmente; cliente/build STAGING e PROD seguem
 > bloqueados. Limites e etapas pendentes em [hosted-environments.md](hosted-environments.md).

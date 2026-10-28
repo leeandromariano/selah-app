@@ -39,9 +39,9 @@ describe('contrato DEV/STAGING/PROD sem serviços externos', () => {
     expect(resolveEnvironment(mode, {})).toMatchObject({ enabled: false })
     expect(() => requireEnabledEnvironment(mode, {})).toThrow('desabilitado')
     expect(() => resolveEnvironment(mode, legacy)).toThrow('exclusivas de DEV')
-    expect(() => createBuildEnvironment(mode, {})).toThrow('desabilitado')
+    expect(() => createBuildEnvironment(mode, {})).toThrow(mode === 'staging' ? 'autorização' : 'desabilitado')
   })
-  it('STAGING válido continua bloqueado, inclusive com flags de habilitação', () => {
+  it('guarda genérica de STAGING permanece bloqueada mesmo com flags públicas', () => {
     const variables = { ...staging, VITE_ENABLE_REMOTE: 'true', VITE_PROD_ENABLED: 'true' }
     expect(resolveEnvironment('staging', variables)).toEqual({ name: 'STAGING', enabled: false, reason: expect.stringContaining('desabilitado') })
     expect(() => requireEnabledEnvironment('staging', variables)).toThrow('desabilitado')

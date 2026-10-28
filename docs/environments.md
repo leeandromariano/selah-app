@@ -1,5 +1,9 @@
 # Ambientes do Selah — Etapa 21.2
 
+> Etapa 23.5.1: STAGING agora permite build com sinal explícito e contrato
+> HTTPS; PROD segue bloqueado. O restante deste documento registra a Etapa
+> 21.2 e seus bloqueios históricos. Veja [staging-deployment.md](staging-deployment.md).
+
 > Etapa 21.5: a Edge Function de [login por username/e-mail](username-login-local.md)
 > também recusa destinos não locais. O frontend continua em DEV 127.0.0.1:54321;
 > o runtime usa somente os serviços internos do Docker local verificado. Não há

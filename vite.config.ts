@@ -6,7 +6,7 @@ import { createBuildEnvironment } from './src/lib/environment.ts'
 export default defineConfig(({ mode }) => {
   const variables = loadEnv(mode, process.cwd(), 'VITE_')
   // Do not expose the whole env object or unselected environments in the bundle.
-  const publicBuild = createBuildEnvironment(mode, variables)
+  const publicBuild = createBuildEnvironment(mode, variables, process.env.SELAH_STAGING_BUILD === 'LOCAL_STAGING_BUILD')
   return {
     plugins: [react()],
     server: { host: '127.0.0.1', port: 5173, strictPort: true },

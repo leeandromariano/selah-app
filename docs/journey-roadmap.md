@@ -1,5 +1,10 @@
 # Etapa 22.3 — Minha Jornada e evolução pessoal
 
+> Etapa 23.5.1: build STAGING controlado preparado localmente; PROD segue
+> bloqueado. Nenhuma implantação ou conexão hospedada nesta rodada. Ver
+> [procedimento e pendências](staging-deployment.md). Os bloqueios STAGING
+> indicados nas notas antigas abaixo são históricos.
+
 > Etapa 23.4 implementada localmente e aguardando commit, com 12/12 validações
 > manuais informadas pelo responsável. STAGING/PROD permanecem bloqueados; ver
 > [ambientes hospedados](hosted-environments.md).

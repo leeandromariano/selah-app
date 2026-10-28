@@ -1,5 +1,10 @@
 # MVP Beta com cadastro aberto — preparação de publicação
 
+> Etapa 23.5.1: STAGING tem build local controlado; PROD continua bloqueado.
+> Nenhum deploy ou acesso ao projeto hospedado ocorreu. O procedimento e as
+> pendências estão em [staging-deployment.md](staging-deployment.md). Os avisos
+> anteriores sobre bloqueio de STAGING são registros históricos.
+
 > Etapa 23.4 implementada localmente, aguardando commit; não houve publicação
 > nem conexão hospedada. As 12 validações manuais informadas pelo responsável
 > constam em [ambientes hospedados](hosted-environments.md).
@@ -43,7 +48,8 @@ restauração são requisitos mesmo se exigirem plano pago ou solução adiciona
 
 ## Diagnóstico e bloqueadores
 
-- `src/lib/environment.ts` bloqueia STAGING/PROD por código; build DEV só
+- PROD segue bloqueado; STAGING exige build explícito e configuração revisada.
+  DEV só
   inicializa em localhost/127.0.0.1 nas portas 5173/4173 e usa API
   `http://127.0.0.1:54321`. `npm run build` gera DEV, não candidato publicável.
   A liberação precisa de alteração específica autorizada, testes e revisão.
@@ -51,9 +57,8 @@ restauração são requisitos mesmo se exigirem plano pago ou solução adiciona
   permite signup e exige confirmação. Testar confirmação e recuperação no
   ambiente aprovado e configurar limites contra abuso; não depender de CORS
   ou de controles da interface para proteger dados e privilégios.
-- Login por e-mail **e** username usa `password-login`; sua função rejeita
-  destinos hospedados e depende de PostgreSQL, segredo servidor e CORS local.
-  Preparar implementação hospedada segura e limites também para acesso direto
+- Login DEV por e-mail **e** username usa `password-login`, exclusivo local.
+  STAGING usa Auth por e-mail; validar limites também para acesso direto
   ao Auth; não adaptar ou apontar os scripts locais ao serviço hospedado.
 - Auth local usa Mailpit, `site_url` e redirects locais; SMTP real, domínio e
   redirects exatos precisam ser configurados e exercitados em homologação.
