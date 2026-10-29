@@ -88,7 +88,7 @@ describe('formulários de autenticação', () => {
       ['Senha', 'senha-ficticia'], ['Confirmar senha', 'senha-ficticia'],
     ]) await user.type(screen.getByLabelText(label), value)
     await user.click(screen.getByRole('button', { name: /Criar conta/ }))
-    expect(await screen.findByRole('status')).toHaveTextContent('Confirme seu endereço')
+    expect(await screen.findByRole('status')).toHaveTextContent('confirme o endereço antes de entrar')
     expect(supabase.auth.signUp).toHaveBeenCalledWith({ email: 'pessoa@example.test', password: 'senha-ficticia', options: { emailRedirectTo: location.origin, data: { username: 'pessoa_01', whatsapp: '+5511999990000', feedback_contact_allowed: false } } })
     expect(screen.getByLabelText('E-mail')).toHaveValue('')
     expect(screen.getByLabelText('Senha')).toHaveValue('')

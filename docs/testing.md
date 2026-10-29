@@ -2296,3 +2296,18 @@ Resultados locais desta rodada: 509 testes Vitest em 49 arquivos com
 STAGING aprovados. O ensaio descartável aplicou 16 migrações e passou 464 checks
 SQL/RLS, os checks adicionais do candidato e as suítes de concorrência; descartou
 o contêiner. Os builds emitiram aviso de bundle maior que 500 kB.
+
+## Refinamento de cadastro DEV/STAGING (Prompt 77)
+
+Os testes de interface simulam a fronteira Auth, incluindo cadastro com sessão
+oficial e sem sessão, falhas, confirmação pendente, troca de conta e logout. A
+interface distingue DEV e STAGING pela configuração validada; o login hospedado
+usa e-mail, enquanto username permanece local. A sessão retornada pelo SDK é
+tratada pelos eventos Auth existentes, sem login adicional ou sessão fabricada.
+Sem sessão, a mensagem orienta confirmação quando solicitada sem garantir envio.
+Os testes não verificam configuração ou entrega real de e-mail no serviço remoto.
+
+Validação final local: `npm.cmd run test:run -- --maxWorkers=2` passou com
+515 testes em 50 arquivos; `npm.cmd run lint`, `npm.cmd run build` e
+`node scripts/build-staging-fixture.mjs` passaram. Os dois builds avisaram sobre
+chunk maior que 500 kB. Não houve ensaio em navegador real ou serviço remoto.

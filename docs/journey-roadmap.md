@@ -380,3 +380,13 @@ ensaiada em PostgreSQL descartável, sem validar o serviço gerenciado. Nenhuma 
 OWNER hospedada está autorizada por este trabalho.
 Exclusão em Auth pode remover OWNER por cascade sem registrar `revoke`; a
 auditoria desse fluxo exige decisão e revisão antes de qualquer operação.
+# Prompt 77 — cadastro em DEV e STAGING
+
+O cadastro usa o resultado do Auth: sessão oficial inicia a experiência autenticada;
+sem sessão, orienta confirmar o e-mail quando solicitado antes de entrar, sem
+prometer entrega. As indicações de ambiente usam a configuração validada. Login
+por username continua exclusivo de DEV; STAGING usa e-mail. A confirmação de
+e-mail deve ser reavaliada na preparação do beta. Não houve acesso remoto ou deploy
+nesta alteração; testes simulados não substituem homologação funcional posterior.
+Validação local: 515 testes em 50 arquivos, lint e builds DEV e fixture STAGING
+aprovados; os builds emitiram aviso de chunk maior que 500 kB.

@@ -11,13 +11,25 @@ import { PasswordForm } from '../components/PasswordForm'
 const session = { user: { id: 'fictional-reader', user_metadata: { role: 'admin' } } } as unknown as Session
 function Probe() {
   const auth = useAuth()
-  return <><p>{auth.loading ? 'loading' : auth.session ? 'signed in' : 'signed out'}</p><p>{auth.recovery ? 'recovering' : 'normal'}</p><p role="alert">{auth.error}</p><button onClick={auth.logout}>logout</button></>
+  return <><p>{auth.loading ? 'loading' : auth.session ? 'signed in' : 'signed out'}</p><p>{auth.session?.user.id}</p><p>{auth.recovery ? 'recovering' : 'normal'}</p><p role="alert">{auth.error}</p><button onClick={auth.logout}>logout</button></>
 }
 function event(type: Parameters<Parameters<typeof supabase.auth.onAuthStateChange>[0]>[0], value: Session | null) {
   act(() => { vi.mocked(supabase.auth.onAuthStateChange).mock.calls.at(-1)![0](type, value) })
 }
 
 describe('sessão e autorização', () => {
+  it('acompanha troca de conta oficial e logout', async () => {
+    render(<AuthProvider><Probe /></AuthProvider>)
+    await screen.findByText('signed out')
+    event('SIGNED_IN', session)
+    expect(screen.getByText('fictional-reader')).toBeVisible()
+    event('SIGNED_IN', { ...session, user: { ...session.user, id: 'fictional-other' } })
+    expect(screen.queryByText('fictional-reader')).not.toBeInTheDocument()
+    expect(screen.getByText('fictional-other')).toBeVisible()
+    await userEvent.click(screen.getByRole('button', { name: 'logout' }))
+    expect(await screen.findByText('signed out')).toBeVisible()
+    expect(screen.queryByText('fictional-other')).not.toBeInTheDocument()
+  })
   it('apresenta link inválido como erro de autenticação em vez de página desconhecida', async () => {
     location.hash = 'error=access_denied&error_code=otp_expired'
     render(<App />)
