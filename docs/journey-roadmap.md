@@ -374,6 +374,9 @@ Após staging decidido pelo responsável: `git diff --cached --stat` e
 
 Há somente um candidato transacional ensaiado localmente e uma entrada que
 recusa execução. Permanecem pendentes revisão humana, identidade independente
-do host/projeto, confirmação externa confiável do e-mail, teste de concorrência
-do candidato e executor seguro com aprovação específica. Nenhuma operação
+do host/projeto, confirmação externa confiável do e-mail, privilégios efetivos
+e executor seguro com aprovação específica. Concorrência do candidato foi
+ensaiada em PostgreSQL descartável, sem validar o serviço gerenciado. Nenhuma operação
 OWNER hospedada está autorizada por este trabalho.
+Exclusão em Auth pode remover OWNER por cascade sem registrar `revoke`; a
+auditoria desse fluxo exige decisão e revisão antes de qualquer operação.

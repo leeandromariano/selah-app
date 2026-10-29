@@ -4,7 +4,7 @@
 create function pg_temp.staging_owner_candidate(action text, target uuid, confirmed uuid, ref text, external_verified boolean)
 returns void language plpgsql set search_path='' as $$
 begin
-  if action not in ('grant','revoke') or target is null or target is distinct from confirmed
+  if action is null or action not in ('grant','revoke') or target is null or target is distinct from confirmed
     or ref is null or ref !~ '^STAGING-[A-Za-z0-9_-]{8,80}$'
     or external_verified is distinct from true then
     raise exception 'Invalid operator confirmation' using errcode='42501';

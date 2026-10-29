@@ -2279,6 +2279,20 @@ O ensaio descartável `node scripts/verify-local-reading-install.mjs` inclui
 `staging-owner-candidate.sql` e seus checks sintéticos, com rollback. Exercita
 eligibilidade, pedido de exclusão, repetição, atomicidade da auditoria e RPCs
 com claims anteriores à revogação. O teste unitário verifica que a entrada
-STAGING recusa todos os destinos e não ecoa argumentos. Não comprova identidade
-remota nem corrida concorrente do candidato; essas verificações são pendências
-antes de preparar qualquer executor hospedado.
+STAGING recusa todos os destinos e não ecoa argumentos. O novo ensaio usa três
+conexões independentes via socket no banco descartável; verifica locks reais,
+concorrência de duas concessões e duas revogações, pedido de exclusão antes e
+depois da concessão, negação nas RPCs com sessão anterior e rollback por auditoria
+duplicada. Ação nula, conta suspensa, excluída, anônima ou sem confirmação de
+Auth são recusadas no candidato. O ensaio não comprova identidade remota,
+verificação externa de e-mail, TLS ou privilégios mínimos no serviço gerenciado.
+Uma exclusão concorrente de `auth.users` também foi ensaiada: ela espera o lock
+da concessão e, após commit, remove a membership por cascade sem evento `revoke`.
+Isso revela uma lacuna de auditoria para exclusão por outra via, distinta da
+revogação explícita. Auditoria duplicada desfaz tanto grant quanto revoke.
+
+Resultados locais desta rodada: 509 testes Vitest em 49 arquivos com
+`npm run test:run -- --maxWorkers=2`, lint, build DEV e build com fixture
+STAGING aprovados. O ensaio descartável aplicou 16 migrações e passou 464 checks
+SQL/RLS, os checks adicionais do candidato e as suítes de concorrência; descartou
+o contêiner. Os builds emitiram aviso de bundle maior que 500 kB.

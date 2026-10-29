@@ -29,6 +29,34 @@ revogação com a mesma sessão e RPCs após autorização específica. O candid
 atual não implementa validação de host nem executor e não autoriza execução.
 Nunca reutilizar ou enfraquecer as guardas dos scripts exclusivamente locais.
 
+O ensaio concorrente usa sessões PostgreSQL independentes no contêiner sem rede:
+concessões e revogações sobrepostas, pedido de exclusão nas duas ordens e
+sessão autenticada anterior. Observa a espera por lock e verifica o resultado
+após commit. São testes de um modelo local, não evidência sobre STAGING.
+
+Bloqueios concretos para uma implementação hospedada: não há fonte independente
+verificada que associe a referência informada ao host efetivamente conectado;
+não foi implementada nem examinada uma conexão com validação de certificado e
+nome TLS, incluindo o caso de pooler; não há identificação autenticada do banco
+que, por si só, prove sua classificação STAGING ou exclua PROD. A referência
+informada pelo operador e o prefixo `STAGING-` não fornecem essas provas.
+Credenciais, canais de inventário e autorização permanecem fora desta rodada.
+
+O candidato local lê usuários, papel editorial, pedidos e membership, bloqueia
+tabelas e linha Auth, altera membership e insere auditoria; a operação deve
+avaliar também permissões de locks e RLS efetivas. O ensaio usa `postgres` local
+com BYPASSRLS e não estabelece um papel mínimo nem demonstra que o operador
+gerenciado disponha das permissões necessárias. Antes de qualquer executor,
+revisar grants e políticas efetivos para cada operação, sem conceder privilégios
+ad hoc nem presumir bypass; se não houver caminho autorizado, manter bloqueado.
+
+O ensaio também mostrou que uma exclusão de `auth.users` aguardando a concessão
+pode ocorrer após seu commit e remover a membership pelo `ON DELETE CASCADE`
+existente sem criar evento `revoke` no diário. A revogação explícita do candidato
+continua atômica, mas não captura essa remoção por outra via. Definir e revisar
+o processo de exclusão e sua auditoria antes de qualquer operação hospedada;
+esta rodada não altera migrações existentes nem propõe solução já aprovada.
+
 > Etapa 23.5.2 / Prompt 73: proposta incremental `20261028000900` acrescenta
 > elegibilidade OWNER e referências de auditoria STAGING. O conjunto agora tem
 > 16 migrações; os textos sobre 15 abaixo registram a base histórica. Nenhuma

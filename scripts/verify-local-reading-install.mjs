@@ -41,6 +41,10 @@ function sql(source) {
     const assertion=(result.stderr||'').match(/ERROR:\s*FAIL: ([A-Za-z0-9 ,:/_.()-]+)/)?.[1]
     const category=(result.stderr||'').match(/ERROR:\s*((?:role |schema |type |function |relation |permission |must be |unrecognized |extension |syntax |could not )[^\r\n]*)/)?.[1]
     if(code)console.error('SQLSTATE '+code)
+    const line=(result.stderr||'').match(/<stdin>:(\d+): ERROR:/)?.[1]
+    if(line)console.error('Isolated SQL input line '+line)
+    const marker=(result.stdout||'').match(/MARKER_[A-Z_]+/g)?.at(-1)
+    if(marker)console.error('Isolated SQL progress '+marker)
     if(assertion)console.error('Failed isolated assertion: '+assertion)
     if(category&&!/https?:|postgres(?:ql)?:|password=|eyJ|sb_secret_/i.test(category))console.error('Isolated SQL: '+category.slice(0,220))
     throw Error('Isolated SQL failed')
@@ -177,6 +181,13 @@ try {
   const ownerCandidate=sql(readFileSync('supabase/tests/staging-owner-candidate.sql','utf8')+'\n'+readFileSync('supabase/tests/staging-owner-candidate-checks.sql','utf8'))
   if(!/\d+ staging owner candidate checks passed/.test(ownerCandidate)||!ownerCandidate.includes('ROLLBACK'))throw Error('Staging owner candidate checks incomplete')
   console.log('PASS isolated staging owner candidate checks with rollback')
+  stage='isolated staging owner concurrent transactions'
+  const candidateSource=readFileSync('supabase/tests/staging-owner-candidate.sql','utf8')
+  const concurrentSource=readFileSync('supabase/tests/staging-owner-concurrency.sql','utf8')
+    .replace('-- CANDIDATE_SETUP', () => ['owner_a','owner_b'].map(name=>`select extensions.dblink_exec('${name}', $candidate_source$${candidateSource}$candidate_source$);`).join('\n'))
+  const ownerOverlap=sql(concurrentSource)
+  if(!ownerOverlap.includes('staging owner concurrency checks passed'))throw Error('Staging owner concurrency checks incomplete')
+  console.log('PASS isolated staging owner concurrent grants, deletion requests, revocations and old session')
   stage='isolated reminder overlapping transactions'
   const overlap=sql(readFileSync('supabase/tests/reminder-concurrency.sql','utf8'))
   if(!overlap.includes('2 overlapping transaction checks passed'))throw Error('Missing concurrency checks')
