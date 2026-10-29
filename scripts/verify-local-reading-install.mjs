@@ -173,6 +173,10 @@ try {
     checks+=count;console.log(`PASS isolated ${suite}: ${count} SQL checks with rollback`)
   }
   console.log(`${migrations.length} migrations and ${checks} SQL checks passed in NEW isolated local PostgreSQL. Auth DDL only; no copied user rows or secrets.`)
+  stage='isolated staging owner candidate'
+  const ownerCandidate=sql(readFileSync('supabase/tests/staging-owner-candidate.sql','utf8')+'\n'+readFileSync('supabase/tests/staging-owner-candidate-checks.sql','utf8'))
+  if(!/\d+ staging owner candidate checks passed/.test(ownerCandidate)||!ownerCandidate.includes('ROLLBACK'))throw Error('Staging owner candidate checks incomplete')
+  console.log('PASS isolated staging owner candidate checks with rollback')
   stage='isolated reminder overlapping transactions'
   const overlap=sql(readFileSync('supabase/tests/reminder-concurrency.sql','utf8'))
   if(!overlap.includes('2 overlapping transaction checks passed'))throw Error('Missing concurrency checks')

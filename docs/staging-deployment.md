@@ -1,5 +1,34 @@
 # Preparação controlada de STAGING — Etapa 23.5.1
 
+## Candidato de OWNER bloqueado — preparação local
+
+`scripts/staging-owner.mjs` recusa todas as operações e não conecta a nenhum
+ambiente. `supabase/tests/staging-owner-candidate.sql` é apenas um modelo para
+banco descartável; não é migração nem ferramenta operacional. O ensaio exige
+membership editorial, confirmação no Auth e atestado externo fictício, bloqueia
+pedidos de exclusão e serializa alterações e auditoria. A revogação não depende
+de elegibilidade e preserva o papel editorial. O teste de transação usa claims
+inalterados após revogar. Esses testes não validam identidade de conexão Cloud.
+
+O responsável informou projeto `hepndavkzuktakezrmsj`, 16 migrações e Pages
+publicado; são informações fornecidas, não verificadas nesta rodada. Confirm Email
+está temporariamente desligado: `email_confirmed_at` não comprova controle do
+e-mail. Antes de qualquer implementação operacional, definir e revisar método
+externo confiável para verificar controle do endereço associado ao UUID, sem
+copiar dados ou expor credenciais; documentar evidência opaca no processo humano.
+Um booleano no ensaio não comprova essa verificação.
+
+Antes de autorizar qualquer execução futura, revisar uma ferramenta que valide
+por fontes independentes o inventário do projeto e o host efetivo autenticado
+por TLS, rejeite pooler/host ambíguo, proxies e qualquer divergência ou PROD;
+confirmar permissões reais sem criar privilégios nem contornar RLS. Exigir
+aprovação específica da operação, UUID repetido, estado esperado e referência
+opaca única `STAGING-`; obter backup e plano de recuperação. Após resultado
+incerto, parar e inspecionar membership e auditoria antes de repetir. Verificar
+revogação com a mesma sessão e RPCs após autorização específica. O candidato
+atual não implementa validação de host nem executor e não autoriza execução.
+Nunca reutilizar ou enfraquecer as guardas dos scripts exclusivamente locais.
+
 > Etapa 23.5.2 / Prompt 73: proposta incremental `20261028000900` acrescenta
 > elegibilidade OWNER e referências de auditoria STAGING. O conjunto agora tem
 > 16 migrações; os textos sobre 15 abaixo registram a base histórica. Nenhuma

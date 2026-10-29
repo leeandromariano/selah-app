@@ -2273,3 +2273,12 @@ e 25 WhatsApp**, total **118 verificações aprovadas**. Builds STAGING/PROD rep
 e recusados com código 1 por variáveis genéricas DEV herdadas, sem conexão remota.
 Nenhum teste HTTP, cenário manual específico ou novo banco isolado foi executado
 agora. A confirmação geral do responsável não altera essas distinções.
+# Candidato OWNER STAGING bloqueado
+
+O ensaio descartável `node scripts/verify-local-reading-install.mjs` inclui
+`staging-owner-candidate.sql` e seus checks sintéticos, com rollback. Exercita
+eligibilidade, pedido de exclusão, repetição, atomicidade da auditoria e RPCs
+com claims anteriores à revogação. O teste unitário verifica que a entrada
+STAGING recusa todos os destinos e não ecoa argumentos. Não comprova identidade
+remota nem corrida concorrente do candidato; essas verificações são pendências
+antes de preparar qualquer executor hospedado.

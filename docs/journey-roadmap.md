@@ -370,3 +370,10 @@ git add -- ^
 Após staging decidido pelo responsável: `git diff --cached --stat` e
 `git diff --cached --check`. Mensagem recomendada:
 `feat(journey): adiciona Minha Jornada e atualiza roadmap da etapa 22.3`.
+# OWNER STAGING — pendência operacional
+
+Há somente um candidato transacional ensaiado localmente e uma entrada que
+recusa execução. Permanecem pendentes revisão humana, identidade independente
+do host/projeto, confirmação externa confiável do e-mail, teste de concorrência
+do candidato e executor seguro com aprovação específica. Nenhuma operação
+OWNER hospedada está autorizada por este trabalho.
