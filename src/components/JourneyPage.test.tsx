@@ -28,7 +28,7 @@ describe('Minha Jornada pessoal', () => {
   it('nega acesso anônimo antes de consultar métricas ou histórico', async () => {
     location.hash = 'minha-jornada'
     render(<App />)
-    expect(await screen.findByText(/Entre na sua conta para acompanhar/)).toBeVisible()
+    expect(await screen.findByRole('heading', { name: 'Que bom te ver de novo' })).toBeVisible()
     expect(supabase.rpc).not.toHaveBeenCalled()
     expect(supabase.from).not.toHaveBeenCalled()
   })
@@ -111,7 +111,7 @@ describe('Minha Jornada pessoal', () => {
     renew('SIGNED_OUT', null)
     await act(async () => { finish({ data: history, error: null }) })
     expect(screen.queryByText('Recorde pessoal')).not.toBeInTheDocument()
-    expect(screen.getByText(/Entre na sua conta para acompanhar/)).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Que bom te ver de novo' })).toBeVisible()
   })
   it('troca de conta remove histórico anterior e não usa IDs na consulta', async () => {
     respond(); openJourney(); await screen.findByRole('list', { name: 'Dias com conclusões neste mês' })

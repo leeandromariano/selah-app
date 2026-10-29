@@ -1,10 +1,41 @@
-import { act, render, screen } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { supabase } from '../lib/supabase'
 import { AuthForm } from './AuthForm'
 
 describe('formulários de autenticação', () => {
+  it('agrupa país, código e telefone e recusa código internacional inválido', async () => {
+    const user = userEvent.setup()
+    render(<AuthForm register />)
+    const group = screen.getByRole('group', { name: 'WhatsApp' })
+    expect(within(group).getByLabelText('País')).toHaveValue('BR')
+    expect(within(group).getByLabelText('Código internacional do país')).toHaveValue('+55')
+    expect(within(group).getByLabelText('WhatsApp com DDD')).toHaveAttribute('placeholder', '11 99999-9999')
+    await user.clear(within(group).getByLabelText('Código internacional do país'))
+    await user.type(within(group).getByLabelText('Código internacional do país'), '+1234')
+    await user.type(within(group).getByLabelText('WhatsApp com DDD'), '12345678')
+    await user.click(screen.getByRole('button', { name: /Criar conta/ }))
+    expect(screen.getByText('Informe um código internacional válido, iniciado por +.')).toBeVisible()
+    expect(within(group).getByLabelText('Código internacional do país')).toHaveAttribute('aria-invalid', 'true')
+    expect(within(group).getByLabelText('Código internacional do país')).toHaveAttribute('aria-describedby', 'country-error')
+    expect(supabase.auth.signUp).not.toHaveBeenCalled()
+  })
+  it('exige nome e aceita país e código internacional alternativos', async () => {
+    const user = userEvent.setup()
+    render(<AuthForm register />)
+    expect(screen.getByLabelText('País')).toHaveValue('BR')
+    expect(screen.getByLabelText('Código internacional do país')).toHaveValue('+55')
+    for (const [label, value] of [['Username','pessoa_01'], ['WhatsApp com DDD','2025550123'], ['E-mail','fiction@example.invalid'], ['Senha','fiction-password'], ['Confirmar senha','fiction-password']]) await user.type(screen.getByLabelText(label), value)
+    await user.selectOptions(screen.getByLabelText('País'), 'other')
+    await user.type(screen.getByLabelText('Código internacional do país'), '1')
+    await user.click(screen.getByRole('button', { name: /Criar conta/ }))
+    expect(screen.getByText('Informe um nome de até 150 caracteres.')).toBeVisible()
+    expect(supabase.auth.signUp).not.toHaveBeenCalled()
+    await user.type(screen.getByLabelText('Nome'), 'Pessoa fictícia')
+    await user.click(screen.getByRole('button', { name: /Criar conta/ }))
+    expect(supabase.auth.signUp).toHaveBeenCalledWith(expect.objectContaining({ options: expect.objectContaining({ data: expect.objectContaining({ name: 'Pessoa fictícia', whatsapp: '+12025550123' }) }) }))
+  })
   it('login com @username usa um único identificador e instala sessão oficial', async () => {
     const user = userEvent.setup()
     render(<AuthForm register={false} />)
@@ -30,12 +61,12 @@ describe('formulários de autenticação', () => {
   it('WhatsApp é obrigatório mas autorização de feedback inicia desmarcada e é opcional', async()=>{
     const user=userEvent.setup();render(<AuthForm register/>)
     expect(screen.getByRole('checkbox')).not.toBeChecked()
-    for(const [label,value] of [['Username','pessoa_01'],['E-mail','fiction@example.invalid'],['Senha','fiction-password'],['Confirmar senha','fiction-password']])await user.type(screen.getByLabelText(label),value)
+    for(const [label,value] of [['Nome','Pessoa fictícia'],['Username','pessoa_01'],['E-mail','fiction@example.invalid'],['Senha','fiction-password'],['Confirmar senha','fiction-password']])await user.type(screen.getByLabelText(label),value)
     await user.click(screen.getByRole('button',{name:/Criar conta/}))
     expect(screen.getByText(/Informe WhatsApp com/)).toBeVisible();expect(supabase.auth.signUp).not.toHaveBeenCalled()
-    await user.type(screen.getByLabelText('WhatsApp com código do país e DDD'),'+55 11 99999-0000')
+    await user.type(screen.getByLabelText('WhatsApp com DDD'),'11 99999-0000')
     await user.click(screen.getByRole('checkbox'));await user.click(screen.getByRole('button',{name:/Criar conta/}))
-    expect(supabase.auth.signUp).toHaveBeenCalledWith(expect.objectContaining({options:{emailRedirectTo:location.origin,data:{username:'pessoa_01',whatsapp:'+5511999990000',feedback_contact_allowed:true}}}))
+    expect(supabase.auth.signUp).toHaveBeenCalledWith(expect.objectContaining({options:{emailRedirectTo:location.origin,data:{name:'Pessoa fictícia',username:'pessoa_01',whatsapp:'+5511999990000',feedback_contact_allowed:true}}}))
   })
   it('erro interno de login continua genérico, sem confundir com cadastro/username', async () => {
     vi.mocked(supabase.functions.invoke).mockResolvedValueOnce({ error: { context: { status: 503 }, message: 'other@example.invalid' } } as never)
@@ -51,7 +82,7 @@ describe('formulários de autenticação', () => {
   it('recusa cadastro sem username mesmo com e-mail e senha válidos', async () => {
     const user = userEvent.setup()
     render(<AuthForm register />)
-    for(const [label,value] of [['WhatsApp com código do país e DDD','+55 11 99999-0000'],['E-mail','fiction@example.invalid'],['Senha','fiction-password'],['Confirmar senha','fiction-password']]) await user.type(screen.getByLabelText(label),value)
+    for(const [label,value] of [['WhatsApp com DDD','11 99999-0000'],['E-mail','fiction@example.invalid'],['Senha','fiction-password'],['Confirmar senha','fiction-password']]) await user.type(screen.getByLabelText(label),value)
     await user.click(screen.getByRole('button',{name:/Criar conta/}))
     expect(screen.getByText(/Use de 3 a 24/)).toBeVisible()
     expect(supabase.auth.signUp).not.toHaveBeenCalled()
@@ -60,7 +91,7 @@ describe('formulários de autenticação', () => {
     vi.mocked(supabase.auth.signUp).mockResolvedValueOnce({ error: { status: 500, message: 'private other@example.invalid' } } as never)
     const user = userEvent.setup()
     render(<AuthForm register />)
-    for(const [label,value] of [['WhatsApp com código do país e DDD','+55 11 99999-0000'], ['Username','pessoa_01'],['E-mail','fiction@example.invalid'],['Senha','fiction-password'],['Confirmar senha','fiction-password']]) await user.type(screen.getByLabelText(label),value)
+    for(const [label,value] of [['WhatsApp com DDD','11 99999-0000'], ['Nome','Pessoa fictícia'],['Username','pessoa_01'],['E-mail','fiction@example.invalid'],['Senha','fiction-password'],['Confirmar senha','fiction-password']]) await user.type(screen.getByLabelText(label),value)
     await user.click(screen.getByRole('button',{name:/Criar conta/}))
     expect(await screen.findByRole('alert')).toHaveTextContent('username pode estar indisponível')
     expect(screen.queryByText(/other@example/)).not.toBeInTheDocument()
@@ -82,14 +113,14 @@ describe('formulários de autenticação', () => {
   it('cadastra com confirmação, limpa campos e usa somente a fronteira simulada', async () => {
     const user = userEvent.setup()
     render(<AuthForm register />)
-    for (const label of [/Nome/i, /Celular/i, /Idade/i, /Instagram/i]) expect(screen.queryByLabelText(label)).not.toBeInTheDocument()
+    for (const label of [/Celular/i, /Idade/i, /Instagram/i]) expect(screen.queryByLabelText(label)).not.toBeInTheDocument()
     for (const [label, value] of [
-      ['WhatsApp com código do país e DDD','+55 11 99999-0000'], ['Username', ' Pessoa_01 '], ['E-mail', 'pessoa@example.test'],
+      ['WhatsApp com DDD','11 99999-0000'], ['Nome', 'Pessoa fictícia'], ['Username', ' Pessoa_01 '], ['E-mail', 'pessoa@example.test'],
       ['Senha', 'senha-ficticia'], ['Confirmar senha', 'senha-ficticia'],
     ]) await user.type(screen.getByLabelText(label), value)
     await user.click(screen.getByRole('button', { name: /Criar conta/ }))
     expect(await screen.findByRole('status')).toHaveTextContent('confirme o endereço antes de entrar')
-    expect(supabase.auth.signUp).toHaveBeenCalledWith({ email: 'pessoa@example.test', password: 'senha-ficticia', options: { emailRedirectTo: location.origin, data: { username: 'pessoa_01', whatsapp: '+5511999990000', feedback_contact_allowed: false } } })
+    expect(supabase.auth.signUp).toHaveBeenCalledWith({ email: 'pessoa@example.test', password: 'senha-ficticia', options: { emailRedirectTo: location.origin, data: { name: 'Pessoa fictícia', username: 'pessoa_01', whatsapp: '+5511999990000', feedback_contact_allowed: false } } })
     expect(screen.getByLabelText('E-mail')).toHaveValue('')
     expect(screen.getByLabelText('Senha')).toHaveValue('')
     expect(fetch).not.toHaveBeenCalled()
@@ -143,7 +174,7 @@ describe('formulários de autenticação', () => {
     vi.mocked(supabase.auth.signUp).mockRejectedValueOnce(new Error('offline'))
     const user = userEvent.setup()
     render(<AuthForm register />)
-    for (const [label, value] of [['WhatsApp com código do país e DDD','+55 11 99999-0000'], ['Username', 'pessoa_02'], ['E-mail', 'fiction@example.invalid'], ['Senha', 'fiction-password'], ['Confirmar senha', 'fiction-password']]) await user.type(screen.getByLabelText(label), value)
+    for (const [label, value] of [['WhatsApp com DDD','11 99999-0000'], ['Nome', 'Pessoa fictícia'], ['Username', 'pessoa_02'], ['E-mail', 'fiction@example.invalid'], ['Senha', 'fiction-password'], ['Confirmar senha', 'fiction-password']]) await user.type(screen.getByLabelText(label), value)
     await user.click(screen.getByRole('button', { name: /Criar conta/ }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Verifique sua conexão')
     expect(screen.getByLabelText('E-mail')).toHaveValue('fiction@example.invalid')

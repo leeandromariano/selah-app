@@ -13,7 +13,7 @@ vi.mock('../lib/supabase', () => ({ environmentName: 'STAGING', loginMethod: 'em
 
 async function fillRegistration() {
   const user = userEvent.setup()
-  for (const [label, value] of [['Username', 'pessoa_01'], ['WhatsApp com código do país e DDD', '+55 11 99999-0000'], ['E-mail', 'pessoa@example.invalid'], ['Senha', 'senha-ficticia'], ['Confirmar senha', 'senha-ficticia']]) await user.type(screen.getByLabelText(label), value)
+  for (const [label, value] of [['Nome', 'Pessoa fictícia'], ['Username', 'pessoa_01'], ['WhatsApp com DDD', '11 99999-0000'], ['E-mail', 'pessoa@example.invalid'], ['Senha', 'senha-ficticia'], ['Confirmar senha', 'senha-ficticia']]) await user.type(screen.getByLabelText(label), value)
   await user.click(screen.getByRole('button', { name: /Criar conta/ }))
 }
 

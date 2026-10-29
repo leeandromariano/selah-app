@@ -18,10 +18,10 @@ export function ReaderLibrary({ page }: { page: string }) {
   const { session, loading, recovery } = useAuth()
   if (loading) return <p role="status">Carregando sessão…</p>
   if (!session || recovery) return <div className="info">Entre na sua conta para acessar os devocionais e seu histórico. <a href="#login">Entrar</a></div>
-  return <Library key={session.user.id} userId={session.user.id} page={page} />
+  return <Library key={session.user.id} userId={session.user.id} name={typeof session.user.user_metadata?.name === 'string' ? session.user.user_metadata.name.trim() : ''} page={page} />
 }
 
-function Library({ userId, page }: { userId: string; page: string }) {
+function Library({ userId, name, page }: { userId: string; name: string; page: string }) {
   const [items, setItems] = useState<Publication[]>([])
   const [openings, setOpenings] = useState<Opening[]>([])
   const [completions, setCompletions] = useState<Completion[]>([])
@@ -86,7 +86,7 @@ function Library({ userId, page }: { userId: string; page: string }) {
   return <>
     {opening && <p role="status">Registrando abertura…</p>}
     {openingError && <div className="info" role="alert">{openingError} Tente abrir o devocional novamente.</div>}
-    {page === 'inicio' && <><div className="greeting"><div><div className="eyebrow">☼ UM NOVO DIA, UMA NOVA GRAÇA</div><h1>Que bom ter você aqui<span className="purple-text">.</span></h1><p>Desacelere o mundo lá fora. Fortaleça a fé aí dentro.</p></div><div className="date">{displayDate(now.toISOString())}<small>Horário de Brasília</small></div></div>
+    {page === 'inicio' && <><div className="greeting"><div><div className="eyebrow">☼ UM NOVO DIA, UMA NOVA GRAÇA</div><h1>{name ? `Bem-vindo, ${name}!` : 'Que bom ter você aqui.'}</h1><p>Desacelere o mundo lá fora. Fortaleça a fé aí dentro.</p></div><div className="date">{displayDate(now.toISOString())}<small>Horário de Brasília</small></div></div>
       {today ? <section className="hero"><div className="hero-copy"><div className="eyebrow">● DEVOCIONAL DO DIA <span>{displayDate(today.publish_at)}</span></div><span className="hero-tag">Devocional</span>{completions.some(value => value.source_devotional_id === today.id) && <span className="hero-tag">Concluído por você</span>}<h2>{today.title}</h2><p>{toCard(today).summary}</p><div className="hero-meta"><span><Icon name="book" />{today.bible_reference}</span><span><Icon name="clock" />{toCard(today).minutes} min de leitura estimada</span></div><button className="button white" disabled={opening} onClick={() => open(today.id)}>Começar a leitura <span>→</span></button></div><div className="hero-illustration" aria-hidden="true"><div className="arch"><div className="sun" /><div className="mountain" /><div className="mountain front" /><div className="trail" /></div><span>HÁ PAZ NO CAMINHO.</span><b>✧</b></div></section> : <div className="info">Nenhum devocional publicado para hoje.</div>}
       <section className="encouragement"><span className="heart" aria-hidden="true">♡</span><div><h3>Pequenas pausas. Grandes recomeços.</h3><p>Reserve alguns minutos para cuidar da sua vida com Deus. O seu coração agradece.</p></div><span className="spark" aria-hidden="true">✧</span></section>
       <ConsistencySection userId={userId} refreshKey={attempt} />

@@ -52,7 +52,7 @@ describe('perfil do leitor', () => {
   it('bloqueia visitante sem consultar o banco', async () => {
     location.hash = 'perfil'
     render(<App />)
-    expect(await screen.findByRole('alert')).toHaveTextContent('Entre na sua conta')
+    expect(await screen.findByRole('heading', { name: 'Que bom te ver de novo' })).toBeVisible()
     expect(supabase.from).not.toHaveBeenCalled()
   })
 
@@ -151,7 +151,7 @@ describe('perfil do leitor', () => {
     act(() => { vi.mocked(supabase.auth.onAuthStateChange).mock.calls.at(-1)![0]('SIGNED_OUT', null) })
     await act(async () => { finish({ data: saved, error: null }) })
     expect(screen.queryByLabelText('Nome de exibição (opcional)')).not.toBeInTheDocument()
-    expect(screen.getByRole('alert')).toHaveTextContent('Entre na sua conta')
+    expect(screen.getByRole('heading', { name: 'Que bom te ver de novo' })).toBeVisible()
   })
 
   it('recusa telefone inválido antes de enviar ao banco', async () => {

@@ -43,10 +43,12 @@ describe('painel administrativo real', () => {
     expect(supabase.from).not.toHaveBeenCalled()
     await act(async () => { finish({ data: [], error: null }) })
     expect(await screen.findByText(editorialFixture.title)).toBeVisible()
+    expect(screen.getByRole('link', { name: 'Painel administrativo' })).toBeVisible()
   })
   it('nega leitor antes de consultar conteúdo administrativo', async () => {
     openAdmin()
     expect(await screen.findByRole('alert')).toHaveTextContent('Acesso restrito')
+    expect(screen.queryByRole('link', { name: 'Painel administrativo' })).not.toBeInTheDocument()
     expect(supabase.from).not.toHaveBeenCalled()
   })
   it('revalida autorização na renovação de sessão e fecha painel após revogação', async () => {

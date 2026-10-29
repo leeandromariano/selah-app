@@ -106,7 +106,7 @@ describe('acervo persistente do leitor', () => {
     view.unmount()
     vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: null }, error: null } as never)
     render(<App />)
-    await screen.findByText(/Entre na sua conta para acessar os devocionais/)
+    await screen.findByRole('heading', { name: 'Que bom te ver de novo' })
     expect(screen.queryByRole('region', { name: 'Compartilhar devocional' })).not.toBeInTheDocument()
   })
   it('mostra conclusão do dia confirmada pelo banco sem converter aberturas', async () => {
@@ -213,7 +213,7 @@ describe('acervo persistente do leitor', () => {
     act(() => { vi.mocked(supabase.auth.onAuthStateChange).mock.calls.at(-1)![0]('SIGNED_OUT', null) })
     await act(async () => { finish({ data: olderPublications, error: null }) })
     expect(screen.queryByText(olderPublications[0].title)).not.toBeInTheDocument()
-    expect(screen.getByText(/Entre na sua conta para acessar os devocionais/)).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Que bom te ver de novo' })).toBeVisible()
   })
   it('não navega após logout quando um registro de abertura atrasado termina', async () => {
     const boundary = libraryBoundary(olderPublications)

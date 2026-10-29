@@ -7,6 +7,26 @@ import { libraryBoundary, olderPublications } from './test/libraryBoundary'
 import { adminBoundary, editorialFixture } from './test/adminBoundary'
 
 describe('fluxos locais do Selah', () => {
+  it('espera a sessão antes de mostrar navegação ou conteúdo privado', async () => {
+    let finish!: (value: Awaited<ReturnType<typeof supabase.auth.getSession>>) => void
+    vi.mocked(supabase.auth.getSession).mockReturnValue(new Promise(resolve => { finish = resolve }))
+    location.hash = 'minha-jornada'
+    render(<App />)
+    expect(screen.queryByRole('navigation', { name: 'Navegação principal' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Minha Jornada')).not.toBeInTheDocument()
+    finish({ data: { session: null }, error: null })
+    expect(await screen.findByRole('heading', { name: 'Que bom te ver de novo' })).toBeVisible()
+    expect(screen.queryByRole('navigation', { name: 'Navegação principal' })).not.toBeInTheDocument()
+  })
+  it.each([['Pessoa fictícia', 'Bem-vindo, Pessoa fictícia!'], ['', 'Que bom ter você aqui.']])('saúda nome cadastrado ou usa fallback', async (name, greeting) => {
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'fictional-reader', user_metadata: { name } } } }, error: null } as never)
+    libraryBoundary(olderPublications)
+    location.hash = 'inicio'
+    render(<App />)
+    expect(await screen.findByRole('heading', { name: greeting })).toBeVisible()
+    expect(screen.queryByRole('link', { name: 'Painel administrativo' })).not.toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Navegação principal' })).toBeVisible()
+  })
   it('busca publicação anterior por referência sem diferenciar maiúsculas e recupera resultado vazio', async () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'fictional-reader' } } }, error: null } as never)
     libraryBoundary(olderPublications)

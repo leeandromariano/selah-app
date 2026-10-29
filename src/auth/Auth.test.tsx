@@ -70,7 +70,8 @@ describe('sessão e autorização', () => {
   it('bloqueia o painel para visitante e para leitor com metadado admin forjado', async () => {
     location.hash = 'admin'
     render(<App />)
-    expect(await screen.findByRole('alert')).toHaveTextContent('Acesso restrito')
+    expect(await screen.findByRole('heading', { name: 'Que bom te ver de novo' })).toBeVisible()
+    expect(screen.queryByRole('navigation', { name: 'Navegação principal' })).not.toBeInTheDocument()
     event('SIGNED_IN', session)
     await waitFor(() => expect(supabase.rpc).toHaveBeenCalledWith('devotional_open_counts'))
     expect(screen.queryByRole('button', { name: 'Remover' })).not.toBeInTheDocument()

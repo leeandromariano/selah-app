@@ -390,3 +390,44 @@ e-mail deve ser reavaliada na preparação do beta. Não houve acesso remoto ou 
 nesta alteração; testes simulados não substituem homologação funcional posterior.
 Validação local: 515 testes em 50 arquivos, lint e builds DEV e fixture STAGING
 aprovados; os builds emitiram aviso de chunk maior que 500 kB.
+
+## Prompt 78 — navegação e cadastro
+
+Enquanto a sessão é carregada, páginas internas não são montadas. Sem sessão,
+rotas internas apresentam login; cadastro, recuperação e privacidade seguem
+acessíveis. O menu administrativo depende da autorização já consultada no servidor.
+Cadastro exige nome na interface, armazenado nos metadados Auth existentes e usado
+na saudação; ele é independente do nome opcional editável do perfil. Não existe
+validação obrigatória de nome no servidor e alterações do perfil não atualizam a
+saudação. Contas antigas sem nome nos metadados usam saudação genérica. Não há
+migração nesta etapa. Brasil e +55 são pré-selecionados no cadastro; outros
+códigos podem ser informados e o número completo mantém o contrato existente.
+
+Fase 2 de username em STAGING depende de desenho e revisão de autenticação segura,
+proteção contra enumeração e abuso, limitação de tentativas, testes isolados e
+aprovação específica antes de qualquer instalação hospedada. Continua exclusivo
+de DEV; a interface hospedada permanece com login por e-mail.
+
+## Prompt 79 — Google OAuth: bloqueio de implementação
+
+O Google não está integrado nem disponível na interface. Os gatilhos atuais em
+`auth.users` exigem username e WhatsApp no momento da criação da conta, antes de
+qualquer tela posterior de complementação. Portanto, ativar somente um botão ou
+uma flag produziria erro para novos usuários e não estabeleceria um controle
+servidor para perfil incompleto. O Supabase também documenta vínculo automático
+de identidades por e-mail, incluindo tratamento próprio para identidades não
+confirmadas; o comportamento deve ser avaliado para as contas existentes e a
+configuração temporária sem confirmação antes de qualquer ativação.
+
+Uma implementação futura requer projeto incremental de onboarding no servidor,
+com controle de acesso verificável no banco para conta incompleta, reserva única
+de username, WhatsApp e consentimento, compatibilidade com contas antigas,
+concorrência e testes SQL/RLS, além de fluxo de recuperação e política explícita
+de vínculo. Não há proposta SQL pronta nem alteração de permissões nesta rodada.
+Após revisão e autorização próprias, configurar clientes OAuth distintos por
+ambiente no Google Cloud e o provedor em cada Supabase, manter o secret apenas no
+servidor, registrar o callback Supabase indicado pelo painel do próprio projeto e
+permitir apenas as origens de retorno validadas no Auth. Validar tudo em ambiente
+isolado antes de disponibilizar um botão; não ativar mediante flag isolada.
+Referências: https://supabase.com/docs/guides/auth/auth-identity-linking e
+https://supabase.com/docs/guides/auth/social-login/auth-google.

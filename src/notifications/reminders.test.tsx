@@ -45,7 +45,7 @@ describe('preferências e privacidade de lembretes', () => {
   it('navegador incompatível informa indisponibilidade', () => { expect(notificationPermission()).toBe('unavailable') })
   it('configurações sem sessão não consultam preferências', async () => {
     location.hash = 'configuracoes'; render(<App />)
-    expect(await screen.findByText('Entre para configurar seus lembretes.', { exact: false })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: 'Que bom te ver de novo' })).toBeVisible()
     expect(supabase.rpc).not.toHaveBeenCalledWith('get_my_reminders', expect.anything())
   })
   it('configurações carregam sem opt-in e alteração de horário é explícita', async () => {

@@ -23,7 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false)
       setError(next ? '' : callbackError)
       if (event === 'PASSWORD_RECOVERY') { setRecovery(true); location.hash = 'nova-senha' }
-      if (event === 'SIGNED_IN' && (location.hash === '#login' || location.hash.includes('access_token='))) location.hash = 'inicio'
+      if (event === 'SIGNED_IN' && (location.hash === '#login' || location.hash === '#cadastro' || location.hash.includes('access_token='))) location.hash = 'inicio'
       if (event === 'SIGNED_OUT') setRecovery(false)
     })
     supabase.auth.getSession().then(({ data, error }) => {

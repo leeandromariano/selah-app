@@ -129,7 +129,8 @@ describe('reflexões e reações do leitor',()=>{
     act(()=>{vi.mocked(supabase.auth.onAuthStateChange).mock.calls.at(-1)![0]('SIGNED_OUT',null)})
     await act(async()=>finish({data:{reaction:null,own:{id:'secret',body:'Texto privado fictício',state:'pending',version:1},comments:[],page:0,total:0},error:null}))
     expect(screen.queryByText('Texto privado fictício')).not.toBeInTheDocument()
-    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:'Enviar para moderação'})).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Usuário ou e-mail')).toBeVisible()
   })
   it('repositório não aceita autoria ou estado de moderação do cliente',async()=>{
     boundary();await createDiscussionRepository(supabase).save(id,'texto',3)

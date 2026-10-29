@@ -2311,3 +2311,36 @@ Validação final local: `npm.cmd run test:run -- --maxWorkers=2` passou com
 515 testes em 50 arquivos; `npm.cmd run lint`, `npm.cmd run build` e
 `node scripts/build-staging-fixture.mjs` passaram. Os dois builds avisaram sobre
 chunk maior que 500 kB. Não houve ensaio em navegador real ou serviço remoto.
+
+## Prompt 78 — navegação, nome e telefone
+
+Testes de interface com fronteiras simuladas cobrem sessão pendente, visitante,
+acesso administrativo, descarte de respostas após logout, saudação com nome ou
+fallback, nome obrigatório e telefone brasileiro/internacional. As expectativas
+de visitante foram atualizadas para o novo encaminhamento ao login, preservando
+as verificações de ausência de consultas e dados privados. Não houve migração;
+o nome fica nos metadados Auth, independente do nome editável no perfil, e sua
+obrigatoriedade é apenas no formulário.
+
+`npm.cmd run test:run -- --maxWorkers=2 --reporter=dot`: 519 testes em 50
+arquivos aprovados; após adicionar asserções visuais administrativas, os 12
+testes de `AdminPanel.test.tsx` passaram novamente. `npm.cmd run lint`, build
+DEV e fixture STAGING passaram; builds avisaram sobre chunk acima de 500 kB.
+O navegador integrado não estava disponível. Não foram executadas medições ou
+verificações visuais reais nas larguras 320, 360, 375, 390, 430, 768 e 1280 px;
+os ajustes de CSS e a acessibilidade por teclado ainda precisam dessa revisão.
+Nenhum serviço remoto foi acessado e nenhuma migração foi aplicada.
+
+## Prompt 79 — telefone e auditoria OAuth
+
+O formulário agrupa país, código e telefone; testes de interface cobrem padrão
+brasileiro, código internacional alternativo, código inválido e associação do
+erro acessível. Os testes de formulário usam Auth simulado. Não há integração
+Google implementada ou habilitada: os gatilhos atuais bloqueiam criação de
+contas sem username e WhatsApp e o vínculo automático exige revisão. Assim, não
+há teste de OAuth ou conclusão de cadastro a ser declarado como aprovado.
+O navegador integrado continuou indisponível; não houve medições reais nas
+larguras solicitadas. O detalhamento das pendências está em `journey-roadmap.md`.
+Validação final: `npm.cmd run test:run -- --maxWorkers=2` passou com 520 testes
+em 50 arquivos; lint, build DEV e fixture STAGING passaram, com aviso de chunk
+acima de 500 kB nos builds. `git diff --check` também foi executado.
