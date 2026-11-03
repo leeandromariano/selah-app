@@ -145,3 +145,5 @@ Autenticação, autorização e persistência reais precisarão de cenários nov
 A Jornada retoma a ultima abertura e a posicao aproximada neste navegador.
 
 Build Preview STAGING exige SELAH_STAGING_PREVIEW_BUILD=LOCAL_STAGING_PREVIEW_BUILD e VITE_STAGING_PREVIEW_ORIGIN com origem HTTPS exata; configurar somente no contexto Preview. O build principal permanece restrito a VITE_STAGING_SITE_ORIGIN. A URL muda por deployment e exige nova autorizacao.
+
+O acervo permite escolher a ordem das publicacoes anteriores e buscar por titulo ou referencia, sem novos dados de servidor.

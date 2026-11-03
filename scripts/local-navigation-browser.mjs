@@ -12,8 +12,9 @@ const readingLayoutRun = process.argv.length === 3 && process.argv[2] === '--rea
 const rewardsRun = process.argv.length === 3 && process.argv[2] === '--rewards'
 const bibleRun = process.argv.length === 3 && process.argv[2] === '--bible'
 const readingPositionRun = process.argv.length === 3 && process.argv[2] === '--reading-position'
-if (process.argv.length !== 2 && !appearanceRun && !remindersRun && !discussionRun && !readingLayoutRun && !rewardsRun && !bibleRun && !readingPositionRun) throw Error('Only local UI regression modes are accepted')
-const origin = `http://127.0.0.1:${readingPositionRun ? 5179 : 5173}`, debug = 'http://127.0.0.1:9229'
+const discoveryRun = process.argv.length === 3 && process.argv[2] === '--reader-discovery'
+if (process.argv.length !== 2 && !appearanceRun && !remindersRun && !discussionRun && !readingLayoutRun && !rewardsRun && !bibleRun && !readingPositionRun && !discoveryRun) throw Error('Only local UI regression modes are accepted')
+const origin = `http://127.0.0.1:${readingPositionRun || discoveryRun ? 5179 : 5173}`, debug = 'http://127.0.0.1:9229'
 const executable = ['C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].find(existsSync)
 if (!executable) throw Error('Installed Chromium unavailable')
 let occupied = false
@@ -252,7 +253,20 @@ try {
     }
   })
   await send('Page.enable'); await send('Runtime.enable'); await send('Fetch.enable', { patterns: [{ urlPattern: '*' }] })
-  if (readingPositionRun) {
+  if (discoveryRun) {
+    for (const [width,height,mobile] of [[390,844,true],[1280,900,false]]) {
+      await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile})
+      await send('Page.navigate',{url:origin+'/#historico'})
+      await check(`Boolean(document.querySelector('.discovery-field input[type=search]') && document.querySelector('.discovery-field select'))`, 'search and order controls render at '+width+'px')
+      await check(`document.documentElement.scrollWidth<=innerWidth`, 'discovery fits viewport at '+width+'px')
+      await evaluate(`document.querySelector('.discovery-field input').focus()`)
+      await check(`document.activeElement===document.querySelector('.discovery-field input')`, 'search is keyboard focusable at '+width+'px')
+      await evaluate(`document.querySelector('.discovery-field select').value='oldest';document.querySelector('.discovery-field select').dispatchEvent(new Event('change',{bubbles:true}))`)
+      await check(`document.querySelector('.discovery-field select').value==='oldest'`, 'oldest order selected at '+width+'px')
+      writeFileSync(resolve(profile,'reader-discovery-'+width+'.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).data,'base64'))
+    }
+    console.log(passed+' Chromium discovery checks passed with simulated backend. Screenshots: '+profile)
+  } else if (readingPositionRun) {
     const id='10000000-0000-4000-8000-000000000001'
     for(const [width,height,mobile] of [[390,844,true],[1280,900,false]]) {
       await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile})

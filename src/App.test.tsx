@@ -33,13 +33,13 @@ describe('fluxos locais do Selah', () => {
     window.location.hash = 'historico'
     const user = userEvent.setup()
     render(<App />)
-    await user.type(await screen.findByRole('textbox', { name: 'Buscar devocionais' }), 'JOÃO')
-    expect(screen.getByRole('status')).toHaveTextContent('1 devocionais encontrados')
+    await user.type(await screen.findByRole('searchbox', { name: /Buscar por/ }), 'JOÃO')
+    expect(screen.getByRole('status')).toHaveTextContent('1 devocional encontrado')
     expect(screen.getByRole('heading', { name: 'Paz em meio ao caminho' })).toBeVisible()
-    await user.type(screen.getByRole('textbox'), ' inexistente')
+    await user.type(screen.getByRole('searchbox'), ' inexistente')
     expect(screen.getByRole('status')).toHaveTextContent('0 devocionais encontrados')
     expect(screen.getByText(/Nenhum devocional encontrado/)).toBeVisible()
-    await user.clear(screen.getByRole('textbox'))
+    await user.clear(screen.getByRole('searchbox'))
     expect(screen.getByRole('heading', { name: 'O extraordinário no simples' })).toBeVisible()
   })
 
