@@ -2348,3 +2348,5 @@ acima de 500 kB nos builds. `git diff --check` também foi executado.
 A retomada local e testada com armazenamento simulado e Chromium com backend ficticio em 390 e 1280 px.
 
 A fronteira de Preview valida origem exata, build autorizado e rejeicao de dominios semelhantes em hostedEnvironment.test.ts.
+
+O acervo testa busca por titulo e referencia sem acentos, ordenacao e resultado vazio com backend simulado.
