@@ -41,6 +41,22 @@ export function createDevotionalRepository(client: Pick<SupabaseClient, 'from'>)
     openings(userId: string) {
       return pages<Opening>((from, to) => client.from('devotional_views').select('id,devotional_id,opened_at').eq('user_id', userId).order('opened_at', { ascending: false }).order('id', { ascending: false }).range(from, to))
     },
+    async lastOpening(userId: string): Promise<Opening | null> {
+      const { data, error } = await client.from('devotional_views').select('id,devotional_id,opened_at').eq('user_id', userId).order('opened_at', { ascending: false }).order('id', { ascending: false }).range(0, 0)
+      if (error) throw error
+      if (!Array.isArray(data) || data.length > 1) throw new Error('Invalid opening response')
+      const opening = data[0] as Opening | undefined
+      if (opening && (typeof opening.id !== 'string' || (opening.devotional_id !== null && typeof opening.devotional_id !== 'string') || typeof opening.opened_at !== 'string' || !Number.isFinite(Date.parse(opening.opened_at)))) throw new Error('Invalid opening response')
+      return opening ?? null
+    },
+    async availableTitle(id: string, now: Date): Promise<{ id: string; title: string } | null> {
+      const { data, error } = await client.from('devotionals').select('id,title').eq('id', id).eq('status', 'published').lte('publish_at', now.toISOString()).range(0, 0)
+      if (error) throw error
+      if (!Array.isArray(data) || data.length > 1) throw new Error('Invalid publication response')
+      const item = data[0] as { id: string; title: string } | undefined
+      if (item && (item.id !== id || typeof item.title !== 'string' || !item.title.trim())) throw new Error('Invalid publication response')
+      return item ?? null
+    },
     async open(devotionalId: string): Promise<Opening> {
       const { data, error } = await client.from('devotional_views').insert({ devotional_id: devotionalId }).select('id,devotional_id,opened_at').single()
       if (error) throw error

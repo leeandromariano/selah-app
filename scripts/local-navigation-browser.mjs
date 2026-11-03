@@ -11,8 +11,9 @@ const discussionRun = process.argv.length === 3 && process.argv[2] === '--discus
 const readingLayoutRun = process.argv.length === 3 && process.argv[2] === '--reading-layout'
 const rewardsRun = process.argv.length === 3 && process.argv[2] === '--rewards'
 const bibleRun = process.argv.length === 3 && process.argv[2] === '--bible'
-if (process.argv.length !== 2 && !appearanceRun && !remindersRun && !discussionRun && !readingLayoutRun && !rewardsRun && !bibleRun) throw Error('Only local UI regression modes are accepted')
-const origin = 'http://127.0.0.1:5173', debug = 'http://127.0.0.1:9229'
+const readingPositionRun = process.argv.length === 3 && process.argv[2] === '--reading-position'
+if (process.argv.length !== 2 && !appearanceRun && !remindersRun && !discussionRun && !readingLayoutRun && !rewardsRun && !bibleRun && !readingPositionRun) throw Error('Only local UI regression modes are accepted')
+const origin = `http://127.0.0.1:${readingPositionRun ? 5179 : 5173}`, debug = 'http://127.0.0.1:9229'
 const executable = ['C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].find(existsSync)
 if (!executable) throw Error('Installed Chromium unavailable')
 let occupied = false
@@ -59,7 +60,8 @@ window.__renew = () => callback?.('TOKEN_REFRESHED', currentSession?{...currentS
 const query = { select(){return this}, eq(){return this}, lte(){return this}, order(){return this}, range:async()=>({data:[],error:null}) };
 const content={id:'theme-fiction',title:'Uma pausa fictícia',bible_reference:'Referência fictícia',bible_text:'Texto fictício para verificar aparência.',content:'Reflexão fictícia para testar legibilidade e cores.',reflection_question:'Uma pergunta fictícia?',publish_at:new Date().toISOString(),reading_revision:1,status:'published',author_id:session.user.id,created_at:new Date().toISOString(),updated_at:new Date().toISOString()};
 window.__themeSignIn=()=>{currentSession=session;callback?.('SIGNED_IN',session)};
-if (${remindersRun || discussionRun || readingLayoutRun}) content.id='10000000-0000-4000-8000-000000000001';
+if (${remindersRun || discussionRun || readingLayoutRun || readingPositionRun}) content.id='10000000-0000-4000-8000-000000000001';
+if (${readingPositionRun}) {content.content=Array.from({length:60},(_,i)=>'Parágrafo fictício '+i+' com palavras suficientes para testar a retomada de leitura no navegador.').join('\\n\\n');window.__sharingBeforeCompletion=true;window.__layoutCredit=0;window.__openingWrites=0;}
 window.__otherReader=()=>{currentSession={user:{id:'synthetic-other-reader'}};callback?.('SIGNED_IN',currentSession)};
 const reminderState=()=>JSON.parse(localStorage.getItem('__fiction_reminder_'+currentSession?.user.id)||'null')||{enabled:false,mode:'simulation',vapid_public_key:null,device:null,last:null};
 const reflections=new Map(),reactions=new Map();let reportOpen=false;
@@ -69,9 +71,10 @@ const discussionSnapshot=page=>({reaction:reactions.get(currentSession?.user.id)
 const rewardKey=()=>'__fiction_reward_'+currentSession?.user.id;
 const rewards=()=>({server_today:'2026-10-28',time_zone:'America/Sao_Paulo',week_start:'2026-10-26',badges:[3,7,14,30,60,100].map(days=>({days,unlocked:currentSession?.user.id===session.user.id&&days<=7})),challenges:JSON.parse(localStorage.getItem(rewardKey())||'[]')});
 export const loginMethod = 'local';
+export const environmentName = 'DEV';
 export const supabase = {
  auth: { getSession:async()=>({data:{session:currentSession},error:null}), onAuthStateChange(fn){callback=fn;return {data:{subscription:{unsubscribe(){callback=null}}}}}, signOut:async()=>{currentSession=null;callback?.('SIGNED_OUT',null);return {error:null}} },
- from:(table)=>({...query,select(){return this},eq(){return this},lte(){return this},order(){return this},maybeSingle:async()=>({data:null,error:null}),range:async()=>({data:table==='devotionals'?[content,{...content,id:'theme-previous',title:'Pausa anterior fictícia',publish_at:new Date(Date.now()-86400000).toISOString()}]:[],error:null})}),
+ from:(table)=>({...query,select(){return this},eq(){return this},lte(){return this},order(){return this},insert(){window.__openingWrites++;return this},single:async()=>({data:null,error:{code:'42501'}}),maybeSingle:async()=>({data:null,error:null}),range:async()=>({data:table==='devotionals'?(${readingPositionRun}?[content]:[content,{...content,id:'theme-previous',title:'Pausa anterior fictícia',publish_at:new Date(Date.now()-86400000).toISOString()}]):table==='devotional_views'&&${readingPositionRun}?[{id:'20000000-0000-4000-8000-000000000001',devotional_id:content.id,opened_at:new Date().toISOString()}]:[],error:null})}),
  rpc(name,args){
   if(name==='get_my_journey_rewards')return {abortSignal:async()=>window.__rewardError?{data:null,error:{code:'42501'}}:{data:rewards(),error:null}};
   if(name==='start_my_personal_challenge')return {abortSignal:async()=>{if(!rewards().challenges.length)localStorage.setItem(rewardKey(),JSON.stringify([{week_start:'2026-10-26',target:args.p_target,days:1,status:'active'}]));return {data:rewards(),error:null}}};
@@ -249,7 +252,29 @@ try {
     }
   })
   await send('Page.enable'); await send('Runtime.enable'); await send('Fetch.enable', { patterns: [{ urlPattern: '*' }] })
-  if (bibleRun) {
+  if (readingPositionRun) {
+    const id='10000000-0000-4000-8000-000000000001'
+    for(const [width,height,mobile] of [[390,844,true],[1280,900,false]]) {
+      await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile})
+      await send('Page.navigate',{url:origin+'/#leitura/'+id})
+      await check(`Boolean(document.querySelector('article.reading'))`, 'fictional reading renders at '+width+'px')
+      await check(`document.documentElement.scrollWidth<=innerWidth`, 'reading fits viewport at '+width+'px')
+      await evaluate('window.scrollTo(0,900)')
+      await check(`window.scrollY>500 && Object.keys(localStorage).some(k=>k.startsWith('selah.reading-position.v1:'))`, 'scroll position is saved at '+width+'px')
+      const previous=await evaluate('window.scrollY')
+      await evaluate(`location.hash='minha-jornada'`)
+      await check(`Boolean(document.querySelector('.journey-last a[href$="/retomar"]'))`, 'journey offers resume at '+width+'px')
+      await evaluate(`document.querySelector('.journey-last a[href$="/retomar"]').click()`)
+      await check(`Boolean(document.querySelector('article.reading')) && Math.abs(window.scrollY-${previous})<35`, 'saved position restored at '+width+'px')
+      await check(`window.__openingWrites===0`, 'resume does not record another opening at '+width+'px')
+      writeFileSync(resolve(profile,'reading-position-'+width+'.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).data,'base64'))
+      await evaluate(`location.hash='historico'`)
+      await check(`Boolean(document.querySelector('.search'))`, 'normal navigation leaves reader at '+width+'px')
+      await evaluate(`location.hash='leitura/${id}'`)
+      await check(`Boolean(document.querySelector('article.reading')) && window.scrollY===0`, 'normal reading does not restore at '+width+'px')
+    }
+    console.log(passed+' Chromium reading-position checks passed; fully simulated backend, no database access. Screenshots: '+profile)
+  } else if (bibleRun) {
     await send('Page.navigate', { url: origin + '/#biblia/demonstracao/joao/3/16-17' })
     await check(`Boolean(document.querySelector('#bible-verse-16.highlighted') && document.querySelector('#bible-verse-17.highlighted'))`, 'fictional reference range highlighted')
     await check(`document.querySelectorAll('.bible-controls optgroup')[0].children.length===39 && document.querySelectorAll('.bible-controls optgroup')[1].children.length===27`, '66 books separated by testament')

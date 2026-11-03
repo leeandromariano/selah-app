@@ -2344,3 +2344,7 @@ larguras solicitadas. O detalhamento das pendências está em `journey-roadmap.m
 Validação final: `npm.cmd run test:run -- --maxWorkers=2` passou com 520 testes
 em 50 arquivos; lint, build DEV e fixture STAGING passaram, com aviso de chunk
 acima de 500 kB nos builds. `git diff --check` também foi executado.
+
+A retomada local e testada com armazenamento simulado e Chromium com backend ficticio em 390 e 1280 px.
+
+A fronteira de Preview valida origem exata, build autorizado e rejeicao de dominios semelhantes em hostedEnvironment.test.ts.
