@@ -49,3 +49,23 @@ describe('preparação hospedada sem habilitação', () => {
     }
   })
 })
+
+describe('Preview origin', () => {
+ const preview = 'https://10ed050b.selah-staging.pages.dev'
+ it('allows only the exact configured origin for the selected build', () => {
+  const main = createBuildEnvironment('staging', variables, true)
+  const b = createBuildEnvironment('staging', {...variables, VITE_STAGING_PREVIEW_ORIGIN:preview}, true, true)
+  const factory = vi.fn()
+  expect(() => createEnvironmentClient(main, factory, variables.VITE_STAGING_SITE_ORIGIN)).not.toThrow()
+  expect(() => createEnvironmentClient(b, factory, preview)).not.toThrow()
+  for (const o of ['http://10ed050b.selah-staging.pages.dev','https://10ed050b.selah-staging.pages.dev.evil.invalid','https://other.selah-staging.pages.dev','https://other.pages.dev', variables.VITE_STAGING_SITE_ORIGIN]) expect(() => createEnvironmentClient(b, factory, o)).toThrow()
+  expect(() => createEnvironmentClient(main, factory, preview)).toThrow()
+  expect(factory).toHaveBeenCalledTimes(2)
+ })
+ it('fails closed without explicit approval or valid origin', () => {
+  expect(() => createBuildEnvironment('staging', {...variables,VITE_STAGING_PREVIEW_ORIGIN:preview}, true)).toThrow()
+  expect(() => createBuildEnvironment('staging', variables, true, true)).toThrow()
+  expect(() => createBuildEnvironment('staging', {...variables,VITE_STAGING_SITE_ORIGIN:'',VITE_STAGING_PREVIEW_ORIGIN:preview}, true, true)).toThrow()
+  for (const o of ['', 'http://evil.invalid','https://evil.invalid/path']) expect(() => createBuildEnvironment('staging', {...variables,VITE_STAGING_PREVIEW_ORIGIN:o}, true, true)).toThrow()
+ })
+})

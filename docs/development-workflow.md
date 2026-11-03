@@ -143,3 +143,5 @@ Não instalar Playwright nem navegadores nesta etapa. Quando a suíte local esti
 Autenticação, autorização e persistência reais precisarão de cenários novos quando forem implementadas. Nesse momento, usar backend local ou homologação isolada e fixtures sintéticas; nunca validar permissões contra produção.
 
 A Jornada retoma a ultima abertura e a posicao aproximada neste navegador.
+
+Build Preview STAGING exige SELAH_STAGING_PREVIEW_BUILD=LOCAL_STAGING_PREVIEW_BUILD e VITE_STAGING_PREVIEW_ORIGIN com origem HTTPS exata; configurar somente no contexto Preview. O build principal permanece restrito a VITE_STAGING_SITE_ORIGIN. A URL muda por deployment e exige nova autorizacao.

@@ -87,10 +87,14 @@ export function requireEnabledEnvironment(mode: string, variables: Variables) {
   return config
 }
 
-export function createBuildEnvironment(mode: string, variables: Variables, stagingBuildAuthorized = false): BuildEnvironment {
+export function createBuildEnvironment(mode: string, variables: Variables, stagingBuildAuthorized = false, previewBuildAuthorized = false): BuildEnvironment {
   if (mode === 'staging') {
     if (!stagingBuildAuthorized) throw new Error('Build STAGING exige autorização local explícita.')
-    const config = prepareHostedEnvironment('staging', variables)
+    const preview = variables.VITE_STAGING_PREVIEW_ORIGIN
+    if (previewBuildAuthorized !== Boolean(preview)) throw new Error('Preview requires explicit build authorization and origin.')
+    if (previewBuildAuthorized) prepareHostedEnvironment('staging', variables)
+    const selected = previewBuildAuthorized ? { ...variables, VITE_STAGING_SITE_ORIGIN: preview } : variables
+    const config = prepareHostedEnvironment('staging', selected)
     return { mode, variables: { VITE_APP_ENV: config.name, VITE_STAGING_SUPABASE_URL: config.url, VITE_STAGING_SUPABASE_PROJECT_REF: config.projectRef, VITE_STAGING_SUPABASE_PUBLISHABLE_KEY: config.key, VITE_STAGING_SITE_ORIGIN: config.siteOrigin } }
   }
   const config = requireEnabledEnvironment(mode, variables)
