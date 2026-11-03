@@ -141,3 +141,5 @@ falhas; investigar e repetir a suíte completa após corrigir a causa.
 Não instalar Playwright nem navegadores nesta etapa. Quando a suíte local estiver estável, começar com um único projeto Chromium, servidor Vite local e acervo fictício, sem backend remoto. Cobrir navegação, busca/filtro, leitura, validação dos formulários e administração demonstrativa. Usar seletores por papel/nome acessível. Adicionar outros navegadores e CI apenas quando houver necessidade concreta.
 
 Autenticação, autorização e persistência reais precisarão de cenários novos quando forem implementadas. Nesse momento, usar backend local ou homologação isolada e fixtures sintéticas; nunca validar permissões contra produção.
+
+A Jornada retoma a ultima abertura e a posicao aproximada neste navegador.

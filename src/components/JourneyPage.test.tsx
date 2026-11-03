@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import App from '../App'
 import { supabase } from '../lib/supabase'
 import { consistencyFixture } from '../test/consistencyBoundary'
+import { libraryBoundary, olderPublications } from '../test/libraryBoundary'
 
 const session = { user: { id: 'journey-fiction' } }
 const history = consistencyFixture({ first_month: '2026-01-01', total_days: 2, total_devotionals: 3, current_streak: 2, best_streak: 2, status: 'completed_today', today_completed: true, last_completed_day: '2026-10-28' })
@@ -39,13 +40,15 @@ describe('Minha Jornada pessoal', () => {
     expect(screen.queryByText(/Ainda não há conclusões/)).not.toBeInTheDocument()
     expect(supabase.rpc).not.toHaveBeenCalled()
   })
-  it('leitor sem permissão editorial acessa rota, resumo mensal e histórico sem consultar acervo', async () => {
+  it('leitor acessa resumo e consulta apenas a última abertura quando o histórico está vazio', async () => {
     respond(); openJourney()
     expect(await screen.findByRole('heading', { name: 'Minha Jornada' })).toBeVisible()
     expect(await screen.findByRole('list', { name: 'Dias com conclusões neste mês' })).toBeVisible()
     expect(screen.getByRole('link', { name: 'Ver minhas aberturas e conclusões' })).toHaveAttribute('href', '#minhas-leituras')
     expect(screen.queryByText('Acesso restrito a administradores.')).not.toBeInTheDocument()
-    expect(supabase.from).not.toHaveBeenCalled()
+    await screen.findByText(/Você ainda não abriu nenhum devocional/)
+    expect(supabase.from).toHaveBeenCalledWith('devotional_views')
+    expect(supabase.from).not.toHaveBeenCalledWith('devotionals')
   })
   it('distingue dias e textos e ordena histórico sem criar novas métricas de servidor', async () => {
     respond(); openJourney()
@@ -58,9 +61,21 @@ describe('Minha Jornada pessoal', () => {
     expect(screen.getByText('Dias com conclusões no mês').nextElementSibling).toHaveTextContent('2')
     expect(screen.getByText('Devocionais concluídos no mês').nextElementSibling).toHaveTextContent('3')
     expect(screen.getByRole('link', { name: 'Minha Jornada' })).toHaveAttribute('aria-current', 'page')
-    expect(supabase.from).not.toHaveBeenCalled()
+    expect(supabase.from).toHaveBeenCalledWith('devotional_views')
+    expect(supabase.from).not.toHaveBeenCalledWith('devotionals')
     expect(vi.mocked(supabase.rpc).mock.calls.filter(([name]) => name === 'get_my_consistency')).toHaveLength(1)
     expect(vi.mocked(supabase.rpc).mock.calls.some(([name]) => name === 'get_owner_community')).toBe(false)
+  })
+  it('permite retomar a última abertura pelo link da jornada sem criar outra abertura', async () => {
+    respond()
+    const item = olderPublications[0]
+    const boundary = libraryBoundary([item], [{ id: 'fiction-opening', devotional_id: item.id, opened_at: '2026-10-28T14:00:00Z' }])
+    const user = userEvent.setup()
+    openJourney()
+    await user.click(await screen.findByRole('link', { name: 'Continuar leitura' }))
+    expect(await screen.findByRole('heading', { name: item.title, level: 1 })).toBeVisible()
+    expect(location.hash).toBe(`#leitura/${item.id}/retomar`)
+    expect(boundary.historyQuery.insert).not.toHaveBeenCalled()
   })
   it('mostra vazio acolhedor somente após resposta e limita navegação sem histórico', async () => {
     openJourney()
