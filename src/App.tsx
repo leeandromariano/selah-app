@@ -9,11 +9,15 @@ import { useAuth } from './auth/auth'
 import { PasswordForm } from './components/PasswordForm'
 import { ProfileForm } from './components/ProfileForm'
 import { ReaderLibrary } from './components/ReaderLibrary'
+import type { EditorialSelection } from './components/ReaderLibrary'
 import { PrivacyPolicy } from './components/PrivacyPolicy'
 import { JourneyPage } from './components/JourneyPage'
 import { AppearanceControl } from './components/AppearanceControl'
 import { ReminderSettings } from './components/ReminderSettings'
 import { BibleReader } from './components/BibleReader'
+
+declare const __SELAH_EDITORIAL_ENABLED__: boolean
+const editorialEnabled = typeof __SELAH_EDITORIAL_ENABLED__ !== 'undefined' && __SELAH_EDITORIAL_ENABLED__
 
 function route() {
   const hash = location.hash.slice(1)
@@ -24,6 +28,7 @@ function AppContent() {
   const auth = useAuth()
   const [loggingOut, setLoggingOut] = useState(false)
   const [requestedPage, setPage] = useState(route)
+  const [editorialSelection, setEditorialSelection] = useState<EditorialSelection | null>(null)
   const publicPages = ['login', 'cadastro', 'recuperar-senha', 'privacidade']
   const page = auth.recovery ? 'nova-senha' : !auth.session && !publicPages.includes(requestedPage) ? 'login' : requestedPage
   const showNavigation = !auth.loading && !!auth.session && !auth.recovery
@@ -32,8 +37,8 @@ function AppContent() {
     window.addEventListener('hashchange', change)
     return () => window.removeEventListener('hashchange', change)
   }, [])
-  return <div className="app"><a className="skip-link" href="#main-content" onClick={e => { e.preventDefault(); document.getElementById('main-content')?.focus() }}>Ir para o conteúdo</a><aside className="sidebar"><a className="brand" href="#inicio"><Icon name="book" /><span>selah<span className="purple-text">.</span><small>PAUSE. RESPIRE. CREIA.</small></span></a>{showNavigation && <><div className="nav-label">SEU MOMENTO COM DEUS</div><nav aria-label="Navegação principal">{[{ id: 'inicio', name: 'Início', icon: 'home' }, { id: 'historico', name: 'Devocionais', icon: 'book' }, { id: 'biblia', name: 'Bíblia', icon: 'book' }, { id: 'minha-jornada', name: 'Minha Jornada', icon: 'chart' }, { id: 'minhas-leituras', name: 'Minhas aberturas', icon: 'clock' }, ...(auth.admin ? [{ id: 'admin', name: 'Painel administrativo', icon: 'grid' }] : [])].map(n => <a className={page === n.id || (page.startsWith('leitura') && n.id === 'historico') || (page.startsWith('biblia/') && n.id === 'biblia') ? 'nav-item active' : 'nav-item'} href={`#${n.id}`} key={n.id} aria-current={page === n.id || (page.startsWith('biblia/') && n.id === 'biblia') ? 'page' : undefined}><Icon name={n.icon} />{n.name}</a>)}</nav></>}<AppearanceControl /><div className="side-quote"><span>“</span><p>Aquietai-vos e sabei<br />que eu sou Deus.</p><small>SALMOS 46:10</small><i /></div><div className="side-bottom"><span /> Um pouco de fé, todos os dias.<small>Feito para cultivar o que importa.</small></div></aside><div className="main-shell"><header><span className="header-note">Um encontro diário com a Palavra.</span>{auth.session && <><a href="#perfil">Meu perfil</a><a href="#configuracoes">Configurações</a></>}<span className="demo-badge">● {environmentName === 'DEV' ? 'Ambiente local' : 'Ambiente de homologação (STAGING)'}</span>{auth.loading ? <span>Carregando sessão…</span> : auth.session ? <button className="text-link" disabled={loggingOut} onClick={async () => { setLoggingOut(true); await auth.logout(); setLoggingOut(false) }}>Sair</button> : <a href="#login">Entrar ↗</a>}</header><main id="main-content" tabIndex={-1}>{auth.error && <div role="alert" className="info">{auth.error}</div>}
-    {auth.loading ? <p role="status">Carregando sessão…</p> : <>{(['inicio', 'historico', 'minhas-leituras', 'leitura'].includes(page) || page.startsWith('leitura/')) && <ReaderLibrary page={page} />}
+  return <div className="app"><a className="skip-link" href="#main-content" onClick={e => { e.preventDefault(); document.getElementById('main-content')?.focus() }}>Ir para o conteúdo</a><aside className="sidebar"><a className="brand" href="#inicio"><Icon name="book" /><span>selah<span className="purple-text">.</span><small>PAUSE. RESPIRE. CREIA.</small></span></a>{showNavigation && <><div className="nav-label">SEU MOMENTO COM DEUS</div><nav aria-label="Navegação principal">{[{ id: 'inicio', name: 'Início', icon: 'home' }, { id: 'historico', name: 'Devocionais', icon: 'book' }, { id: 'biblia', name: 'Bíblia', icon: 'book' }, { id: 'minha-jornada', name: 'Minha Jornada', icon: 'chart' }, { id: 'minhas-leituras', name: 'Minhas aberturas', icon: 'clock' }, ...(editorialEnabled ? [{ id: 'editorial', name: 'Temas e séries', icon: 'book' }] : []), ...(auth.admin ? [{ id: 'admin', name: 'Painel administrativo', icon: 'grid' }] : [])].map(n => <a className={page === n.id || (page.startsWith('leitura') && n.id === 'historico') || (page.startsWith('biblia/') && n.id === 'biblia') ? 'nav-item active' : 'nav-item'} href={`#${n.id}`} key={n.id} aria-current={page === n.id || (page.startsWith('biblia/') && n.id === 'biblia') ? 'page' : undefined}><Icon name={n.icon} />{n.name}</a>)}</nav></>}<AppearanceControl /><div className="side-quote"><span>“</span><p>Aquietai-vos e sabei<br />que eu sou Deus.</p><small>SALMOS 46:10</small><i /></div><div className="side-bottom"><span /> Um pouco de fé, todos os dias.<small>Feito para cultivar o que importa.</small></div></aside><div className="main-shell"><header><span className="header-note">Um encontro diário com a Palavra.</span>{auth.session && <><a href="#perfil">Meu perfil</a><a href="#configuracoes">Configurações</a></>}<span className="demo-badge">● {environmentName === 'DEV' ? 'Ambiente local' : 'Ambiente de homologação (STAGING)'}</span>{auth.loading ? <span>Carregando sessão…</span> : auth.session ? <button className="text-link" disabled={loggingOut} onClick={async () => { setLoggingOut(true); await auth.logout(); setLoggingOut(false) }}>Sair</button> : <a href="#login">Entrar ↗</a>}</header><main id="main-content" tabIndex={-1}>{auth.error && <div role="alert" className="info">{auth.error}</div>}
+    {auth.loading ? <p role="status">Carregando sessão…</p> : <>{(['inicio', 'historico', 'minhas-leituras', 'leitura'].includes(page) || page.startsWith('leitura/') || (editorialEnabled && page === 'editorial')) && <ReaderLibrary page={page} editorialEnabled={editorialEnabled} initialEditorialSelection={editorialSelection} onEditorialSelection={setEditorialSelection} />}
     {(page === 'cadastro' || page === 'login') && <AuthForm key={page} register={page === 'cadastro'} />}
     {page === 'perfil' && <ProfileForm />}
     {page === 'configuracoes' && <ReminderSettings />}
@@ -42,7 +47,7 @@ function AppContent() {
     {(page === 'biblia' || page.startsWith('biblia/')) && <BibleReader page={page} />}
     {(page === 'admin' || page === 'admin/comunidade' || page === 'admin/moderacao') && ((auth.loading || auth.adminLoading) ? <p role="status">Verificando acesso administrativo…</p> : auth.session && auth.admin && !auth.recovery ? <AdminPanel community={page === 'admin/comunidade'} moderation={page === 'admin/moderacao'} /> : <div className="info" role="alert">Acesso restrito a administradores. <a href="#login">Entrar</a></div>)}
     {(page === 'recuperar-senha' || page === 'nova-senha' || auth.recovery) && <PasswordForm update={page === 'nova-senha' || auth.recovery} />}
-    {!['biblia', 'configuracoes', 'minha-jornada', 'inicio', 'historico', 'leitura', 'login', 'cadastro', 'admin', 'admin/comunidade', 'admin/moderacao', 'recuperar-senha', 'nova-senha', 'perfil', 'minhas-leituras', 'privacidade'].includes(page) && !page.startsWith('leitura/') && !page.startsWith('biblia/') && <div className="info">Página não encontrada. <a href="#inicio">Voltar ao início →</a></div>}
+    {!['biblia', 'configuracoes', 'minha-jornada', 'inicio', 'historico', 'leitura', 'login', 'cadastro', 'admin', 'admin/comunidade', 'admin/moderacao', 'recuperar-senha', 'nova-senha', 'perfil', 'minhas-leituras', 'privacidade'].includes(page) && !page.startsWith('leitura/') && !page.startsWith('biblia/') && !(editorialEnabled && page === 'editorial') && <div className="info">Página não encontrada. <a href="#inicio">Voltar ao início →</a></div>}
   </>}</main><footer><span className="footer-logo">selah.</span><span>Um momento de pausa. Uma vida com propósito.</span><small>Conteúdo e administração no ambiente {environmentName === 'DEV' ? 'local' : 'de homologação'}</small></footer></div></div>
 }
 function SessionContent() {

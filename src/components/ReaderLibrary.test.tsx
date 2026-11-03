@@ -249,4 +249,11 @@ describe('acervo persistente do leitor', () => {
     expect(screen.getByText(/Nenhum devocional encontrado/)).toBeVisible()
   })
 
+  it('mantem a rota editorial fechada quando a habilitacao local esta ausente', async () => {
+    libraryBoundary(olderPublications)
+    open('editorial')
+    expect(await screen.findByText(/Página não encontrada/)).toBeVisible()
+    expect(vi.mocked(supabase.rpc).mock.calls.some(([name]) => name === 'reader_editorial_catalog')).toBe(false)
+  })
+
 })

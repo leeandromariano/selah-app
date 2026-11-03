@@ -2350,3 +2350,6 @@ A retomada local e testada com armazenamento simulado e Chromium com backend fic
 A fronteira de Preview valida origem exata, build autorizado e rejeicao de dominios semelhantes em hostedEnvironment.test.ts.
 
 O acervo testa busca por titulo e referencia sem acentos, ordenacao e resultado vazio com backend simulado.
+
+
+Release editorial: editorialBuildGate.test.ts cobre barreiras de build; fixtures de Preview e ensaios SQL/Auth/Chromium sao locais e descartaveis. Ver editorial-release-staging.md.
