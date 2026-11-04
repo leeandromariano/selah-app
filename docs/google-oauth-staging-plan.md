@@ -1,6 +1,18 @@
 # Google OAuth — Selah STAGING (plano de implementação)
 
-Status: planejamento; **não habilitar o provider nem publicar o botão antes da migração e da homologação**.
+Status: implementação local em revisão; **NÃO habilitar o Google no Supabase nem mesclar o PR antes dos testes e da autorização de rollout**.
+
+Implementado nesta branch:
+- Migration `20261104000300_google_oauth_onboarding.sql` (triggers separadas para Google, RPC de conclusão, consultas de estado e guardas RLS para contas pendentes).
+- Botão OAuth exclusivo do build STAGING, com retorno à origem canônica.
+- Tela obrigatória para username, WhatsApp, nome opcional e consentimento de feedback não pré-selecionado.
+- Bloqueio das telas do aplicativo enquanto a conta Google não estiver concluída.
+- Testes Vitest e SQL `supabase/tests/google-oauth-onboarding.sql` (executar **somente no Docker local**).
+- Pendentes: execução da migration local, testes SQL, testes automatizados, TypeScript, lint e validação real do fluxo OAuth no STAGING.
+
+Operação: o cliente OAuth no Google Cloud já foi criado. A chave secreta apareceu em uma captura enviada; recomendamos sua rotação antes da ativação. O operador optou por seguir a preparação sem rotacioná-la nesta etapa; **nenhuma chave fica neste repositório**.
+
+O Google Auth Platform está no modo **Externo / Testes**. Nesse modo, somente contas adicionadas em *Usuários de teste* poderão concluir a autenticação; ignorar a etapa agora não elimina essa restrição quando houver o primeiro teste real.
 
 ## Contrato atual
 
