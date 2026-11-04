@@ -143,6 +143,24 @@ describe('acervo persistente do leitor', () => {
     expect(screen.getByRole('heading', { name: olderPublications[0].title })).toBeVisible()
     expect(boundary.historyQuery.insert).not.toHaveBeenCalled()
   })
+  it('inclui o devocional publicado hoje na lista completa e ordena por mais recente', async () => {
+    const today = { ...olderPublications[0], id: 'today-in-library', title: 'Devocional de Hoje no Acervo', publish_at: new Date(Date.now() - 60_000).toISOString() }
+    const boundary = libraryBoundary([today, ...olderPublications])
+    open('historico')
+    expect(await screen.findByRole('heading', { name: today.title })).toBeVisible()
+    expect(screen.getByText('3 devocionais encontrados')).toBeVisible()
+    const headings = screen.getAllByRole('heading').map(heading => heading.textContent)
+    expect(headings.indexOf(today.title)).toBeLessThan(headings.indexOf(olderPublications[0].title))
+    expect(boundary.historyQuery.insert).not.toHaveBeenCalled()
+  })
+  it('não duplica a publicação de hoje entre o destaque e os cartões antigos da página Início', async () => {
+    const today = { ...olderPublications[0], id: 'today-not-duplicated', title: 'Destaque de Hoje', publish_at: new Date(Date.now() - 60_000).toISOString() }
+    libraryBoundary([today, ...olderPublications])
+    open()
+    expect(await screen.findByRole('heading', { name: today.title })).toBeVisible()
+    expect(screen.getAllByRole('heading', { name: today.title })).toHaveLength(1)
+    expect(screen.getByRole('heading', { name: olderPublications[0].title })).toBeVisible()
+  })
   it('não apresenta uma publicação antiga como devocional de hoje', async () => {
     libraryBoundary(olderPublications)
     open()
@@ -153,7 +171,7 @@ describe('acervo persistente do leitor', () => {
     libraryBoundary([])
     const user = userEvent.setup()
     open('historico')
-    expect(await screen.findByText('Ainda não há publicações anteriores.')).toBeVisible()
+    expect(await screen.findByText('Ainda não há devocionais publicados.')).toBeVisible()
     expect(screen.queryByText('Confie no tempo de Deus')).not.toBeInTheDocument()
     await user.click(screen.getByRole('link', { name: 'Minhas aberturas' }))
     expect(await screen.findByText('Você ainda não abriu nenhum devocional.')).toBeVisible()
