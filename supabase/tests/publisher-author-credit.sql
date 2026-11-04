@@ -96,7 +96,7 @@ select set_config('request.jwt.claims', jsonb_build_object('sub',
 set local role authenticated;
 select pg_temp.ok((select count(*)=1 from public.devotionals where title='Rascunho sintético'
  and review_requested_at is not null), 'ADMIN can see review queue');
-update public.devotionals set status='published',publish_at=clock_timestamp()
+update public.devotionals set status='published',publish_at=now() - interval '1 minute'
  where title='Rascunho sintético';
 select pg_temp.ok((select author_name='Autora Convidada' from public.devotionals
  where title='Rascunho sintético'), 'credited name survives publication');
