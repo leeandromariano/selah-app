@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { adminColumns, editorialFields } from '../admin/repository'
+import { EditorialValidationError, adminColumns, editorialFields } from '../admin/repository'
 import type { AdminDevotional, DevotionalInput } from '../admin/repository'
 
 export type PublisherDevotional = AdminDevotional
@@ -8,7 +8,7 @@ export function publisherMessage(error: unknown): string {
   const code = (error as { code?: string } | null)?.code
   if (code === '42501' || code === 'PGRST116') return 'Acesso negado ou texto não está disponível para edição. Confira sua permissão e o estado da revisão.'
   if (code === '23514' || code === '23502') return 'Confira os campos e o nome do autor.'
-  if (error instanceof Error && error.name === 'EditorialValidationError') return error.message
+  if (error instanceof EditorialValidationError) return error.message
   return 'Não foi possível concluir. Verifique sua conexão e tente novamente.'
 }
 
