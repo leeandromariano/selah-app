@@ -14,6 +14,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [recovery, setRecovery] = useState(false)
   const [adminAuthorization, setAdminAuthorization] = useState<{ session: Session; allowed: boolean } | null>(null)
+  const [publisherAuthorization, setPublisherAuthorization] = useState<{ session: Session; allowed: boolean } | null>(null)
   const [ownerAuthorization, setOwnerAuthorization] = useState<{ session: Session; allowed: boolean } | null>(null)
   const [error, setError] = useState(callbackError)
   useEffect(() => {
@@ -24,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       eventReceived = true
       setAdminAuthorization(null)
       setOwnerAuthorization(null)
+      setPublisherAuthorization(null)
       setSession(next ? { ...next } : null)
       setLoading(false)
       setError(next ? '' : callbackError)
@@ -56,6 +58,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     return () => { active = false }
   }, [session, recovery])
+  useEffect(() => {
+    let active = true
+    if (session && !recovery) {
+      supabase.rpc('get_my_publisher_access').then(({ data, error }) => {
+        if (active) setPublisherAuthorization({ session, allowed: !error && data === true })
+      }, () => { if (active) setPublisherAuthorization({ session, allowed: false }) })
+    }
+    return () => { active = false }
+  }, [session, recovery])
   const reminderUser = session && !recovery ? session.user.id : null
   useEffect(() => { synchronizeReminderSession(reminderUser) }, [reminderUser])
   async function logout() {
@@ -64,8 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session) await disconnectReminderDevice(session.user.id)
       const { error } = await supabase.auth.signOut()
       if (error) throw error
-      setSession(null); setAdminAuthorization(null); setOwnerAuthorization(null); setRecovery(false); location.hash = 'login'
+      setSession(null); setAdminAuthorization(null); setOwnerAuthorization(null); setPublisherAuthorization(null); setRecovery(false); location.hash = 'login'
     } catch (error) { setError(authMessage(error)) }
   }
-  return <AuthContext.Provider value={{ session, loading, recovery, admin: Boolean(session && adminAuthorization?.session === session && adminAuthorization.allowed), adminLoading: Boolean(session && !recovery && adminAuthorization?.session !== session), owner: Boolean(session && !recovery && ownerAuthorization?.session === session && ownerAuthorization.allowed), ownerLoading: Boolean(session && !recovery && ownerAuthorization?.session !== session), error, logout, finishRecovery: () => setRecovery(false) }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ session, loading, recovery, admin: Boolean(session && adminAuthorization?.session === session && adminAuthorization.allowed), adminLoading: Boolean(session && !recovery && adminAuthorization?.session !== session), owner: Boolean(session && !recovery && ownerAuthorization?.session === session && ownerAuthorization.allowed), ownerLoading: Boolean(session && !recovery && ownerAuthorization?.session !== session), publisher: Boolean(session && !recovery && publisherAuthorization?.session === session && publisherAuthorization.allowed), publisherLoading: Boolean(session && !recovery && publisherAuthorization?.session !== session), error, logout, finishRecovery: () => setRecovery(false) }}>{children}</AuthContext.Provider>
 }

@@ -1,13 +1,15 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type DevotionalStatus = 'draft' | 'scheduled' | 'published'
-export type DevotionalInput = { title: string; bible_reference: string; bible_text: string; content: string; reflection_question: string; publish_at: string | null; status: DevotionalStatus }
-export type AdminDevotional = DevotionalInput & { id: string; author_id: string; created_at: string; updated_at: string }
-export const adminColumns = 'id,title,bible_reference,bible_text,content,reflection_question,publish_at,status,author_id,created_at,updated_at'
+export type DevotionalInput = { author_name: string | null; title: string; bible_reference: string; bible_text: string; content: string; reflection_question: string; publish_at: string | null; status: DevotionalStatus }
+export type AdminDevotional = DevotionalInput & { review_requested_at: string | null; id: string; author_id: string; created_at: string; updated_at: string }
+export const adminColumns = 'id,author_name,review_requested_at,title,bible_reference,bible_text,content,reflection_question,publish_at,status,author_id,created_at,updated_at'
 export const statusLabels = { draft: 'Rascunho', scheduled: 'Agendado', published: 'Publicado' }
 
 export class EditorialValidationError extends Error {}
 export function editorialFields(input: DevotionalInput, now = new Date()): DevotionalInput {
+  const author_name = (input.author_name ?? '').trim()
+  if ([...author_name].length < 2 || [...author_name].length > 120) throw new EditorialValidationError('Informe o nome do autor (2 a 120 caracteres).')
   const title = input.title.trim()
   const bible_reference = input.bible_reference.trim()
   const bible_text = input.bible_text.trim()
@@ -22,7 +24,7 @@ export function editorialFields(input: DevotionalInput, now = new Date()): Devot
   if (input.status !== 'draft' && !instant) throw new EditorialValidationError('Informe a data e hora de publicação.')
   if (input.status === 'scheduled' && instant! <= now) throw new EditorialValidationError('Escolha uma data futura para agendar.')
   if (input.status === 'published' && instant! > now) throw new EditorialValidationError('Para uma data futura, use Agendado.')
-  return { title, bible_reference, bible_text, content, reflection_question, status: input.status, publish_at: instant?.toISOString() ?? null }
+  return { author_name, title, bible_reference, bible_text, content, reflection_question, status: input.status, publish_at: instant?.toISOString() ?? null }
 }
 export function adminMessage(error: unknown) {
   if (error instanceof EditorialValidationError) return error.message
@@ -60,6 +62,11 @@ export function createAdminRepository(client: Pick<SupabaseClient, 'from' | 'rpc
         rows.push(...data as AdminDevotional[])
         if (data.length < 100) return rows
       }
+    },
+    async returnToAuthor(id: string): Promise<void> {
+      await authorize()
+      const { error } = await client.rpc('return_devotional_to_author', { p_id: id })
+      if (error) throw error
     },
     async save(userId: string, input: DevotionalInput, id?: string): Promise<AdminDevotional> {
       const fields = editorialFields(input)

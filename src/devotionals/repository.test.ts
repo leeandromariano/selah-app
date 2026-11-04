@@ -20,6 +20,7 @@ describe('publicações e calendário', () => {
     expect(card.summary).toHaveLength(151)
     expect(card.minutes).toBe(3)
     expect(card.reference).toBe(olderPublications[0].bible_reference)
+    expect(card.author).toBe('Autoria Fictícia')
     expect(card).not.toHaveProperty('author_id')
   })
   it('filtra publicados/data, ordena e busca todas as páginas além do limite de resposta', async () => {

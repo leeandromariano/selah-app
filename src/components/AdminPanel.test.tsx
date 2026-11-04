@@ -12,11 +12,16 @@ function openAdmin() {
   return render(<App />)
 }
 async function fill(user: ReturnType<typeof userEvent.setup>) {
-  for (const [label, value] of [['Título', 'Novo Texto Fictício'], ['Referência bíblica', 'Ref fictícia'], ['Texto bíblico', 'Texto fictício'], ['Reflexão', 'Reflexão fictícia'], ['Para refletir', 'Pergunta fictícia?']]) await user.type(screen.getByLabelText(label), value)
+  for (const [label, value] of [['Autor (crédito público)', 'Autor Convidado'], ['Título', 'Novo Texto Fictício'], ['Referência bíblica', 'Ref fictícia'], ['Texto bíblico', 'Texto fictício'], ['Reflexão', 'Reflexão fictícia'], ['Para refletir', 'Pergunta fictícia?']]) await user.type(screen.getByLabelText(label), value)
 }
 describe('painel administrativo real', () => {
   it('preserva comunidade após foco e renovação de sessão e remontagem', async () => {
     adminBoundary()
+    const fallbackRpc = vi.mocked(supabase.rpc).getMockImplementation()!
+    vi.mocked(supabase.rpc).mockImplementation((name, args) =>
+      name === 'get_my_discussion_access'
+        ? { abortSignal: async () => ({ data: true, error: null }) } as never
+        : fallbackRpc(name, args))
     const user = userEvent.setup()
     const view = openAdmin()
     await user.click(await screen.findByRole('button', { name: 'Comunidade e ofensivas' }))
@@ -32,6 +37,13 @@ describe('painel administrativo real', () => {
     vi.mocked(supabase.rpc).mockResolvedValueOnce({ data: null, error: { code: '42501' } } as never)
     act(() => { vi.mocked(supabase.auth.onAuthStateChange).mock.calls.at(-1)![0]('TOKEN_REFRESHED', { user: { id: editorialFixture.author_id } } as never) })
     await waitFor(() => expect(screen.queryByRole('heading', { name: 'COMUNIDADE E OFENSIVAS' })).not.toBeInTheDocument())
+  })
+  it('ADMIN legado não visualiza o acesso exclusivo à comunidade OWNER', async () => {
+    adminBoundary()
+    openAdmin()
+    await screen.findByText(editorialFixture.title)
+    expect(screen.queryByRole('button', { name: 'Comunidade e ofensivas' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Painel OWNER' })).not.toBeInTheDocument()
   })
   it('exibe verificação de acesso durante autorização pendente, sem falso acesso negado', async () => {
     adminBoundary()
@@ -77,12 +89,12 @@ describe('painel administrativo real', () => {
     openAdmin()
     await user.click(await screen.findByRole('button', { name: /Novo devocional/ }))
     await user.click(screen.getByRole('button', { name: 'Salvar devocional' }))
-    expect(screen.getByRole('alert')).toHaveTextContent('Informe um título')
+    expect(screen.getByRole('alert')).toHaveTextContent('Informe o nome do autor')
     expect(table.insert).not.toHaveBeenCalled()
     await fill(user)
     await user.click(screen.getByRole('button', { name: 'Salvar devocional' }))
     expect(await screen.findByRole('status')).toHaveTextContent('Rascunho salvo')
-    expect(table.insert).toHaveBeenCalledWith({ title: 'Novo Texto Fictício', bible_reference: 'Ref fictícia', bible_text: 'Texto fictício', content: 'Reflexão fictícia', reflection_question: 'Pergunta fictícia?', status: 'draft', publish_at: null, author_id: editorialFixture.author_id })
+    expect(table.insert).toHaveBeenCalledWith({ author_name: 'Autor Convidado', title: 'Novo Texto Fictício', bible_reference: 'Ref fictícia', bible_text: 'Texto fictício', content: 'Reflexão fictícia', reflection_question: 'Pergunta fictícia?', status: 'draft', publish_at: null, author_id: editorialFixture.author_id })
   })
   it('agenda data futura e informa que ainda exige publicação explícita', async () => {
     const table = adminBoundary()
@@ -116,7 +128,7 @@ describe('painel administrativo real', () => {
     const user = userEvent.setup()
     openAdmin()
     await user.click(await screen.findByRole('button', { name: 'Editar' }))
-    expect(screen.getAllByRole('textbox')).toHaveLength(5)
+    expect(screen.getAllByRole('textbox')).toHaveLength(6)
     await user.click(screen.getByRole('button', { name: 'Publicar agora' }))
     expect(await screen.findByRole('status')).toHaveTextContent('publicado e salvo')
     const payload = table.update.mock.calls[0][0]
