@@ -12,7 +12,7 @@ function openAdmin() {
   return render(<App />)
 }
 async function fill(user: ReturnType<typeof userEvent.setup>) {
-  for (const [label, value] of [['Título', 'Novo Texto Fictício'], ['Referência bíblica', 'Ref fictícia'], ['Texto bíblico', 'Texto fictício'], ['Reflexão', 'Reflexão fictícia'], ['Para refletir', 'Pergunta fictícia?']]) await user.type(screen.getByLabelText(label), value)
+  for (const [label, value] of [['Autor (crédito público)', 'Autor Convidado'], ['Título', 'Novo Texto Fictício'], ['Referência bíblica', 'Ref fictícia'], ['Texto bíblico', 'Texto fictício'], ['Reflexão', 'Reflexão fictícia'], ['Para refletir', 'Pergunta fictícia?']]) await user.type(screen.getByLabelText(label), value)
 }
 describe('painel administrativo real', () => {
   it('preserva comunidade após foco e renovação de sessão e remontagem', async () => {
@@ -82,7 +82,7 @@ describe('painel administrativo real', () => {
     await fill(user)
     await user.click(screen.getByRole('button', { name: 'Salvar devocional' }))
     expect(await screen.findByRole('status')).toHaveTextContent('Rascunho salvo')
-    expect(table.insert).toHaveBeenCalledWith({ title: 'Novo Texto Fictício', bible_reference: 'Ref fictícia', bible_text: 'Texto fictício', content: 'Reflexão fictícia', reflection_question: 'Pergunta fictícia?', status: 'draft', publish_at: null, author_id: editorialFixture.author_id })
+    expect(table.insert).toHaveBeenCalledWith({ author_name: 'Autor Convidado', title: 'Novo Texto Fictício', bible_reference: 'Ref fictícia', bible_text: 'Texto fictício', content: 'Reflexão fictícia', reflection_question: 'Pergunta fictícia?', status: 'draft', publish_at: null, author_id: editorialFixture.author_id })
   })
   it('agenda data futura e informa que ainda exige publicação explícita', async () => {
     const table = adminBoundary()
@@ -116,7 +116,7 @@ describe('painel administrativo real', () => {
     const user = userEvent.setup()
     openAdmin()
     await user.click(await screen.findByRole('button', { name: 'Editar' }))
-    expect(screen.getAllByRole('textbox')).toHaveLength(5)
+    expect(screen.getAllByRole('textbox')).toHaveLength(6)
     await user.click(screen.getByRole('button', { name: 'Publicar agora' }))
     expect(await screen.findByRole('status')).toHaveTextContent('publicado e salvo')
     const payload = table.update.mock.calls[0][0]
