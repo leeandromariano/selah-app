@@ -61,7 +61,7 @@ insert into public.devotionals(title,bible_reference,bible_text,content,reflecti
  status,publish_at,author_id,author_name)
 values('OAuth Published Fixture','Salmos 46:10','Texto fictício','Reflexão fictícia',
  'Pergunta fictícia?','published',clock_timestamp()-interval '1 hour',
- (select user_id from private.app_owner limit 1),'Autoria Fictícia');
+ (select id from oauth_fixture limit 1),'Autoria Fictícia');
 
 select set_config('request.jwt.claims',jsonb_build_object(
   'sub',(select id from oauth_fixture limit 1),'role','authenticated')::text,true);
@@ -102,6 +102,9 @@ select pg_temp.ok((select count(*)=1 from public.profiles
 select pg_temp.ok((select count(*)=1 from public.feedback_contact_preferences
   where user_id in(select id from oauth_fixture) and allowed=false),
   'feedback opt-in not invented by Google metadata');
+select pg_temp.ok((select count(*)=1 from public.profiles
+  where id in(select id from oauth_fixture) and name='Fictitious Google User'),
+  'missing optional name uses safe Google display name');
 select pg_temp.ok((select count(*)=0 from private.admin_users
   where user_id in(select id from oauth_fixture)),
   'Google onboarding never grants ADMIN privileges');
