@@ -7,6 +7,14 @@ create function pg_temp.ok(value boolean, label text) returns void
 language plpgsql as $$ begin
   if value is distinct from true then raise exception 'FAIL: %', label; end if;
 end $$;
+create function pg_temp.affected(statement text, expected bigint, label text) returns void
+language plpgsql as $
+declare actual bigint;
+begin
+  execute statement;
+  get diagnostics actual = row_count;
+  if actual <> expected then raise exception 'FAIL: % expected %, got %', label, expected, actual; end if;
+end $;
 create function pg_temp.denied(statement text, label text) returns void
 language plpgsql as $$
 begin
@@ -18,6 +26,7 @@ begin
 end $$;
 
 create temp table publisher_test_ids(role text primary key, user_id uuid not null, username text not null);
+grant select on publisher_test_ids to authenticated;
 insert into publisher_test_ids(role,user_id,username) values
   ('owner',gen_random_uuid(),'owner_' || left(replace(gen_random_uuid()::text,'-',''),12)),
   ('admin',gen_random_uuid(),'admin_' || left(replace(gen_random_uuid()::text,'-',''),12)),
@@ -72,15 +81,13 @@ values ((select user_id from publisher_test_ids where role='publisher'),
 select pg_temp.ok((select count(*)=1 from public.devotionals where title='Rascunho sintético'), 'publisher sees own draft');
 select pg_temp.denied($q$insert into public.devotionals(author_id,author_name,title,bible_reference,bible_text,content,reflection_question,status,publish_at)
  values (auth.uid(),'Autor','Tentativa','Salmo','Texto','Conteúdo','Pergunta','published',now())$q$, 'cannot publish directly');
-select pg_temp.denied($q$delete from public.devotionals where title='Rascunho sintético'$q$, 'cannot delete content');
+select pg_temp.affected($q$delete from public.devotionals where title='Rascunho sintético'$q$, 0, 'cannot delete content');
 update public.devotionals set content='Revisão sintética' where title='Rascunho sintético';
 select public.submit_devotional_for_review((select id from public.devotionals where title='Rascunho sintético'));
 select pg_temp.ok((select count(*)=1 from public.devotionals where title='Rascunho sintético'
  and review_requested_at is not null and status='draft'), 'submitted draft stays private');
-select pg_temp.ok((with updated as (
- update public.devotionals set content='Tentativa após envio'
- where title='Rascunho sintético' returning id
-) select count(*)=0 from updated), 'submitted draft is no longer editable');
+select pg_temp.affected($q$update public.devotionals set content='Tentativa após envio'
+ where title='Rascunho sintético'$q$, 0, 'submitted draft is no longer editable');
 reset role;
 
 -- Admin can review, but cannot manage publisher roles.
