@@ -39,6 +39,16 @@ describe('Painel OWNER', () => {
     if (admin) expect(await screen.findByRole('link', { name: 'Painel administrativo' })).toBeInTheDocument()
   })
 
+  it('OWNER herda o acesso administrativo e tem atalho para gerenciar devocionais', async () => {
+    path('owner')
+    rpc(async () => ({ data: true, error: null }), true)
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: session('owner') }, error: null })
+    render(<App />)
+    expect(await screen.findByRole('link', { name: 'Painel OWNER' })).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Painel administrativo' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Gerenciar devocionais' })).toHaveAttribute('href', '#admin')
+  })
+
   it('descarta autorização atrasada na troca de sessão e no logout', async () => {
     path('owner')
     let resolveFirst!: (result: { data: boolean; error: null }) => void
