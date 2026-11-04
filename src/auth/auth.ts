@@ -18,7 +18,7 @@ export function signupMessage(error: unknown) {
 }
 
 export const AuthContext = createContext<{
-  session: Session | null; loading: boolean; recovery: boolean; admin: boolean; adminLoading: boolean; owner: boolean; ownerLoading: boolean; error: string;
+  session: Session | null; loading: boolean; recovery: boolean; admin: boolean; adminLoading: boolean; owner: boolean; ownerLoading: boolean; publisher: boolean; publisherLoading: boolean; error: string;
   logout: () => Promise<void>; finishRecovery: () => void;
 } | null>(null)
 
