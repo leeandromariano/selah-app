@@ -50,7 +50,7 @@ describe('preferências e privacidade de lembretes', () => {
   })
   it('configurações carregam sem opt-in e alteração de horário é explícita', async () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'fiction-settings' } } }, error: null } as never)
-    vi.mocked(supabase.rpc).mockImplementation(name => name === 'devotional_open_counts' ? Promise.resolve({ error: { code: '42501' } }) as never : { abortSignal: async () => ({ data: snapshot, error: null }) } as never)
+    vi.mocked(supabase.rpc).mockImplementation(name => name === 'devotional_open_counts' ? Promise.resolve({ error: { code: '42501' } }) as never : name === 'get_my_publisher_access' ? Promise.resolve({ data: false, error: null }) as never : { abortSignal: async () => ({ data: snapshot, error: null }) } as never)
     location.hash = 'configuracoes'; render(<App />)
     const checkbox = await screen.findByRole('checkbox')
     expect(checkbox).not.toBeChecked()
@@ -67,7 +67,7 @@ describe('preferências e privacidade de lembretes', () => {
     vi.stubGlobal('PushManager', function () {})
     vi.stubGlobal('navigator', { ...navigator, serviceWorker: { getRegistration: vi.fn().mockResolvedValue(undefined) } })
     vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'fiction-permission-' + permission } } }, error: null } as never)
-    vi.mocked(supabase.rpc).mockImplementation(name => name === 'devotional_open_counts' ? Promise.resolve({ error: { code: '42501' } }) as never : { abortSignal: async () => ({ data: { ...snapshot, enabled: true }, error: null }) } as never)
+    vi.mocked(supabase.rpc).mockImplementation(name => name === 'devotional_open_counts' ? Promise.resolve({ error: { code: '42501' } }) as never : name === 'get_my_publisher_access' ? Promise.resolve({ data: false, error: null }) as never : { abortSignal: async () => ({ data: { ...snapshot, enabled: true }, error: null }) } as never)
     location.hash = 'configuracoes'; render(<App />)
     await screen.findByRole('checkbox')
     expect(request).not.toHaveBeenCalled()
