@@ -38,6 +38,13 @@ insert into auth.users(id,email,email_confirmed_at,raw_user_meta_data)
     jsonb_build_object('username',username,'whatsapp','+5511999990000')
   from publisher_test_ids;
 
+-- This LOCAL database already has one OWNER. Temporarily replace membership
+-- inside the transaction so that the test can use a fully synthetic OWNER.
+-- ROLLBACK (including connection abort on ON_ERROR_STOP) restores that account.
+-- Never run this fixture against a linked or remotely hosted database.
+select pg_temp.ok((select count(*) = 1 from private.app_owner),
+  'local OWNER singleton must already exist');
+delete from private.app_owner;
 insert into private.app_owner(user_id)
   select user_id from publisher_test_ids where role='owner';
 insert into private.admin_users(user_id)
