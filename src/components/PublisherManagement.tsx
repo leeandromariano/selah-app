@@ -19,7 +19,7 @@ export function PublisherManagement() {
   const [notice, setNotice] = useState('')
   useEffect(() => {
     let active = true
-    supabase.rpc('owner_list_publishers').then(({ data, error }) => {
+    Promise.resolve(supabase.rpc('owner_list_publishers')).then(({ data, error }) => {
       if (!active) return
       if (error || !Array.isArray(data) || !data.every(item => typeof item?.username === 'string')) {
         setError('Não foi possível consultar a lista de PUBLICADORES. Confira sua permissão OWNER.')
