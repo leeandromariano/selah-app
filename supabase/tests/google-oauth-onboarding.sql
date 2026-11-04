@@ -47,6 +47,11 @@ select pg_temp.ok((select count(*)=0 from public.profiles
   where id in (select id from oauth_fixture)), 'Google does not fabricate contact');
 select pg_temp.ok((select count(*)=0 from public.feedback_contact_preferences
   where user_id in (select id from oauth_fixture)), 'Google does not grant contact consent');
+select pg_temp.ok((select count(*)=1 from auth.users
+  where id in (select id from oauth_fixture)
+    and not (raw_user_meta_data ? 'whatsapp')
+    and not (raw_user_meta_data ? 'feedback_contact_allowed')),
+  'unexpected contact data is removed from Auth metadata');
 select pg_temp.ok(not has_function_privilege('anon',
  'public.complete_google_onboarding(text,text,text,boolean)', 'EXECUTE'),
  'anonymous cannot complete signup');
