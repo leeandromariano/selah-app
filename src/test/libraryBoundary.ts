@@ -23,6 +23,6 @@ export function libraryBoundary(publications: Publication[], initialOpenings: Op
 }
 
 export const olderPublications: Publication[] = [
-  { id: '20000000-0000-4000-8000-000000000001', title: 'Paz em meio ao caminho', bible_reference: 'João 14:27', bible_text: 'Texto bíblico fictício', content: 'Reflexão fictícia sobre a paz.', reflection_question: 'Pergunta fictícia?', publish_at: '2020-10-22T12:00:00Z', reading_revision: 1 },
-  { id: '20000000-0000-4000-8000-000000000002', title: 'O extraordinário no simples', bible_reference: 'Salmos 118:24', bible_text: 'Texto bíblico fictício', content: 'Reflexão fictícia sobre gratidão.', reflection_question: 'Pergunta fictícia?', publish_at: '2020-10-21T12:00:00Z', reading_revision: 1 },
+  { id: '20000000-0000-4000-8000-000000000001', author_name: 'Autoria Fictícia', title: 'Paz em meio ao caminho', bible_reference: 'João 14:27', bible_text: 'Texto bíblico fictício', content: 'Reflexão fictícia sobre a paz.', reflection_question: 'Pergunta fictícia?', publish_at: '2020-10-22T12:00:00Z', reading_revision: 1 },
+  { id: '20000000-0000-4000-8000-000000000002', author_name: 'Outro Autor Fictício', title: 'O extraordinário no simples', bible_reference: 'Salmos 118:24', bible_text: 'Texto bíblico fictício', content: 'Reflexão fictícia sobre gratidão.', reflection_question: 'Pergunta fictícia?', publish_at: '2020-10-21T12:00:00Z', reading_revision: 1 },
 ]
