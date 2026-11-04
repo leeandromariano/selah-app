@@ -17,6 +17,11 @@ async function fill(user: ReturnType<typeof userEvent.setup>) {
 describe('painel administrativo real', () => {
   it('preserva comunidade após foco e renovação de sessão e remontagem', async () => {
     adminBoundary()
+    const fallbackRpc = vi.mocked(supabase.rpc).getMockImplementation()!
+    vi.mocked(supabase.rpc).mockImplementation((name, args) =>
+      name === 'get_my_discussion_access'
+        ? { abortSignal: async () => ({ data: true, error: null }) } as never
+        : fallbackRpc(name, args))
     const user = userEvent.setup()
     const view = openAdmin()
     await user.click(await screen.findByRole('button', { name: 'Comunidade e ofensivas' }))
@@ -32,6 +37,13 @@ describe('painel administrativo real', () => {
     vi.mocked(supabase.rpc).mockResolvedValueOnce({ data: null, error: { code: '42501' } } as never)
     act(() => { vi.mocked(supabase.auth.onAuthStateChange).mock.calls.at(-1)![0]('TOKEN_REFRESHED', { user: { id: editorialFixture.author_id } } as never) })
     await waitFor(() => expect(screen.queryByRole('heading', { name: 'COMUNIDADE E OFENSIVAS' })).not.toBeInTheDocument())
+  })
+  it('ADMIN legado não visualiza o acesso exclusivo à comunidade OWNER', async () => {
+    adminBoundary()
+    openAdmin()
+    await screen.findByText(editorialFixture.title)
+    expect(screen.queryByRole('button', { name: 'Comunidade e ofensivas' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Painel OWNER' })).not.toBeInTheDocument()
   })
   it('exibe verificação de acesso durante autorização pendente, sem falso acesso negado', async () => {
     adminBoundary()
