@@ -89,7 +89,7 @@ describe('painel administrativo real', () => {
     openAdmin()
     await user.click(await screen.findByRole('button', { name: /Novo devocional/ }))
     await user.click(screen.getByRole('button', { name: 'Salvar devocional' }))
-    expect(screen.getByRole('alert')).toHaveTextContent('Informe um título')
+    expect(screen.getByRole('alert')).toHaveTextContent('Informe o nome do autor')
     expect(table.insert).not.toHaveBeenCalled()
     await fill(user)
     await user.click(screen.getByRole('button', { name: 'Salvar devocional' }))
