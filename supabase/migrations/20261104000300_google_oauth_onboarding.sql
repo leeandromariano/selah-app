@@ -25,6 +25,11 @@ language plpgsql security definer set search_path = '' as $$
 declare number text; choice boolean := false;
 begin
   if new.raw_app_meta_data ->> 'provider' = 'google' then
+    -- Preserve the privacy rule for any unexpected social-provider intake
+    -- fields; never persist a client/identity-provided feedback preference.
+    update auth.users
+      set raw_user_meta_data = raw_user_meta_data - 'whatsapp' - 'feedback_contact_allowed'
+      where id = new.id and (raw_user_meta_data ?| array['whatsapp','feedback_contact_allowed']);
     return new;
   end if;
   if jsonb_typeof(new.raw_user_meta_data -> 'whatsapp') is distinct from 'string' then
