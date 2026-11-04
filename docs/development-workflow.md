@@ -37,6 +37,11 @@
 
 # Processo de desenvolvimento do Selah
 
+O painel `#owner` oferece comunidade e ofensivas e moderação em rotas próprias.
+O item de navegação depende da confirmação da RPC `get_my_discussion_access`
+para a sessão atual; falhas negam acesso. OWNER e ADMIN editorial legado são
+independentes. A mudança de frontend não instala migrações nem publica versões.
+
 > Etapa 23.5.1: STAGING pode gerar build local mediante sinal explícito e
 > contrato HTTPS completo; PROD continua bloqueado. Não executar deploy por
 > consequência do build. Ver [staging-deployment.md](staging-deployment.md);

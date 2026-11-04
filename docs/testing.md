@@ -1,5 +1,13 @@
 # Inventário e execução de testes
 
+## Painel OWNER em STAGING
+
+`OwnerPanel.test.tsx` simula as RPCs na fronteira e cobre as três rotas OWNER,
+leitor, ADMIN legado, respostas inválidas ou falha da RPC, troca de sessão,
+resposta atrasada e logout. A confirmação de acesso usa exclusivamente
+`get_my_discussion_access`; os componentes mantêm as verificações no servidor.
+Os testes não conectam ao STAGING e não substituem homologação em navegador.
+
 ## Prompt 73 — elegibilidade OWNER e compatibilidade local
 
 O teste novo `owner-eligibility.sql` primeiro falhou contra as 15 migrações:

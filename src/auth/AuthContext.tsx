@@ -4,6 +4,9 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { AuthContext, authMessage } from './auth'
 import { disconnectReminderDevice, synchronizeReminderSession } from '../notifications/session'
+import { createDiscussionRepository } from '../discussion/repository'
+
+const discussion = createDiscussionRepository(supabase)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [callbackError] = useState(() => new URLSearchParams(location.hash.slice(1)).has('error') ? 'O link de autenticação é inválido ou expirou. Solicite um novo e-mail.' : '')
@@ -11,6 +14,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [recovery, setRecovery] = useState(false)
   const [adminAuthorization, setAdminAuthorization] = useState<{ session: Session; allowed: boolean } | null>(null)
+  const [ownerAuthorization, setOwnerAuthorization] = useState<{ session: Session; allowed: boolean } | null>(null)
   const [error, setError] = useState(callbackError)
   useEffect(() => {
     let active = true
@@ -19,6 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!active) return
       eventReceived = true
       setAdminAuthorization(null)
+      setOwnerAuthorization(null)
       setSession(next ? { ...next } : null)
       setLoading(false)
       setError(next ? '' : callbackError)
@@ -44,6 +49,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     return () => { active = false }
   }, [session, recovery])
+  useEffect(() => {
+    let active = true
+    if (session && !recovery) {
+      discussion.ownerAccess().then(allowed => { if (active) setOwnerAuthorization({ session, allowed }) }, () => { if (active) setOwnerAuthorization({ session, allowed: false }) })
+    }
+    return () => { active = false }
+  }, [session, recovery])
   const reminderUser = session && !recovery ? session.user.id : null
   useEffect(() => { synchronizeReminderSession(reminderUser) }, [reminderUser])
   async function logout() {
@@ -52,8 +64,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session) await disconnectReminderDevice(session.user.id)
       const { error } = await supabase.auth.signOut()
       if (error) throw error
-      setSession(null); setAdminAuthorization(null); setRecovery(false); location.hash = 'login'
+      setSession(null); setAdminAuthorization(null); setOwnerAuthorization(null); setRecovery(false); location.hash = 'login'
     } catch (error) { setError(authMessage(error)) }
   }
-  return <AuthContext.Provider value={{ session, loading, recovery, admin: Boolean(session && adminAuthorization?.session === session && adminAuthorization.allowed), adminLoading: Boolean(session && !recovery && adminAuthorization?.session !== session), error, logout, finishRecovery: () => setRecovery(false) }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ session, loading, recovery, admin: Boolean(session && adminAuthorization?.session === session && adminAuthorization.allowed), adminLoading: Boolean(session && !recovery && adminAuthorization?.session !== session), owner: Boolean(session && !recovery && ownerAuthorization?.session === session && ownerAuthorization.allowed), ownerLoading: Boolean(session && !recovery && ownerAuthorization?.session !== session), error, logout, finishRecovery: () => setRecovery(false) }}>{children}</AuthContext.Provider>
 }
