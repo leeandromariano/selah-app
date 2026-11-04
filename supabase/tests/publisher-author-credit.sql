@@ -8,13 +8,13 @@ language plpgsql as $$ begin
   if value is distinct from true then raise exception 'FAIL: %', label; end if;
 end $$;
 create function pg_temp.affected(statement text, expected bigint, label text) returns void
-language plpgsql as $
+language plpgsql as $$
 declare actual bigint;
 begin
   execute statement;
   get diagnostics actual = row_count;
   if actual <> expected then raise exception 'FAIL: % expected %, got %', label, expected, actual; end if;
-end $;
+end $$;
 create function pg_temp.denied(statement text, label text) returns void
 language plpgsql as $$
 begin
