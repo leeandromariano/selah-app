@@ -86,8 +86,18 @@ update public.devotionals set content='Revisão sintética' where title='Rascunh
 select public.submit_devotional_for_review((select id from public.devotionals where title='Rascunho sintético'));
 select pg_temp.ok((select count(*)=1 from public.devotionals where title='Rascunho sintético'
  and review_requested_at is not null and status='draft'), 'submitted draft stays private');
+select pg_temp.denied($q$select public.submit_devotional_for_review('10000000-0000-4000-8000-000000000001')$q$,
+  'publisher cannot submit another record');
 select pg_temp.affected($q$update public.devotionals set content='Tentativa após envio'
  where title='Rascunho sintético'$q$, 0, 'submitted draft is no longer editable');
+reset role;
+
+-- Reader cannot see someone else's unpublished submission.
+select set_config('request.jwt.claims', jsonb_build_object('sub',
+  (select user_id from publisher_test_ids where role='reader'), 'role','authenticated')::text, true);
+set local role authenticated;
+select pg_temp.ok((select count(*)=0 from public.devotionals
+ where title='Rascunho sintético'), 'reader cannot see submitted draft');
 reset role;
 
 -- Admin can review, but cannot manage publisher roles.
@@ -109,6 +119,18 @@ set local role authenticated;
 select pg_temp.ok((select count(*)=1 from public.devotionals where title='Rascunho sintético'
  and author_name='Autora Convidada'), 'readers see attributed publication');
 select pg_temp.denied('select * from private.devotional_publishers', 'private membership inaccessible');
+reset role;
+
+-- Revocation becomes effective immediately without renewing the access token.
+select set_config('request.jwt.claims', jsonb_build_object('sub',
+  (select user_id from publisher_test_ids where role='owner'), 'role','authenticated')::text, true);
+set local role authenticated;
+select public.owner_manage_publisher((select username from publisher_test_ids where role='publisher'),false);
+reset role;
+select set_config('request.jwt.claims', jsonb_build_object('sub',
+  (select user_id from publisher_test_ids where role='publisher'), 'role','authenticated')::text, true);
+set local role authenticated;
+select pg_temp.ok(public.get_my_publisher_access()=false,'revocation blocks publisher with same claims');
 reset role;
 
 rollback;
