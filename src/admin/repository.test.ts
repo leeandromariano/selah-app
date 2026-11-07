@@ -17,6 +17,12 @@ describe('contrato editorial', () => {
     expect(dateTimeInput(publicationInstant(changed, original))).toBe(changed)
     expect(() => publicationInstant('invalid', null)).toThrow()
   })
+  it('guarda seleção estruturada sem copiar conteúdo bíblico e preserva o contrato legado', () => {
+    const selection = { translation: 'nvt', book: 'genesis', chapter: 1, verse: 1, endVerse: 1 }
+    expect(editorialFields({ ...editorialFixture, bible_reference: 'Gênesis 1:1', bible_text: null, bible_selection: selection })).toEqual(expect.objectContaining({ bible_reference: 'Gênesis 1:1', bible_text: null, bible_selection: selection }))
+    expect(() => editorialFields({ ...editorialFixture, bible_selection: selection })).toThrow()
+    expect(editorialFields(editorialFixture).bible_text).toBe('Texto fictício')
+  })
   it('falha fechada antes da consulta se não houver autorização', async () => {
     const from = vi.fn()
     const rpc = vi.fn().mockResolvedValue({ error: { code: '42501' } })

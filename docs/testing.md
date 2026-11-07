@@ -1,5 +1,37 @@
 # Inventário e execução de testes
 
+## Destaques e anotações bíblicas
+
+`hostedGateway.test.ts` exercita o candidato de rota hospedada com dependências
+fictícias: autenticação, isolamento do token, limite e falha fechada. Não prova
+deploy, D1, quota do fornecedor ou integração hospedada real.
+
+`BibleFavorites.test.tsx` cobre listagem, paginação, atribuição, referência com
+intervalo e tratamento de erro; `attribution.test.ts` verifica a preservação do
+aviso de direitos ao retirar a apresentação promocional conhecida da ARA.
+
+`annotations.test.ts` testa filtros por conta e resposta recusada;
+`BibleVerseList.test.tsx` cobre cor, anotação, cópia com atribuição, remoção e
+erros, além de favoritar e desfavoritar; `BibleAnnotationsIntegration.test.tsx` cobre troca de conta enquanto
+uma resposta está pendente. `supabase/tests/bible-personal-annotations.sql`
+exercita isolamento, alterações e exclusões da própria conta e bloqueio de
+acesso anônimo. `supabase/tests/bible-favorite-verses.sql` cobre a mesma fronteira
+para favoritos. Testes equivalentes foram executados com contas fictícias e
+ROLLBACK, incluindo a proteção para cadastro Google pendente. Nenhum texto real
+ou credencial é incluído nas fixtures.
+
+## Seleção bíblica nos devocionais locais
+
+`BiblePassagePicker.test.tsx` cobre escolha de tradução e passagem, intervalos
+agrupados e falhas sem persistir o texto da API. `DevotionalPassage.test.tsx`
+verifica duplo clique, referência exata e link acessível; o teste de passagem
+legada cobre referências reconhecidas e não reconhecidas. Os testes de ADMIN e
+PUBLICADOR usam fronteira simulada para salvar a seleção. O roteiro SQL
+`supabase/tests/devotional-bible-selection.sql` usa dados fictícios e rollback;
+as verificações equivalentes de ADMIN, PUBLICADOR, revisão e negação a leitor
+foram exercitadas em transações revertidas no banco local. Não substituem
+homologação hospedada ou verificação de licenças para monetização.
+
 ## Painel OWNER em STAGING
 
 `OwnerPanel.test.tsx` simula as RPCs na fronteira e cobre as três rotas OWNER,

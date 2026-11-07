@@ -6,13 +6,18 @@ import { supabase } from '../lib/supabase'
 import { adminBoundary, editorialFixture } from '../test/adminBoundary'
 import { dateTimeInput } from '../admin/repository'
 
+vi.mock('./BiblePassagePicker', () => ({ BiblePassagePicker: ({ onSelect }: { onSelect: (value: unknown) => void }) => <button type="button" onClick={() => onSelect({ translation: 'nvt', book: 'genesis', chapter: 1, verse: 1, endVerse: 1, reference: 'Gênesis 1:1' })}>Usar passagem fictícia</button> }))
+vi.mock('../bible/editorialFeature', () => ({ bibleEditorialEnabled: true }))
+
 function openAdmin() {
   location.hash = 'admin'
   vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: editorialFixture.author_id, user_metadata: {} } } }, error: null } as never)
   return render(<App />)
 }
 async function fill(user: ReturnType<typeof userEvent.setup>) {
-  for (const [label, value] of [['Autor (crédito público)', 'Autor Convidado'], ['Título', 'Novo Texto Fictício'], ['Referência bíblica', 'Ref fictícia'], ['Texto bíblico', 'Texto fictício'], ['Reflexão', 'Reflexão fictícia'], ['Para refletir', 'Pergunta fictícia?']]) await user.type(screen.getByLabelText(label), value)
+  for (const [label, value] of [['Autor (crédito público)', 'Autor Convidado'], ['Título', 'Novo Texto Fictício'], ['Reflexão', 'Reflexão fictícia'], ['Para refletir', 'Pergunta fictícia?']]) await user.type(screen.getByLabelText(label), value)
+  await user.click(screen.getByRole('button', { name: 'Selecionar passagem' }))
+  await user.click(screen.getByRole('button', { name: 'Usar passagem fictícia' }))
 }
 describe('painel administrativo real', () => {
   it('preserva comunidade após foco e renovação de sessão e remontagem', async () => {
@@ -94,7 +99,7 @@ describe('painel administrativo real', () => {
     await fill(user)
     await user.click(screen.getByRole('button', { name: 'Salvar devocional' }))
     expect(await screen.findByRole('status')).toHaveTextContent('Rascunho salvo')
-    expect(table.insert).toHaveBeenCalledWith({ author_name: 'Autor Convidado', title: 'Novo Texto Fictício', bible_reference: 'Ref fictícia', bible_text: 'Texto fictício', content: 'Reflexão fictícia', reflection_question: 'Pergunta fictícia?', status: 'draft', publish_at: null, author_id: editorialFixture.author_id })
+    expect(table.insert).toHaveBeenCalledWith({ author_name: 'Autor Convidado', title: 'Novo Texto Fictício', bible_reference: 'Gênesis 1:1', bible_text: null, bible_selection: { translation: 'nvt', book: 'genesis', chapter: 1, verse: 1, endVerse: 1 }, content: 'Reflexão fictícia', reflection_question: 'Pergunta fictícia?', status: 'draft', publish_at: null, author_id: editorialFixture.author_id })
   })
   it('agenda data futura e informa que ainda exige publicação explícita', async () => {
     const table = adminBoundary()
@@ -128,7 +133,8 @@ describe('painel administrativo real', () => {
     const user = userEvent.setup()
     openAdmin()
     await user.click(await screen.findByRole('button', { name: 'Editar' }))
-    expect(screen.getAllByRole('textbox')).toHaveLength(6)
+    expect(screen.getByText(/Passagem: Referência fictícia/)).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Selecionar passagem' })).toBeVisible()
     await user.click(screen.getByRole('button', { name: 'Publicar agora' }))
     expect(await screen.findByRole('status')).toHaveTextContent('publicado e salvo')
     const payload = table.update.mock.calls[0][0]

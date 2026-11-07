@@ -1,5 +1,84 @@
 # Leitor bíblico local — Etapa 23.3
 
+## Integração API.Bible em desenvolvimento — 07/11/2026
+
+Preparação de hospedagem: existe um candidato de função Cloudflare Pages que
+valida a sessão no Supabase Auth, guarda a chave apenas no servidor e limita
+as requisições usando um banco D1 dedicado. A configuração não foi criada nem
+implantada; o cliente preparado para STAGING envia o token da sessão à rota da
+mesma origem, mas os controles da Bíblia continuam desativados nesse ambiente.
+O limite diário é uma proteção preliminar,
+não garante conformidade com a janela de faturamento nem cobre outros serviços
+que compartilhem a chave. Revisar cota, privacidade, retenção dos contadores,
+limpeza, custos, CSP/FUMS e plano de reversão antes de disponibilizar.
+
+O responsável selecionou NVT (`41a6caa722a21d88-01`), ARA
+(`afc24de218ef6e38-01`, identificador a confirmar na conta) e NTLH
+(`acef2bc597c450a1-01`) no plano Starter não comercial. O gateway local
+`src/bible/apiGateway.ts` valida edição, livro e capítulo e mantém a chave no
+servidor. Ele está ligado somente ao servidor e à interface de desenvolvimento local.
+O cliente e o parser locais recusam respostas sem atribuição, token FUMS ou
+numeração inequívoca; os exemplos dos testes são exclusivamente fictícios.
+No servidor Vite local, as três traduções podem ser testadas via variável de
+processo `BIBLE_API_KEY` (não `VITE_*`); o endpoint local limita chamadas e recusa
+requisições entre sites. A chave não é persistida no código. O leitor exige uma
+atribuição e registra FUMS sem enviar ID do usuário antes de exibir o capítulo.
+O tratamento de respostas não reconhecidas falha fechado. A rota local não é
+uma rota para STAGING/PROD.
+
+Validação posterior: em 07/11/2026, Esdras 1 foi exibido no navegador local
+para NVT, ARA e NTLH. A NTLH agrupa os versículos 9–10; o leitor foi ajustado
+para apresentar intervalos e reconhecer uma referência a qualquer versículo
+do grupo. Isso não valida todos os capítulos, o contrato hospedado ou a licença
+para uso comercial. O conteúdo devolvido pela API não foi gravado em fixtures.
+No desenvolvimento local o seletor apresenta apenas NVT, ARA e NTLH; a NVI
+indisponível e os dados demonstrativos foram ocultados, e a NVT é a abertura
+padrão. O comportamento anterior do build hospedado permanece sem ativação.
+
+### Passagens nos devocionais — em desenvolvimento
+
+Uma migração incremental local e um seletor foram preparados para guardar a
+tradução, livro, capítulo e intervalo em `bible_selection`, sem persistir o
+texto da API. Leituras buscarão o texto atual e mostrarão a atribuição, com
+abertura da passagem por duplo clique e link acessível. Os registros antigos
+preservam `bible_text`; referências reconhecíveis abrem na NVT, indicada no
+link, sem atribuir essa versão ao texto original. A migração foi exercitada
+em transações revertidas com identidades fictícias para ADMIN e PUBLICADOR,
+inclusive envio para revisão e negação a leitor, e foi aplicada ao banco local
+em 07/11/2026. O fluxo está habilitado somente no desenvolvimento local, em
+`editorialFeature.ts`. Não foi aplicado a STAGING ou produção. A API.Bible exige que conteúdo armazenado não
+esteja desatualizado; a leitura dinâmica evita armazenamento permanente do
+texto da API. Ver https://care.api.bible/article/401-caching-content.
+
+Antes de ativar em STAGING: confirmar os identificadores e licença exata via resposta da
+conta, integrar apresentação fiel dos capítulos e copyright por edição,
+validar FUMS no navegador, implementar autenticação e controle de abuso e
+consumo de cota na rota hospedada, e testar a integração real com chave guardada
+no servidor. A documentação da API para metadados FUMS difere entre exemplos
+das versões; confirmar o contrato efetivo. Não inserir chave em `VITE_*` ou no
+Git. Sem essas etapas, a Bíblia permanece demonstrativa e não está pronta para
+STAGING. Nenhuma licença para monetização é presumida.
+
+### Destaques e anotações pessoais — preparação local
+
+O leitor permite marcar o versículo inteiro em amarelo, azul-claro ou rosa,
+copiar com referência e atribuição, e manter uma anotação opcional. Versículos
+agrupados pela tradução são tratados como um único trecho. A migração
+`bible_personal_annotations` armazena somente conta, referência, cor e anotação;
+nenhum texto da API é guardado. As políticas RLS restringem leitura e escrita à
+conta autenticada e bloqueiam contas Google com cadastro pendente. Em testes
+reversíveis com identidades fictícias, uma conta não leu, alterou ou apagou
+registros de outra; o acesso anônimo e o cadastro pendente foram negados.
+A migração foi aplicada ao Supabase local em 07/11/2026 e os controles estão
+habilitados no ambiente local. Não há migração ou habilitação em STAGING/PROD
+nesta etapa.
+
+O menu de ações abre ao selecionar o próprio versículo. Copiar, anotar, usar
+cores e marcar favorito são ações independentes; favoritos usam tabela própria
+com RLS por conta, sem gravar texto bíblico e sem alterar notas anteriores. A
+migração de favoritos foi verificada em transação revertida com contas
+fictícias e aplicada ao banco local em 07/11/2026; STAGING/PROD não foram alterados.
+
 ## Validação manual informada pelo responsável — 9/9 aprovados
 
 1. A seção Bíblia aparece no menu e abre corretamente.
@@ -69,3 +148,9 @@ Sem tradução bíblica real, leitor completo, funcionamento offline ou validaç
 de licença, a funcionalidade ainda é demonstrativa e não resolve a necessidade
 de texto bíblico para o MVP. O cadastro aberto, confirmação de e-mail, bloqueios
 STAGING/PROD e proibição de entrega Web Push externa permanecem inalterados.
+# Lista de favoritos
+
+Na Bíblia local, Favoritados lista as passagens da conta em páginas de cinco,
+com texto obtido da API, atribuição e link para abrir o versículo no capítulo.
+O texto não é guardado na tabela de favoritos. O aviso de direitos aparece junto
+à leitura, sem caixa promocional. A lista requer a migração local de favoritos.

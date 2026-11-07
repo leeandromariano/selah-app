@@ -24,7 +24,7 @@ export function createPublisherRepository(client: Pick<SupabaseClient, 'from' | 
       const rows: PublisherDevotional[] = []
       for (let offset = 0; ; offset += 100) {
         const { data, error } = await client.from('devotionals')
-          .select(adminColumns)
+          .select<typeof adminColumns, PublisherDevotional>(adminColumns)
           .eq('author_id', userId)
           .order('created_at', { ascending: false })
           .order('id', { ascending: false })
@@ -40,7 +40,7 @@ export function createPublisherRepository(client: Pick<SupabaseClient, 'from' | 
       const query = id
         ? client.from('devotionals').update(fields).eq('id', id).eq('author_id', userId)
         : client.from('devotionals').insert({ ...fields, author_id: userId })
-      const { data, error } = await query.select(adminColumns).single()
+      const { data, error } = await query.select<typeof adminColumns, PublisherDevotional>(adminColumns).single()
       if (error) throw error
       if (!data || (id && data.id !== id)) throw { code: 'PGRST116' }
       return data as PublisherDevotional

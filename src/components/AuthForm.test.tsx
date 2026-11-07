@@ -8,7 +8,7 @@ describe('formulários de autenticação', () => {
   it('oferece entrada Google no STAGING sem solicitar senha ou transportar WhatsApp pela URL', async () => {
     const user = userEvent.setup()
     render(<AuthForm register={false} googleEnabled />)
-    await user.click(screen.getByRole('button', { name: 'Continuar com Google' }))
+    await user.click(screen.getByRole('button', { name: 'Fazer Login com o Google' }))
     expect(supabase.auth.signInWithOAuth).toHaveBeenCalledOnce()
     expect(supabase.auth.signInWithOAuth).toHaveBeenCalledWith({
       provider: 'google', options: { redirectTo: location.origin + '/' },
@@ -17,7 +17,7 @@ describe('formulários de autenticação', () => {
   })
   it('não inicia OAuth se o modo Google não estiver habilitado', async () => {
     render(<AuthForm register={false} googleEnabled={false} />)
-    expect(screen.queryByRole('button', { name: 'Continuar com Google' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Fazer Login com o Google' })).not.toBeInTheDocument()
     expect(supabase.auth.signInWithOAuth).not.toHaveBeenCalled()
   })
 

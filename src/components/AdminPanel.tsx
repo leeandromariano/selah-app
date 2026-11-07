@@ -7,6 +7,8 @@ import type { AdminDevotional, DevotionalInput, DevotionalStatus } from '../admi
 import { Heading, Icon } from './UI'
 import { CommunityPanel } from './CommunityPanel'
 import { ModerationLink, ModerationPanel } from './ModerationPanel'
+import { BiblePassagePicker } from './BiblePassagePicker'
+import { bibleEditorialEnabled } from '../bible/editorialFeature'
 
 const repository = createAdminRepository(supabase)
 const blank: DevotionalInput = { author_name: '', title: '', bible_reference: '', bible_text: '', content: '', reflection_question: '', publish_at: null, status: 'draft' }
@@ -27,6 +29,7 @@ function EditorialPanel({ userId, community, moderation }: { userId: string; com
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [attempt, setAttempt] = useState(0)
+  const [showBiblePicker, setShowBiblePicker] = useState(false)
   const active = useRef(false)
   useEffect(() => { active.current = true; return () => { active.current = false } }, [])
   useEffect(() => {
@@ -34,7 +37,7 @@ function EditorialPanel({ userId, community, moderation }: { userId: string; com
     repository.list().then(data => { if (current) { setItems(data); setLoading(false); setReady(true); setError('') } }).catch(error => { if (current) { setError(adminMessage(error)); setLoading(false); setReady(false) } })
     return () => { current = false }
   }, [attempt])
-  function edit(item: AdminDevotional | DevotionalInput) { setEditing({ ...item }); setDate(dateTimeInput(item.publish_at)); setError(''); setNotice('') }
+  function edit(item: AdminDevotional | DevotionalInput) { setEditing({ ...item }); setShowBiblePicker(false); setDate(dateTimeInput(item.publish_at)); setError(''); setNotice('') }
   async function save(publishNow: boolean) {
     if (!editing || saving || !ready) return
     setSaving(true); setError(''); setNotice('')
@@ -74,7 +77,8 @@ function EditorialPanel({ userId, community, moderation }: { userId: string; com
         <div className="stats">{[{ title: 'Devocionais', value: items.length }, ...(['draft', 'scheduled', 'published'] as const).map(status => ({ title: statusLabels[status], value: items.filter(item => item.status === status).length })), { title: 'Em revisão', value: items.filter(item => item.status === 'draft' && item.review_requested_at).length }].map(stat => <div className="stat" key={stat.title}><Icon name="book" /><p>{stat.title}</p><strong>{stat.value}</strong><small>Contagem de conteúdo</small></div>)}</div>
         <div className="section-heading"><h2>Gerenciar devocionais</h2><button className="button primary" disabled={saving} onClick={() => edit(blank)}>+ Novo devocional</button></div>
         {notice && <p className="success" role="status">{notice}</p>}
-        {editing && <form className="editor" onSubmit={submit} noValidate><h3>{'id' in editing ? 'Editar devocional' : 'Novo devocional'}</h3><fieldset disabled={saving}><div className="form-grid"><label>Autor (crédito público)<input required maxLength={120} value={editing.author_name ?? ''} onChange={event => setEditing({ ...editing, author_name: event.target.value })} /></label>{([{ key: 'title', label: 'Título' }, { key: 'bible_reference', label: 'Referência bíblica' }, { key: 'bible_text', label: 'Texto bíblico' }, { key: 'content', label: 'Reflexão' }, { key: 'reflection_question', label: 'Para refletir' }] as const).map(field => <label key={field.key}>{field.label}<textarea required maxLength={field.key === 'title' || field.key === 'bible_reference' ? 200 : undefined} value={editing[field.key]} onChange={event => setEditing({ ...editing, [field.key]: event.target.value })} /></label>)}
+        {editing && <form className="editor" onSubmit={submit} noValidate><h3>{'id' in editing ? 'Editar devocional' : 'Novo devocional'}</h3><fieldset disabled={saving}><div className="form-grid"><label>Autor (crédito público)<input required maxLength={120} value={editing.author_name ?? ''} onChange={event => setEditing({ ...editing, author_name: event.target.value })} /></label>{([{ key: 'title', label: 'Título' }, ...(!bibleEditorialEnabled ? [{ key: 'bible_reference', label: 'Referência bíblica' }, { key: 'bible_text', label: 'Texto bíblico' }] as const : []), { key: 'content', label: 'Reflexão' }, { key: 'reflection_question', label: 'Para refletir' }] as const).map(field => <label key={field.key}>{field.label}<textarea required maxLength={field.key === 'title' || field.key === 'bible_reference' ? 200 : undefined} value={editing[field.key] ?? ''} onChange={event => setEditing({ ...editing, [field.key]: event.target.value })} /></label>)}
+          {bibleEditorialEnabled && <div><p>Passagem: {editing.bible_reference || 'nenhuma selecionada'}{editing.bible_selection && ` · ${editing.bible_selection.translation.toUpperCase()}`}</p><button type="button" className="button secondary" onClick={() => setShowBiblePicker(value => !value)}>Selecionar passagem</button>{showBiblePicker && <BiblePassagePicker onSelect={({ reference, ...selection }) => { setEditing({ ...editing, bible_reference: reference, bible_text: null, bible_selection: selection }); setShowBiblePicker(false) }} />}</div>}
           <label>Situação<select value={editing.status} onChange={event => setEditing({ ...editing, status: event.target.value as DevotionalStatus })}>{(['draft', 'scheduled', 'published'] as const).map(status => <option key={status} value={status}>{statusLabels[status]}</option>)}</select></label>
           <label>Data e hora (fuso do dispositivo)<input type="datetime-local" value={date} onChange={event => setDate(event.target.value)} /></label>
         </div><p className="muted">Fuso do editor: {Intl.DateTimeFormat().resolvedOptions().timeZone}. O acervo usa America/Sao_Paulo. Publicar agora disponibiliza o texto imediatamente.</p>

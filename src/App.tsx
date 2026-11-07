@@ -1,4 +1,5 @@
-import { environmentName } from './lib/supabase'
+import { environmentName, supabase } from './lib/supabase'
+import { createBibleAnnotationStore } from './bible/annotations'
 import { useEffect, useState } from 'react'
 import { AuthForm } from './components/AuthForm'
 import { AdminPanel } from './components/AdminPanel'
@@ -17,6 +18,8 @@ import { BibleReader } from './components/BibleReader'
 import { OwnerPanel } from './components/OwnerPanel'
 import { PublisherPanel } from './components/PublisherPanel'
 import { GoogleOnboarding } from './components/GoogleOnboarding'
+
+const bibleAnnotationStore = createBibleAnnotationStore(supabase)
 
 function route() {
   const hash = location.hash.slice(1)
@@ -42,7 +45,7 @@ function AppContent() {
     {page === 'configuracoes' && <ReminderSettings />}
     {page === 'privacidade' && <PrivacyPolicy />}
     {page === 'minha-jornada' && <JourneyPage />}
-    {(page === 'biblia' || page.startsWith('biblia/')) && <BibleReader page={page} />}
+    {(page === 'biblia' || page.startsWith('biblia/')) && <BibleReader page={page} userId={auth.session?.user.id} annotationStore={bibleAnnotationStore} />}
     {(page === 'admin' || page === 'admin/comunidade' || page === 'admin/moderacao') && ((auth.loading || auth.adminLoading) ? <p role="status">Verificando acesso administrativo…</p> : auth.session && auth.admin && !auth.recovery ? <AdminPanel community={page === 'admin/comunidade'} moderation={page === 'admin/moderacao'} /> : <div className="info" role="alert">Acesso restrito a administradores. <a href="#login">Entrar</a></div>)}
     {(page === 'owner' || page === 'owner/comunidade' || page === 'owner/moderacao' || page === 'owner/publicadores') && (auth.ownerLoading ? <p role="status">Verificando acesso OWNER…</p> : auth.owner ? <OwnerPanel page={page} /> : <div className="info" role="alert">Acesso restrito ao OWNER.</div>)}
     {page === 'publicador' && <PublisherPanel />}
