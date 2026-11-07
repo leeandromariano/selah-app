@@ -28,7 +28,16 @@ describe('acesso hospedado à Bíblia', () => {
     const result = await hostedBibleGateway(request({ authorization: 'Bearer fictional-token' }), config)
     expect(result.status).toBe(200)
     expect(config.quota.consume).toHaveBeenCalledTimes(2)
+    expect(config.fetcher.mock.calls[0][1].redirect).toBe('manual')
+    expect(config.fetcher.mock.calls[1][1].redirect).toBe('manual')
     expect(config.fetcher.mock.calls[1][1].headers).toEqual({ 'api-key': 'fictional-secret', Accept: 'application/json' })
+  })
+  it('rejeita redirecionamento da autenticação sem encaminhar credenciais', async () => {
+    const config = options()
+    config.fetcher.mockReset().mockResolvedValue(new Response(null, { status: 302, headers: { Location: 'https://other.invalid/' } }))
+    expect((await hostedBibleGateway(request({ authorization: 'Bearer fictional-token' }), config)).status).toBe(401)
+    expect(config.fetcher).toHaveBeenCalledOnce()
+    expect(config.quota.consume).not.toHaveBeenCalled()
   })
   it('falha fechado quando o limite foi atingido', async () => {
     const config = options()

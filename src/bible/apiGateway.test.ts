@@ -11,6 +11,7 @@ describe('bible API gateway', () => {
     const [url, options] = fetcher.mock.calls[0] as [URL, RequestInit]
     expect(url.origin).toBe('https://rest.api.bible')
     expect(url.pathname).toBe('/v1/bibles/41a6caa722a21d88-01/chapters/JHN.3')
+    expect(options.redirect).toBe('manual')
     expect(options.headers).toEqual({ 'api-key': 'fictional-key', Accept: 'application/json' })
     expect(await result.text()).not.toContain('fictional-key')
   })
@@ -29,6 +30,14 @@ describe('bible API gateway', () => {
     const result = await bibleGateway(request('translation=ntlh&book=genesis&chapter=1'), { apiKey: 'fictional-key', fetcher })
     expect(result.status).toBe(502)
     expect(await result.text()).not.toMatch(/fictional-key|private upstream error/)
+  })
+
+  it('does not follow provider redirects with the API key', async () => {
+    const fetcher = vi.fn().mockResolvedValue(new Response(null, { status: 302, headers: { Location: 'https://other.invalid/' } }))
+    const result = await bibleGateway(request('translation=nvt&book=genesis&chapter=1'), { apiKey: 'fictional-key', fetcher })
+    expect(result.status).toBe(502)
+    expect(fetcher).toHaveBeenCalledOnce()
+    expect(fetcher.mock.calls[0][1].redirect).toBe('manual')
   })
 
   it('reports the provider status without forwarding its error body or the key', async () => {

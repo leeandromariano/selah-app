@@ -25,7 +25,7 @@ export async function bibleGateway(request: Request, { apiKey, fetcher = fetch }
   const endpoint = new URL(`https://rest.api.bible/v1/bibles/${editions[translation]}/chapters/${apiBookIds[index]}.${chapter}`)
   endpoint.search = new URLSearchParams({ 'content-type': 'json', 'include-notes': 'false', 'include-titles': 'false', 'include-verse-numbers': 'true', 'fums-version': '3' }).toString()
   try {
-    const response = await fetcher(endpoint, { headers: { 'api-key': apiKey, Accept: 'application/json' }, redirect: 'error' })
+    const response = await fetcher(endpoint, { headers: { 'api-key': apiKey, Accept: 'application/json' }, redirect: 'manual' })
     if (!response.ok) return json({ error: 'Não foi possível carregar o capítulo.', providerStatus: response.status }, 502)
     const payload: unknown = await response.json()
     // The browser validates the response and only renders safe text nodes.

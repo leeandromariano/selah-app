@@ -25,7 +25,7 @@ export async function hostedBibleGateway(request: Request, options: HostedBibleO
   if (!authorization || !/^Bearer [A-Za-z0-9._-]+$/.test(authorization)) return failure(401)
   try {
     // Validate the access token with Supabase Auth, not decoded user metadata.
-    const userResponse = await fetcher(`${supabaseUrl}/auth/v1/user`, { headers: { Authorization: authorization, apikey: supabasePublicKey }, redirect: 'error' })
+    const userResponse = await fetcher(`${supabaseUrl}/auth/v1/user`, { headers: { Authorization: authorization, apikey: supabasePublicKey }, redirect: 'manual' })
     if (!userResponse.ok) return failure(401)
     const user = await userResponse.json() as { id?: unknown }
     if (typeof user.id !== 'string' || !/^[a-f0-9-]{36}$/i.test(user.id)) return failure(401)
