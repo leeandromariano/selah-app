@@ -1,4 +1,10 @@
 .bible-reader { max-width: 850px; margin: 0 auto; }
+.reading-font-control { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; margin:1rem 0; color:var(--text-muted); font-size:.85rem; }
+.reading-font-control input { width:clamp(120px,30vw,220px); accent-color:var(--accent); }
+.reading-font-control .reading-font-large { font-size:1.35rem; }
+.reading-font-control output { min-width:3ch; font-variant-numeric:tabular-nums; }
+.bible-chapter .bible-verse, .reading-column .reading>p:not(.muted), .reading-column .reading blockquote { font-size:var(--reading-font-size,18px); }
+.bible-multi-tools { box-shadow:0 8px 24px var(--shadow); }
 .bible-controls { display: grid; grid-template-columns: 1fr 1fr 120px; gap: 1rem; margin: 1.5rem 0; }
 .bible-controls label { display: grid; gap: .4rem; font-weight: 600; min-width: 0; }
 .bible-controls select { width: 100%; min-width: 0; }

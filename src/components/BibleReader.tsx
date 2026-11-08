@@ -12,6 +12,7 @@ import type { AnnotationStore } from '../bible/annotations'
 import { BibleVerseList } from './BibleVerseList'
 import { BibleFavorites } from './BibleFavorites'
 import { Heading } from './UI'
+import { ReadingFontControl } from './ReadingFontControl'
 import './bible.css'
 
 const defaultLocation: Location = { translation: bibleAvailable ? 'nvt' : 'demonstracao', book: 'genesis', chapter: 1 }
@@ -66,6 +67,7 @@ export function BibleReader({ page, source = bibleProvider, userId, annotationSt
   return <section className="bible-reader" aria-label="Leitor bíblico">
     <Heading eyebrow="LEITURA" title="Bíblia" description="Escolha um livro e um capítulo para ler." />
     {bibleFavoritesEnabled && userId && annotationStore && <button className="button secondary bible-favorites-toggle" aria-expanded={showFavorites} onClick={() => setShowFavorites(value => !value)}>{showFavorites ? '← Voltar à Bíblia' : '♡ Favoritados'}</button>}
+    <ReadingFontControl />
     {showFavorites && userId && annotationStore ? <BibleFavorites key={userId} userId={userId} store={annotationStore} source={source} onOpen={() => setShowFavorites(false)} /> : <>
     <div className="bible-controls">
       <label>Tradução<select value={translation.id} onChange={event => go({ translation: event.target.value })}>{source.translations.map(item => <option key={item.id} value={item.id} disabled={!item.available}>{item.name}{!item.available ? ' — indisponível' : ''}</option>)}</select></label>

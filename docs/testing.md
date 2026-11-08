@@ -2390,3 +2390,7 @@ A retomada local e testada com armazenamento simulado e Chromium com backend fic
 A fronteira de Preview valida origem exata, build autorizado e rejeicao de dominios semelhantes em hostedEnvironment.test.ts.
 
 O acervo testa busca por titulo e referencia sem acentos, ordenacao e resultado vazio com backend simulado.
+
+## Controles de leitura e seleção de versículos
+
+BibleVerseList.test.tsx cobre seleção de versículos avulsos no mesmo capítulo, aplicação de cor e favoritos, preservação de nota prévia e cópia com referência, atribuição e link do aplicativo. ReadingFontControl.test.tsx cobre ajuste e persistência local do tamanho da fonte. A responsividade dos botões de login é uma mudança de CSS e requer conferência visual em navegador estreito.
