@@ -65,7 +65,7 @@ function EditorialPanel({ userId, community, moderation }: { userId: string; com
   }
   function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); void save(false) }
   const format = (instant: string) => new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' }).format(new Date(instant))
-  return <><Heading eyebrow="CUIDANDO DE CADA MENSAGEM" title="Painel administrativo" description="Crie, revise e publique devocionais no Selah." />
+  return <><Heading eyebrow="CUIDANDO DE CADA MENSAGEM" title="Painel administrativo" description="Crie, revise e publique devocionais no Coram." />
     {owner && <button className="button secondary" aria-expanded={community} onClick={() => { location.hash = community ? 'admin' : 'admin/comunidade' }}>Comunidade e ofensivas</button>}
     {owner && community && <CommunityPanel />}
     <ModerationLink selected={moderation} />

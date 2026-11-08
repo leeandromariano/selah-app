@@ -10,7 +10,7 @@ describe('seletor de aparência acessível', () => {
   it('oferece Claro/Escuro/Sistema e pode ser usado por teclado sem sessão', async () => {
     const user=userEvent.setup();render(<AppearanceControl />)
     const select=screen.getByRole('combobox',{name:'Aparência'})
-    expect(select).toHaveValue('system')
+    expect(select).toHaveValue('dark')
     expect(screen.getAllByRole('option').map(option=>option.textContent)).toEqual(['Claro','Escuro','Sistema'])
     await user.tab();expect(select).toHaveFocus()
     await user.selectOptions(select,'dark')

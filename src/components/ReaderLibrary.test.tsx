@@ -139,7 +139,7 @@ describe('acervo persistente do leitor', () => {
     const boundary = libraryBoundary([today, ...olderPublications])
     open()
     expect(await screen.findByRole('heading', { name: today.title })).toBeVisible()
-    expect(screen.getByRole('button', { name: /Começar a leitura/ })).toBeVisible()
+    expect(screen.getByRole('button', { name: /Entrar na Presença/ })).toBeVisible()
     expect(screen.getByRole('heading', { name: olderPublications[0].title })).toBeVisible()
     expect(boundary.historyQuery.insert).not.toHaveBeenCalled()
   })
@@ -165,7 +165,7 @@ describe('acervo persistente do leitor', () => {
     libraryBoundary(olderPublications)
     open()
     expect(await screen.findByText('Nenhum devocional publicado para hoje.')).toBeVisible()
-    expect(screen.queryByRole('button', { name: /Começar a leitura/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Entrar na Presença/ })).not.toBeInTheDocument()
   })
   it('trata acervo vazio e histórico vazio sem usar os dados demonstrativos', async () => {
     libraryBoundary([])

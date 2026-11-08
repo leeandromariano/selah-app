@@ -55,7 +55,7 @@ export function GoogleOnboarding() {
   return <section className="auth-card" aria-label="Concluir cadastro Google">
     <div className="eyebrow">CADASTRO COM GOOGLE</div>
     <h1>Falta só concluir seu perfil.</h1>
-    <p>Você já entrou com sua conta Google. Para utilizar o Selah, escolha seu username e informe seu WhatsApp. Esses dados são necessários também no cadastro tradicional.</p>
+    <p>Você já entrou com sua conta Google. Para utilizar o Coram, escolha seu username e informe seu WhatsApp. Esses dados são necessários também no cadastro tradicional.</p>
     <p>O WhatsApp não será utilizado para solicitar feedback sem sua autorização específica. A opção abaixo inicia desmarcada e pode ser alterada posteriormente.</p>
     {error && <p role="alert" className="info">{error}</p>}
     <form onSubmit={submit} noValidate className="form-stack">
@@ -78,7 +78,7 @@ export function GoogleOnboarding() {
       </label>
       <label className="contact-choice">
         <input type="checkbox" checked={feedbackAllowed} disabled={pending} onChange={e => setFeedbackAllowed(e.target.checked)}/>
-        Autorizo contato individual pelo WhatsApp para solicitar feedback sobre o Selah (opcional). Posso revogar essa autorização no perfil.
+        Autorizo contato individual pelo WhatsApp para solicitar feedback sobre o Coram (opcional). Posso revogar essa autorização no perfil.
       </label>
       <p>Leia nossa <a href="/#privacidade" target="_blank" rel="noopener noreferrer">Política de privacidade</a>.</p>
       <button className="button primary" disabled={pending} type="submit">{pending ? 'Salvando…' : 'Concluir cadastro'}</button>

@@ -4,7 +4,7 @@ globalThis.SelahPush = (() => {
   function notification(payload, binding, now = new Date()) {
     if (!payload || payload.v !== 1 || !uuid.test(binding || '') || payload.binding !== binding) return null
     if (payload.kind === 'verify' && uuid.test(payload.proof || '')) return {
-      title: 'Confirme os lembretes do Selah', body: 'Volte às configurações para concluir a ativação.', path: '/#configuracoes', proof: payload.proof,
+      title: 'Confirme os lembretes do Coram', body: 'Volte às configurações para concluir a ativação.', path: '/#configuracoes', proof: payload.proof,
     }
     if (!['reading', 'share'].includes(payload.kind) || !uuid.test(payload.devotional || '') || !/^\d{4}-\d{2}-\d{2}$/.test(payload.day || '')) return null
     // Drop late delivery across BRT midnight. This is a stale-message guard,

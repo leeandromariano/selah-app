@@ -13,11 +13,11 @@ const messages = {
   completed_today: 'Conclusão de hoje registrada. Continue no seu ritmo.',
   interrupted: 'Você pode recomeçar hoje. Seus dias anteriores continuam na sua história.',
 }
-export function ConsistencySection({ userId, refreshKey = 0, showHistory = false }: { userId: string; refreshKey?: number; showHistory?: boolean }) {
+export function ConsistencySection({ userId, refreshKey = 0, showHistory = false, compact = false }: { userId: string; refreshKey?: number; showHistory?: boolean; compact?: boolean }) {
   // A new account always receives a fresh component and no prior reader state.
-  return <ConsistencyView key={userId} refreshKey={refreshKey} showHistory={showHistory} />
+  return <ConsistencyView key={userId} refreshKey={refreshKey} showHistory={showHistory} compact={compact} />
 }
-function ConsistencyView({ refreshKey, showHistory }: { refreshKey: number; showHistory: boolean }) {
+function ConsistencyView({ refreshKey, showHistory, compact }: { refreshKey: number; showHistory: boolean; compact: boolean }) {
   const [data, setData] = useState<Consistency | null>(null)
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null)
   const [attempt, setAttempt] = useState(0)
@@ -51,6 +51,11 @@ function ConsistencyView({ refreshKey, showHistory }: { refreshKey: number; show
   // Navigation follows the user's selection even while an older month is loading.
   const navigationMonth = selectedMonth ?? data?.current_month
   const previous = navigationMonth && shiftMonth(navigationMonth, -1), next = navigationMonth && shiftMonth(navigationMonth, 1)
+  if (compact) return <section className="coram-presence" aria-label="Sua presença diária" aria-busy={pending}>
+    <span className={`coram-presence-flame ${data?.today_completed ? 'lit' : ''}`} aria-hidden="true"><Icon name="flame" /></span>
+    <div><div className="eyebrow">UM DIA DE CADA VEZ</div><h2>{data ? data.current_streak > 0 ? `Dia ${data.current_streak} na Presença` : 'Seu primeiro dia na Presença' : 'Sua presença diária'}</h2><p>{data ? messages[data.status] : pending ? 'Carregando sua constância…' : error}</p></div>
+    {error && <button type="button" className="button secondary" disabled={pending} onClick={() => setAttempt(value => value + 1)}>Tentar novamente</button>}
+  </section>
   return <section className="consistency" aria-labelledby={titleId} aria-busy={pending}>
     <div className="section-heading"><div><div className="eyebrow">UM DIA DE CADA VEZ</div><h2 id={titleId}>Sua constância</h2></div><span className="muted">Horário de Brasília</span></div>
     {!data && pending && <p role="status">Carregando sua consistência…</p>}

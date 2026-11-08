@@ -5,7 +5,7 @@ export function ShareDevotional({ id }: { id: string }) {
   const [message, setMessage] = useState('')
   const link = devotionalShareLink(id, location.origin)
   if (!link) return null
-  const text = 'Convite para uma pausa com a Palavra no Selah. O link exige uma conta.'
+  const text = 'Convite para uma pausa com a Palavra no Coram. O link exige uma conta.'
   async function copy() {
     try { await navigator.clipboard.writeText(link!); setMessage('Link copiado.') }
     catch { setMessage('Selecione e copie o endereço abaixo.') }
@@ -14,7 +14,7 @@ export function ShareDevotional({ id }: { id: string }) {
     <div className="actions">
       <button className="button" onClick={async () => {
         if (typeof navigator.share !== 'function') { await copy(); return }
-        try { await navigator.share({ title: 'Selah', text, url: link }); setMessage('Compartilhamento aberto por sua escolha.') }
+        try { await navigator.share({ title: 'Coram', text, url: link }); setMessage('Compartilhamento aberto por sua escolha.') }
         catch { setMessage('Compartilhamento cancelado ou indisponível. Você pode copiar o link.') }
       }}>Compartilhar</button>
       {typeof navigator.share !== 'function' && <p>O compartilhamento nativo não está disponível. O botão Compartilhar copia o link.</p>}

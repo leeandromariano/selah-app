@@ -7,7 +7,7 @@ describe('transparência de consistência', () => {
   it('política pública explica acesso OWNER sem consultar ou exibir ranking', async () => {
     location.hash = 'privacidade'
     render(<App />)
-    expect(await screen.findByRole('heading', { name: 'Privacidade no Selah' })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: 'Privacidade no Coram' })).toBeVisible()
     expect(screen.getByText(/O ranking é administrativo, não público/)).toHaveTextContent('PUBLISHER')
     expect(screen.getByText(/O WhatsApp é um dado separado/)).toHaveTextContent('não será reutilizada')
     expect(screen.getByText(/O uso por menores de idade/)).toBeVisible()

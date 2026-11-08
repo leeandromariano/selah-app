@@ -96,7 +96,7 @@ describe('preferências e privacidade de lembretes', () => {
     expect(share).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('button', { name: 'Compartilhar' }))
     await screen.findByText('Compartilhamento aberto por sua escolha.')
-    expect(share).toHaveBeenCalledWith({ title: 'Selah', text: expect.stringContaining('exige uma conta'), url: location.origin + '/#leitura/' + id })
+    expect(share).toHaveBeenCalledWith({ title: 'Coram', text: expect.stringContaining('exige uma conta'), url: location.origin + '/#leitura/' + id })
   })
 })
 describe('protocolo real do service worker', () => {
