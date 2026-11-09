@@ -22,6 +22,7 @@
 .guided-panel h2 { margin-bottom: 1.3rem; font-size: clamp(1.4rem, 3vw, 2rem); }
 .guided-panel > p { line-height: 1.8; margin: 0 0 1rem; }
 .guided-panel blockquote { margin: 1rem 0; }
+.guided-panel blockquote .devotional-bible-link { display: flex; width: fit-content; margin-top: .75rem; }
 .devotional-chapter { margin: 1rem 0; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-soft); overflow: hidden; }
 .devotional-chapter summary { cursor: pointer; padding: .85rem 1rem; color: var(--accent); font-weight: 700; }
 .devotional-chapter summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
