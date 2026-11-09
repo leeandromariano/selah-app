@@ -1,11 +1,14 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { fetchApiChapter } from '../bible/apiClient'
 import { DevotionalPassage } from './DevotionalPassage'
 
 vi.mock('../bible/apiClient', () => ({ fetchApiChapter: vi.fn().mockResolvedValue({ verses: [{ number: 9, endNumber: 10, text: 'Passagem fictícia' }], copyright: 'Atribuição fictícia', fumsToken: 'ficticio' }) }))
 vi.mock('../bible/fums', () => ({ reportBibleView: vi.fn().mockResolvedValue(undefined) }))
 
 describe('passagem do devocional', () => {
+  beforeEach(() => vi.clearAllMocks())
+
   it('abre a referência exata ao clicar duas vezes e também oferece link acessível', async () => {
     const selection = { translation: 'ntlh', book: 'esdras', chapter: 1, verse: 9, endVerse: 10 }
     render(<DevotionalPassage reference="Esdras 1:9-10" selection={selection} />)
@@ -14,5 +17,31 @@ describe('passagem do devocional', () => {
     expect(screen.getByRole('link', { name: 'Abrir na Bíblia' })).toHaveAttribute('href', '#biblia/ntlh/esdras/1/9-10')
     fireEvent.doubleClick(text)
     expect(location.hash).toBe('#biblia/ntlh/esdras/1/9-10')
+  })
+
+  it('permite ler o capítulo inteiro na etapa sem navegar nem fazer uma segunda chamada à API', async () => {
+    vi.mocked(fetchApiChapter).mockResolvedValueOnce({
+      verses: [
+        { number: 8, text: 'Antes da passagem fictícia.' },
+        { number: 9, endNumber: 10, text: 'Passagem fictícia agrupada.' },
+        { number: 11, text: 'Depois da passagem fictícia.' },
+      ],
+      copyright: 'Atribuição fictícia', fumsToken: 'ficticio',
+    })
+    const selection = { translation: 'ntlh', book: 'esdras', chapter: 1, verse: 9, endVerse: 10 }
+    render(<DevotionalPassage reference="Esdras 1:9-10" selection={selection} inlineChapter />)
+    await screen.findByRole('link', { name: 'Abrir na Bíblia' })
+    const hash = location.hash
+    const disclosure = screen.getByText('Ler capítulo completo aqui').closest('details')!
+    expect(disclosure).not.toHaveAttribute('open')
+    fireEvent.click(screen.getByText('Ler capítulo completo aqui'))
+    expect(disclosure).toHaveAttribute('open')
+    expect(screen.getByRole('heading', { name: 'Esdras 1 · NTLH' })).toBeVisible()
+    expect(screen.getByText('Antes da passagem fictícia.')).toBeVisible()
+    expect(screen.getByText('Depois da passagem fictícia.')).toBeVisible()
+    expect(disclosure.querySelector('p.selected')).toHaveTextContent('9–10 Passagem fictícia agrupada.')
+    expect(disclosure).toHaveTextContent('Atribuição fictícia')
+    expect(fetchApiChapter).toHaveBeenCalledTimes(1)
+    expect(location.hash).toBe(hash)
   })
 })

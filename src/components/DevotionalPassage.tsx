@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { bibleHash } from '../bible/catalog'
+import { bibleHash, bookById } from '../bible/catalog'
 import { fetchApiChapter } from '../bible/apiClient'
 import { reportBibleView } from '../bible/fums'
+import { displayAttribution } from '../bible/attribution'
 import type { BibleSelectionRecord } from '../admin/repository'
 import type { ApiChapter } from '../bible/apiChapter'
 
-export function DevotionalPassage({ selection, reference }: { selection: BibleSelectionRecord; reference: string }) {
+export function DevotionalPassage({ selection, reference, inlineChapter = false }: { selection: BibleSelectionRecord; reference: string; inlineChapter?: boolean }) {
   const [chapter, setChapter] = useState<ApiChapter | null>(null)
   const [error, setError] = useState(false)
   useEffect(() => {
@@ -21,5 +22,8 @@ export function DevotionalPassage({ selection, reference }: { selection: BibleSe
   const href = bibleHash(selection)
   if (error || (chapter && !valid)) return <p role="alert">Não foi possível carregar a passagem bíblica. <a href={href}>Abrir na Bíblia</a></p>
   if (!chapter) return <p role="status">Carregando passagem bíblica…</p>
-  return <blockquote onDoubleClick={() => { location.hash = href }}><span>“</span>{matching.map(item => item.text).join(' ')}<cite>{reference} · {selection.translation.toUpperCase()}</cite><small>{chapter.copyright}</small><a className="text-link" href={href}>Abrir na Bíblia</a></blockquote>
+  return <>
+    <blockquote onDoubleClick={() => { location.hash = href }}><span>“</span>{matching.map(item => item.text).join(' ')}<cite>{reference} · {selection.translation.toUpperCase()}</cite><small>{displayAttribution(chapter.copyright)}</small><a className="text-link" href={href}>Abrir na Bíblia</a></blockquote>
+    {inlineChapter && <details className="devotional-chapter"><summary>Ler capítulo completo aqui</summary><div className="devotional-chapter-content"><h3>{bookById(selection.book)?.name ?? selection.book} {selection.chapter} · {selection.translation.toUpperCase()}</h3><div className="devotional-chapter-verses">{chapter.verses.map(verse => <p key={verse.number} className={verse.number <= selection.endVerse && (verse.endNumber ?? verse.number) >= selection.verse ? 'selected' : undefined}><span className="bible-number">{verse.number}{verse.endNumber ? `–${verse.endNumber}` : ''}</span> {verse.text}</p>)}</div><p className="bible-attribution">{displayAttribution(chapter.copyright)}</p></div></details>}
+  </>
 }

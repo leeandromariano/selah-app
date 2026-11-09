@@ -31,7 +31,8 @@ ou credencial é incluído nas fixtures.
 `BiblePassagePicker.test.tsx` cobre escolha de tradução e passagem, intervalos
 agrupados e falhas sem persistir o texto da API. `DevotionalPassage.test.tsx`
 verifica duplo clique, referência exata e link acessível; o teste de passagem
-legada cobre referências reconhecidas e não reconhecidas. Os testes de ADMIN e
+legada cobre referências reconhecidas e não reconhecidas. O mesmo teste cobre a
+leitura do capítulo na etapa guiada, a atribuição e uma única chamada à API. Os testes de ADMIN e
 PUBLICADOR usam fronteira simulada para salvar a seleção. O roteiro SQL
 `supabase/tests/devotional-bible-selection.sql` usa dados fictícios e rollback;
 as verificações equivalentes de ADMIN, PUBLICADOR, revisão e negação a leitor
