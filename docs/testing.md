@@ -2404,3 +2404,5 @@ BibleVerseList.test.tsx cobre seleção de versículos avulsos no mesmo capítul
 ## Devocional guiado Coram
 
 `GuidedDevotional.test.tsx` percorre as quatro etapas com conteúdo fictício, confere a barra de etapas e verifica a gravação da resposta pela fronteira simulada. `privateResponses.test.ts` cobre validação de texto, identidade da conta e vínculo com o devocional. `ReadingProgress.test.tsx` cobre vibração somente após conclusão explícita confirmada, sem vibração ao reabrir leitura concluída. Os testes existentes de editor, publicador e acervo cobrem a compatibilidade com publicações anteriores. A migração SQL não é executada na suíte automatizada; ela ainda exige aplicação e verificação no Supabase local antes de ativar o fluxo em qualquer ambiente hospedado.
+
+`apiGateway.test.ts`, `search.test.ts` e `BibleReader.test.tsx` cobrem busca por palavra, recusa de entradas inválidas, projeção de referências sem texto licenciado e abertura do capítulo pela rota interna. O gateway usa os controles de autenticação e cota já existentes.

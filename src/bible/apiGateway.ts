@@ -5,9 +5,7 @@ const editions: Record<string, string> = {
   ntlh: 'acef2bc597c450a1-01',
 }
 
-import { books } from './catalog.ts'
-
-const apiBookIds = 'GEN EXO LEV NUM DEU JOS JDG RUT 1SA 2SA 1KI 2KI 1CH 2CH EZR NEH EST JOB PSA PRO ECC SNG ISA JER LAM EZK DAN HOS JOL AMO OBA JON MIC NAM HAB ZEP HAG ZEC MAL MAT MRK LUK JHN ACT ROM 1CO 2CO GAL EPH PHP COL 1TH 2TH 1TI 2TI TIT PHM HEB JAS 1PE 2PE 1JN 2JN 3JN JUD REV'.split(' ')
+import { apiBookIds, books } from './catalog.ts'
 
 type GatewayOptions = { apiKey?: string; fetcher?: typeof fetch }
 const json = (data: unknown, status: number) => Response.json(data, { status, headers: { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } })
@@ -16,6 +14,30 @@ export async function bibleGateway(request: Request, { apiKey, fetcher = fetch }
   if (request.method !== 'GET') return json({ error: 'Método não permitido.' }, 405)
   const url = new URL(request.url)
   const translation = url.searchParams.get('translation') ?? ''
+  const search = url.searchParams.get('search')
+  if (search !== null) {
+    const query = search.trim()
+    if (!Object.hasOwn(editions, translation) || query.length < 2 || query.length > 80 || [...query].some(char => { const code = char.charCodeAt(0); return code < 32 || code === 127 })) return json({ error: 'Busca inválida.' }, 400)
+    if (!apiKey) return json({ error: 'Bíblia indisponível.' }, 503)
+    const endpoint = new URL(`https://rest.api.bible/v1/bibles/${editions[translation]}/search`)
+    endpoint.search = new URLSearchParams({ query, limit: '10', sort: 'relevance' }).toString()
+    try {
+      const response = await fetcher(endpoint, { headers: { 'api-key': apiKey, Accept: 'application/json' }, redirect: 'manual' })
+      if (!response.ok) return json({ error: 'Não foi possível buscar na Bíblia.' }, 502)
+      const payload: unknown = await response.json()
+      const data = (payload as { data?: { verses?: unknown } })?.data
+      if (!Array.isArray(data?.verses)) return json({ error: 'Resposta de busca inválida.' }, 502)
+      // Return references only. The chapter reader supplies licensed text and view tracking.
+      const results = data.verses.slice(0, 10).flatMap(value => {
+        const verse = value as { id?: unknown }
+        const match = typeof verse.id === 'string' ? /^([A-Z0-9]{3})\.([1-9]\d{0,2})\.([1-9]\d{0,2})$/.exec(verse.id) : null
+        const index = match ? apiBookIds.indexOf(match[1]) : -1
+        if (index < 0 || Number(match![2]) > books[index].chapters) return []
+        return [{ book: books[index].id, chapter: Number(match![2]), verse: Number(match![3]), reference: `${books[index].name} ${match![2]}:${match![3]}` }]
+      })
+      return json({ results }, 200)
+    } catch { return json({ error: 'Não foi possível buscar na Bíblia.' }, 502) }
+  }
   const book = url.searchParams.get('book') ?? ''
   const chapterValue = url.searchParams.get('chapter') ?? ''
   const index = books.findIndex(item => item.id === book)
