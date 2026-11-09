@@ -1,8 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DevotionalShareCard } from './DevotionalShareCard'
 
 describe('exportação do card devocional', () => {
+  afterEach(() => vi.unstubAllGlobals())
   it('does not create a card from a free-text reference that could contain licensed content', () => {
     render(<DevotionalShareCard id="fiction" title="Paz" reference="Texto bíblico copiado" link="https://coram.example" />)
     expect(screen.queryByRole('button', { name: 'Criar card do devocional' })).not.toBeInTheDocument()
@@ -42,5 +43,42 @@ describe('exportação do card devocional', () => {
     expect(context.fillRect).toHaveBeenCalledWith(0, 0, 1080, 1920)
     expect(createObjectURL).toHaveBeenCalledOnce()
     expect(click).toHaveBeenCalledOnce()
+  })
+  it('shares the generated PNG and devotional link through the native file menu', async () => {
+    const context = { fillRect: vi.fn(), strokeRect: vi.fn(), fillText: vi.fn(), measureText: vi.fn((text: string) => ({ width: text.length * 20 })) }
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(context as never)
+    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,ZmFrZQ==')
+    const canShare = vi.fn().mockReturnValue(true), share = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal('navigator', { ...navigator, canShare, share })
+    render(<DevotionalShareCard id="fiction" title="Paz" phrase="Hoje posso descansar." reference="João 14:27" link="https://coram.example/#leitura/fiction" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Criar card do devocional' }))
+    fireEvent.change(screen.getByLabelText('Formato'), { target: { value: 'story' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Compartilhar imagem' }))
+    expect(await screen.findByRole('status')).toHaveTextContent('Imagem enviada ao menu de compartilhamento')
+    const file = canShare.mock.calls[0][0].files[0] as File
+    expect(file).toMatchObject({ name: 'coram-devocional-fiction-story.png', type: 'image/png' })
+    expect(share).toHaveBeenCalledWith(expect.objectContaining({ files: [file], text: 'Hoje posso descansar.\nhttps://coram.example/#leitura/fiction' }))
+    expect(context.fillRect).toHaveBeenCalledWith(0, 0, 1080, 1920)
+  })
+  it('keeps download available when the browser cannot share files', async () => {
+    const canShare = vi.fn().mockReturnValue(false)
+    vi.stubGlobal('navigator', { ...navigator, canShare, share: vi.fn() })
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({ fillRect: vi.fn(), strokeRect: vi.fn(), fillText: vi.fn(), measureText: vi.fn((text: string) => ({ width: text.length * 20 })) } as never)
+    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,ZmFrZQ==')
+    render(<DevotionalShareCard id="fiction" title="Paz" reference="João 14:27" link="https://coram.example" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Criar card do devocional' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Compartilhar imagem' }))
+    expect(await screen.findByRole('status')).toHaveTextContent('Use Baixar PNG')
+    expect(screen.getByRole('button', { name: 'Baixar PNG' })).toBeEnabled()
+    expect(navigator.share).not.toHaveBeenCalled()
+  })
+  it('reports native share cancellation without claiming success', async () => {
+    vi.stubGlobal('navigator', { ...navigator, canShare: vi.fn().mockReturnValue(true), share: vi.fn().mockRejectedValue(new DOMException('cancel', 'AbortError')) })
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({ fillRect: vi.fn(), strokeRect: vi.fn(), fillText: vi.fn(), measureText: vi.fn((text: string) => ({ width: text.length * 20 })) } as never)
+    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,ZmFrZQ==')
+    render(<DevotionalShareCard id="fiction" title="Paz" reference="João 14:27" link="https://coram.example" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Criar card do devocional' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Compartilhar imagem' }))
+    expect(await screen.findByRole('status')).toHaveTextContent('Compartilhamento cancelado')
   })
 })
