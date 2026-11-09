@@ -1,4 +1,15 @@
 .bible-reader { max-width: 850px; margin: 0 auto; }
+.bible-jump { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:end; gap:.8rem; margin:1.25rem 0 .8rem; }
+.bible-jump label { min-width:0; }
+.bible-jump .button { min-height:44px; }
+.bible-jump p { grid-column:1 / -1; color:var(--error); font-size:.85rem; }
+.bible-book-picker { border:1px solid var(--border); border-radius:12px; background:var(--surface); margin-bottom:1.25rem; }
+.bible-book-picker summary { cursor:pointer; padding:.85rem 1rem; font-weight:700; }
+.bible-book-groups { display:grid; gap:1rem; border-top:1px solid var(--border); padding:1rem; }
+.bible-book-groups h3 { color:var(--text-muted); font:600 .75rem/1.4 'JetBrains Mono',monospace; text-transform:uppercase; letter-spacing:.07em; margin:0 0 .55rem; }
+.bible-book-groups section>div { display:flex; flex-wrap:wrap; gap:.4rem; }
+.bible-book-groups button { min-height:38px; padding:.45rem .75rem; border:1px solid var(--border); border-radius:9px; background:var(--surface-soft); font-size:.8rem; }
+.bible-book-groups button:hover,.bible-book-groups button[aria-pressed="true"] { border-color:var(--accent); color:var(--accent); }
 .reading-font-control { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; margin:1rem 0; color:var(--text-muted); font-size:.85rem; }
 .reading-font-control input { width:clamp(120px,30vw,220px); accent-color:var(--accent); }
 .reading-font-control .reading-font-large { font-size:1.35rem; }
@@ -49,3 +60,4 @@
 .bible-favorite-card p { line-height: 1.7; }
 .bible-favorite-card small { color: var(--text-muted); }
 @media (max-width: 600px) { .bible-controls { grid-template-columns: 1fr 1fr; } .bible-controls label:first-child { grid-column: 1 / -1; } }
+@media (max-width: 600px) { .bible-jump { grid-template-columns:1fr; } .bible-jump .button { width:100%; } }

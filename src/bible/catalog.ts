@@ -36,7 +36,7 @@ export function adjacent(bookId: string, chapter: number, direction: -1 | 1) {
 // Preserve accents: "Jo" could mean João, whereas "Jó" is a distinct book.
 const normalize = (value: string) => value.toLocaleLowerCase('pt-BR').replace(/\s+/g, ' ').trim()
 export function parseReference(value: string): Omit<Location, 'translation'> | null {
-  const match = value.trim().match(/^(.+?)\s+(\d{1,3})(?::(\d{1,3})(?:\s*[-–]\s*(\d{1,3}))?)?$/u)
+  const match = value.trim().match(/^(.+?)\s+(\d{1,3})(?:(?::|\s+)(\d{1,3})(?:\s*[-–]\s*(\d{1,3}))?)?$/u)
   if (!match) return null
   const book = books.find(item => normalize(item.name) === normalize(match[1]))
   const chapter = Number(match[2]), verse = match[3] ? Number(match[3]) : undefined, endVerse = match[4] ? Number(match[4]) : undefined

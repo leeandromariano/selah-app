@@ -8,6 +8,8 @@ A pergunta opcional “Como seu coração chega hoje?” oferece quatro resposta
 
 Os destaques pessoais da Bíblia continuam amarelo, azul claro e rosa. Essa escolha anterior do produto não foi substituída pelas cores de exemplo dos materiais de marca. O laranja da identidade identifica ações e constância. O modo escuro usa texto secundário mais claro que o valor sugerido no material para manter o contraste legível.
 
-O fluxo de quatro cards, o desafio e a oração privados, a busca bíblica inteligente e a exportação de cards sociais ainda exigem desenho de comportamento, persistência e verificação de licença antes de serem considerados concluídos. Os exemplos com contadores, devocionais e dias fixos fornecidos no material não foram copiados para o produto.
+A Bíblia ganhou uma grade de livros por grupo e um campo para ir diretamente a referências completas, inclusive no formato “João 3 16”. O campo não faz pesquisa semântica por temas; entradas como “ansiedade” recebem orientação de formato em vez de uma página sem resultado.
+
+O fluxo de quatro cards, o desafio e a oração privados, a busca bíblica por assunto e a exportação de cards sociais ainda exigem desenho de comportamento, persistência e verificação de licença antes de serem considerados concluídos. Os exemplos com contadores, devocionais e dias fixos fornecidos no material não foram copiados para o produto.
 
 Nenhuma migração, chave, publicação ou banco remoto faz parte desta etapa. A versão no site principal continua independente da branch local até uma aprovação específica de deploy.

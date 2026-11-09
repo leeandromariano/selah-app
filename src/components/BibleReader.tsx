@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { adjacent, bibleHash, bookById, books, parseBibleRoute } from '../bible/catalog'
+import { adjacent, bibleHash, bookById, books, parseBibleRoute, parseReference } from '../bible/catalog'
 import type { Location } from '../bible/catalog'
 import { bibleProvider } from '../bible/provider'
 import type { BibleProvider, Verse } from '../bible/provider'
@@ -17,6 +17,15 @@ import './bible.css'
 
 const defaultLocation: Location = { translation: bibleAvailable ? 'nvt' : 'demonstracao', book: 'genesis', chapter: 1 }
 const storageKey = 'selah.bible.location'
+const bookGroups = [
+  { name: 'Pentateuco', start: 0, end: 5 },
+  { name: 'Históricos', start: 5, end: 17 },
+  { name: 'Poéticos e sabedoria', start: 17, end: 22 },
+  { name: 'Profetas', start: 22, end: 39 },
+  { name: 'Evangelhos e Atos', start: 39, end: 44 },
+  { name: 'Cartas', start: 44, end: 65 },
+  { name: 'Apocalipse', start: 65, end: 66 },
+] as const
 function initialLocation() {
   try { const saved = parseBibleRoute(sessionStorage.getItem(storageKey) ?? ''); return !saved || (bibleAvailable && saved.translation === 'demonstracao') ? defaultLocation : saved } catch { return defaultLocation }
 }
@@ -25,6 +34,8 @@ export function BibleReader({ page, source = bibleProvider, userId, annotationSt
   const [result, setResult] = useState<{ key: string; source: BibleProvider; verses: Verse[] | null; error: string; copyright?: string } | null>(null)
   const [attempt, setAttempt] = useState(0)
   const [showFavorites, setShowFavorites] = useState(false)
+  const [reference, setReference] = useState('')
+  const [referenceError, setReferenceError] = useState('')
   const [expiredHighlight, setExpiredHighlight] = useState<typeof result>(null)
   const translation = source.translations.find(item => item.id === route?.translation)
   const book = route && bookById(route.book)
@@ -69,6 +80,12 @@ export function BibleReader({ page, source = bibleProvider, userId, annotationSt
     {bibleFavoritesEnabled && userId && annotationStore && <button className="button secondary bible-favorites-toggle" aria-expanded={showFavorites} onClick={() => setShowFavorites(value => !value)}>{showFavorites ? '← Voltar à Bíblia' : '♡ Favoritados'}</button>}
     <ReadingFontControl />
     {showFavorites && userId && annotationStore ? <BibleFavorites key={userId} userId={userId} store={annotationStore} source={source} onOpen={() => setShowFavorites(false)} /> : <>
+    <form className="bible-jump" onSubmit={event => { event.preventDefault(); const target = parseReference(reference); if (!target) { setReferenceError('Digite uma referência completa, como João 3:16.'); return } setReferenceError(''); go(target) }}>
+      <label>Ir para uma passagem<input type="search" value={reference} onChange={event => { setReference(event.target.value); setReferenceError('') }} placeholder="Ex.: João 3:16 ou João 3 16" /></label>
+      <button type="submit" className="button secondary">Abrir passagem</button>
+      {referenceError && <p role="alert">{referenceError}</p>}
+    </form>
+    <details className="bible-book-picker"><summary>Explorar livros por categoria</summary><div className="bible-book-groups">{bookGroups.map(group => <section key={group.name} aria-label={group.name}><h3>{group.name}</h3><div>{books.slice(group.start, group.end).map(item => <button type="button" key={item.id} aria-pressed={item.id === book.id} onClick={() => go({ book: item.id, chapter: 1 })}>{item.name}</button>)}</div></section>)}</div></details>
     <div className="bible-controls">
       <label>Tradução<select value={translation.id} onChange={event => go({ translation: event.target.value })}>{source.translations.map(item => <option key={item.id} value={item.id} disabled={!item.available}>{item.name}{!item.available ? ' — indisponível' : ''}</option>)}</select></label>
       <label>Livro<select value={book.id} onChange={event => go({ book: event.target.value, chapter: 1 })}>{(['Antigo Testamento', 'Novo Testamento'] as const).map(testament => <optgroup key={testament} label={testament}>{books.filter(item => item.testament === testament).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</optgroup>)}</select></label>

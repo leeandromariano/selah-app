@@ -18,6 +18,8 @@ describe('catálogo e referências bíblicas', () => {
   })
   it('interpreta apenas referências completas e inequívocas', () => {
     expect(parseReference('João 3:16')).toEqual({ book: 'joao', chapter: 3, verse: 16, endVerse: undefined })
+    expect(parseReference('João 3 16')).toEqual({ book: 'joao', chapter: 3, verse: 16, endVerse: undefined })
+    expect(parseReference('1 João 3 16')).toEqual({ book: '1-joao', chapter: 3, verse: 16, endVerse: undefined })
     expect(parseReference('Romanos 12:1-2')).toEqual({ book: 'romanos', chapter: 12, verse: 1, endVerse: 2 })
     expect(parseReference('Salmos 23')?.chapter).toBe(23)
     for (const reference of ['Jo 3:16','João 22:1','João 3:0','João 3:4-2','João 3:16; 4:1','<script> 1:1']) expect(parseReference(reference)).toBeNull()
