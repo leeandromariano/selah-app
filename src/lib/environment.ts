@@ -97,7 +97,9 @@ export function createBuildEnvironment(mode: string, variables: Variables, stagi
     const config = prepareHostedEnvironment('staging', selected)
     const bibleEnabled = variables.VITE_STAGING_BIBLE_ENABLED
     if (bibleEnabled !== undefined && bibleEnabled !== 'true' && bibleEnabled !== 'false') throw new Error('Sinal da Bíblia hospedada inválido.')
-    return { mode, variables: { VITE_APP_ENV: config.name, VITE_STAGING_SUPABASE_URL: config.url, VITE_STAGING_SUPABASE_PROJECT_REF: config.projectRef, VITE_STAGING_SUPABASE_PUBLISHABLE_KEY: config.key, VITE_STAGING_SITE_ORIGIN: config.siteOrigin, VITE_STAGING_BIBLE_ENABLED: bibleEnabled === 'true' ? 'true' : 'false' } }
+    const guidedEnabled = variables.VITE_STAGING_GUIDED_DEVOTIONAL_ENABLED
+    if (guidedEnabled !== undefined && guidedEnabled !== 'true' && guidedEnabled !== 'false') throw new Error('Sinal do devocional guiado inválido.')
+    return { mode, variables: { VITE_APP_ENV: config.name, VITE_STAGING_SUPABASE_URL: config.url, VITE_STAGING_SUPABASE_PROJECT_REF: config.projectRef, VITE_STAGING_SUPABASE_PUBLISHABLE_KEY: config.key, VITE_STAGING_SITE_ORIGIN: config.siteOrigin, VITE_STAGING_BIBLE_ENABLED: bibleEnabled === 'true' ? 'true' : 'false', VITE_STAGING_GUIDED_DEVOTIONAL_ENABLED: guidedEnabled === 'true' ? 'true' : 'false' } }
   }
   const config = requireEnabledEnvironment(mode, variables)
   return { mode, variables: { VITE_APP_ENV: config.name, VITE_DEV_SUPABASE_URL: config.url, VITE_DEV_SUPABASE_PUBLISHABLE_KEY: config.key } }

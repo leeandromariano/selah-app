@@ -15,7 +15,7 @@ function openAdmin() {
   return render(<App />)
 }
 async function fill(user: ReturnType<typeof userEvent.setup>) {
-  for (const [label, value] of [['Autor (crédito público)', 'Autor Convidado'], ['Título', 'Novo Texto Fictício'], ['Reflexão', 'Reflexão fictícia'], ['Para refletir', 'Pergunta fictícia?']]) await user.type(screen.getByLabelText(label), value)
+  for (const [label, value] of [['Autor (crédito público)', 'Autor Convidado'], ['Título', 'Novo Texto Fictício'], ['Reflexão', 'Reflexão fictícia'], ['Para refletir', 'Pergunta fictícia?'], ['Prática Coram Deo', 'Faça uma pausa.'], ['Oração e resposta', 'Ore por paz.']]) await user.type(screen.getByLabelText(label), value)
   await user.click(screen.getByRole('button', { name: 'Selecionar passagem' }))
   await user.click(screen.getByRole('button', { name: 'Usar passagem fictícia' }))
 }
@@ -99,7 +99,7 @@ describe('painel administrativo real', () => {
     await fill(user)
     await user.click(screen.getByRole('button', { name: 'Salvar devocional' }))
     expect(await screen.findByRole('status')).toHaveTextContent('Rascunho salvo')
-    expect(table.insert).toHaveBeenCalledWith({ author_name: 'Autor Convidado', title: 'Novo Texto Fictício', bible_reference: 'Gênesis 1:1', bible_text: null, bible_selection: { translation: 'nvt', book: 'genesis', chapter: 1, verse: 1, endVerse: 1 }, content: 'Reflexão fictícia', reflection_question: 'Pergunta fictícia?', status: 'draft', publish_at: null, author_id: editorialFixture.author_id })
+    expect(table.insert).toHaveBeenCalledWith({ author_name: 'Autor Convidado', title: 'Novo Texto Fictício', bible_reference: 'Gênesis 1:1', bible_text: null, bible_selection: { translation: 'nvt', book: 'genesis', chapter: 1, verse: 1, endVerse: 1 }, content: 'Reflexão fictícia', reflection_question: 'Pergunta fictícia?', practical_challenge: 'Faça uma pausa.', prayer_prompt: 'Ore por paz.', status: 'draft', publish_at: null, author_id: editorialFixture.author_id })
   })
   it('agenda data futura e informa que ainda exige publicação explícita', async () => {
     const table = adminBoundary()

@@ -8,11 +8,12 @@ import type { DevotionalInput } from '../admin/repository'
 import { Heading } from './UI'
 import { BiblePassagePicker } from './BiblePassagePicker'
 import { bibleEditorialEnabled } from '../bible/editorialFeature'
+import { guidedDevotionalsEnabled } from '../devotionals/guidedFeature'
 
 const repository = createPublisherRepository(supabase)
 const blank: DevotionalInput = {
   author_name: '', title: '', bible_reference: '', bible_text: '', content: '',
-  reflection_question: '', status: 'draft', publish_at: null,
+  reflection_question: '', practical_challenge: '', prayer_prompt: '', status: 'draft', publish_at: null,
 }
 
 export function PublisherPanel() {
@@ -82,6 +83,7 @@ function PublisherWorkspace({ userId }: { userId: string }) {
     ...(!bibleEditorialEnabled ? [{ key: 'bible_reference', label: 'Referência bíblica' }, { key: 'bible_text', label: 'Texto bíblico' }] as const : []),
     { key: 'content', label: 'Reflexão' },
     { key: 'reflection_question', label: 'Para refletir' },
+    ...(guidedDevotionalsEnabled ? [{ key: 'practical_challenge', label: 'Prática Coram Deo' }, { key: 'prayer_prompt', label: 'Oração e resposta' }] as const : []),
   ] as const
   const stateLabel = (item: PublisherDevotional) => item.status === 'published' ? 'Publicado'
     : item.status === 'scheduled' ? 'Agendado'
@@ -98,7 +100,7 @@ function PublisherWorkspace({ userId }: { userId: string }) {
           <h3>{editing.id ? 'Editar meu rascunho' : 'Novo devocional'}</h3>
           <fieldset disabled={busy}><div className="form-grid">
             <label>Autor (crédito público)<input required maxLength={120} value={editing.author_name ?? ''} onChange={event => setEditing({ ...editing, author_name: event.target.value })} /></label>
-            {fields.map(field => <label key={field.key}>{field.label}<textarea required maxLength={field.key === 'title' || field.key === 'bible_reference' ? 200 : undefined} value={editing[field.key] ?? ''} onChange={event => setEditing({ ...editing, [field.key]: event.target.value })} /></label>)}
+            {fields.map(field => <label key={field.key}>{field.label}<textarea required={!(editing.id && (field.key === 'practical_challenge' || field.key === 'prayer_prompt') && !editing.practical_challenge && !editing.prayer_prompt)} maxLength={field.key === 'title' || field.key === 'bible_reference' ? 200 : field.key === 'practical_challenge' || field.key === 'prayer_prompt' ? 500 : undefined} value={editing[field.key] ?? ''} onChange={event => setEditing({ ...editing, [field.key]: event.target.value })} /></label>)}
             {bibleEditorialEnabled && <div><p>Passagem: {editing.bible_reference || 'nenhuma selecionada'}{editing.bible_selection && ` · ${editing.bible_selection.translation.toUpperCase()}`}</p><button type="button" className="button secondary" onClick={() => setShowBiblePicker(value => !value)}>Selecionar passagem</button>{showBiblePicker && <BiblePassagePicker onSelect={({ reference, ...selection }) => { setEditing({ ...editing, bible_reference: reference, bible_text: null, bible_selection: selection }); setShowBiblePicker(false) }} />}</div>}
           </div><div className="actions">
             <button className="button primary" type="submit">{busy ? 'Salvando…' : 'Salvar rascunho'}</button>

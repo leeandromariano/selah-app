@@ -10,6 +10,25 @@
   letter-spacing: -.06em;
   gap: 11px;
 }
+
+.guided-devotional { margin-top: 2rem; }
+.guided-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; margin-bottom: 1.5rem; }
+.guided-steps button { text-align: left; padding: .85rem; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text-muted); font-size: .8rem; line-height: 1.4; }
+.guided-steps button span { display: block; font-weight: 700; color: var(--accent); margin-bottom: .25rem; }
+.guided-steps button[aria-current=step] { color: var(--text); border-color: var(--accent); background: var(--accent-bg); }
+.guided-panel { min-height: 18rem; padding: clamp(1.2rem, 3vw, 2rem); border-radius: 16px; border: 1px solid var(--border); background: var(--surface); }
+.guided-panel h2 { margin-bottom: 1.3rem; font-size: clamp(1.4rem, 3vw, 2rem); }
+.guided-panel > p { line-height: 1.8; margin: 0 0 1rem; }
+.guided-panel blockquote { margin: 1rem 0; }
+.guided-panel .reflection { margin-top: 1.5rem; }
+.guided-response { margin: 1.5rem 0 .5rem; }
+.guided-response textarea { min-height: 7rem; resize: vertical; }
+.guided-navigation { display: flex; justify-content: space-between; gap: 1rem; margin: 1rem 0 1.5rem; }
+.guided-navigation .button:last-child { margin-left: auto; }
+.private-response-history { margin-top: 2rem; }
+.private-response-history > .muted { margin: .4rem 0 1rem; }
+.private-response-history .admin-row p { margin: .4rem 0; white-space: pre-wrap; }
+@media (max-width: 650px) { .guided-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } .guided-steps button { min-height: 4.2rem; } }
 .brand > img { width: 46px; height: 46px; flex: none; }
 .brand small { font-family: 'JetBrains Mono', monospace; letter-spacing: .025em; font-weight: 500; font-size: 6.6px; line-height: 1.5; }
 .footer-logo { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; letter-spacing: -.055em; }

@@ -2400,3 +2400,7 @@ O acervo testa busca por titulo e referencia sem acentos, ordenacao e resultado 
 ## Controles de leitura e seleção de versículos
 
 BibleVerseList.test.tsx cobre seleção de versículos avulsos no mesmo capítulo, aplicação de cor e favoritos, preservação de nota prévia e cópia com referência, atribuição e link do aplicativo. ReadingFontControl.test.tsx cobre ajuste e persistência local do tamanho da fonte. A responsividade dos botões de login é uma mudança de CSS e requer conferência visual em navegador estreito.
+
+## Devocional guiado Coram
+
+`GuidedDevotional.test.tsx` percorre as quatro etapas com conteúdo fictício e verifica a gravação da resposta pela fronteira simulada. `privateResponses.test.ts` cobre validação de texto, identidade da conta e vínculo com o devocional. Os testes existentes de editor, publicador e acervo cobrem a compatibilidade com publicações anteriores. A migração SQL não é executada na suíte automatizada; ela ainda exige aplicação e verificação no Supabase local antes de ativar o fluxo em qualquer ambiente hospedado.

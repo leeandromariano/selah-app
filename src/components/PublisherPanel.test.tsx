@@ -60,6 +60,8 @@ describe('espaço editorial PUBLICADOR', () => {
       ['Título', 'Reflexão para teste'],
       ['Reflexão', 'Reflexão fictícia'],
       ['Para refletir', 'Pergunta fictícia?'],
+      ['Prática Coram Deo', 'Faça uma pausa.'],
+      ['Oração e resposta', 'Ore por paz.'],
     ]) await user.type(screen.getByLabelText(label), value)
     await user.click(screen.getByRole('button', { name: 'Selecionar passagem' }))
     await user.click(screen.getByRole('button', { name: 'Usar passagem fictícia' }))

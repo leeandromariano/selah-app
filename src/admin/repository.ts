@@ -1,18 +1,17 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Location } from '../bible/catalog'
 import { bibleEditorialEnabled } from '../bible/editorialFeature.ts'
+import { guidedDevotionalsEnabled } from '../devotionals/guidedFeature.ts'
 
 export type DevotionalStatus = 'draft' | 'scheduled' | 'published'
 export type BibleSelectionRecord = Location & { verse: number; endVerse: number }
-export type DevotionalInput = { author_name: string | null; title: string; bible_reference: string; bible_text: string | null; bible_selection?: BibleSelectionRecord | null; content: string; reflection_question: string; publish_at: string | null; status: DevotionalStatus }
+export type DevotionalInput = { author_name: string | null; title: string; bible_reference: string; bible_text: string | null; bible_selection?: BibleSelectionRecord | null; content: string; reflection_question: string; practical_challenge?: string | null; prayer_prompt?: string | null; publish_at: string | null; status: DevotionalStatus }
 export type AdminDevotional = DevotionalInput & { review_requested_at: string | null; id: string; author_id: string; created_at: string; updated_at: string }
-export const adminColumns = bibleEditorialEnabled
-  ? 'id,author_name,review_requested_at,title,bible_reference,bible_text,bible_selection,content,reflection_question,publish_at,status,author_id,created_at,updated_at'
-  : 'id,author_name,review_requested_at,title,bible_reference,bible_text,content,reflection_question,publish_at,status,author_id,created_at,updated_at'
+export const adminColumns = `id,author_name,review_requested_at,title,bible_reference,bible_text,${bibleEditorialEnabled ? 'bible_selection,' : ''}content,reflection_question,${guidedDevotionalsEnabled ? 'practical_challenge,prayer_prompt,' : ''}publish_at,status,author_id,created_at,updated_at`
 export const statusLabels = { draft: 'Rascunho', scheduled: 'Agendado', published: 'Publicado' }
 
 export class EditorialValidationError extends Error {}
-export function editorialFields(input: DevotionalInput, now = new Date()): DevotionalInput {
+export function editorialFields(input: DevotionalInput, now = new Date(), requireGuided = false): DevotionalInput {
   const author_name = (input.author_name ?? '').trim()
   if ([...author_name].length < 2 || [...author_name].length > 120) throw new EditorialValidationError('Informe o nome do autor (2 a 120 caracteres).')
   const title = input.title.trim()
@@ -21,6 +20,9 @@ export function editorialFields(input: DevotionalInput, now = new Date()): Devot
   const bible_selection = input.bible_selection ?? null
   const content = input.content.trim()
   const reflection_question = input.reflection_question.trim()
+  const practical_challenge = input.practical_challenge?.trim() || null
+  const prayer_prompt = input.prayer_prompt?.trim() || null
+  if (guidedDevotionalsEnabled && ((requireGuided && (!practical_challenge || !prayer_prompt)) || Boolean(practical_challenge) !== Boolean(prayer_prompt) || (practical_challenge && [...practical_challenge].length > 500) || (prayer_prompt && [...prayer_prompt].length > 500))) throw new EditorialValidationError('Preencha prática e oração, com até 500 caracteres cada.')
   if (!title || [...title].length > 200) throw new EditorialValidationError('Informe um título de até 200 caracteres.')
   if (!bible_reference || [...bible_reference].length > 200) throw new EditorialValidationError('Informe uma referência bíblica de até 200 caracteres.')
   if ((!bible_text && !bible_selection) || (bible_text && bible_selection) || !content || !reflection_question) throw new EditorialValidationError('Preencha texto bíblico, reflexão e pergunta para refletir.')
@@ -30,7 +32,7 @@ export function editorialFields(input: DevotionalInput, now = new Date()): Devot
   if (input.status !== 'draft' && !instant) throw new EditorialValidationError('Informe a data e hora de publicação.')
   if (input.status === 'scheduled' && instant! <= now) throw new EditorialValidationError('Escolha uma data futura para agendar.')
   if (input.status === 'published' && instant! > now) throw new EditorialValidationError('Para uma data futura, use Agendado.')
-  return { author_name, title, bible_reference, bible_text, ...(input.bible_selection !== undefined ? { bible_selection } : {}), content, reflection_question, status: input.status, publish_at: instant?.toISOString() ?? null }
+  return { author_name, title, bible_reference, bible_text, ...(input.bible_selection !== undefined ? { bible_selection } : {}), content, reflection_question, ...(guidedDevotionalsEnabled ? { practical_challenge, prayer_prompt } : {}), status: input.status, publish_at: instant?.toISOString() ?? null }
 }
 export function adminMessage(error: unknown) {
   if (error instanceof EditorialValidationError) return error.message
@@ -75,7 +77,7 @@ export function createAdminRepository(client: Pick<SupabaseClient, 'from' | 'rpc
       if (error) throw error
     },
     async save(userId: string, input: DevotionalInput, id?: string): Promise<AdminDevotional> {
-      const fields = editorialFields(input)
+      const fields = editorialFields(input, new Date(), guidedDevotionalsEnabled && !id)
       await authorize()
       const query = id ? client.from('devotionals').update(fields).eq('id', id) : client.from('devotionals').insert({ ...fields, author_id: userId })
       const { data, error } = await query.select<typeof adminColumns, AdminDevotional>(adminColumns).single()

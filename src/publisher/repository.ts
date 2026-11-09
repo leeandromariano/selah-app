@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { EditorialValidationError, adminColumns, editorialFields } from '../admin/repository'
+import { guidedDevotionalsEnabled } from '../devotionals/guidedFeature.ts'
 import type { AdminDevotional, DevotionalInput } from '../admin/repository'
 
 export type PublisherDevotional = AdminDevotional
@@ -35,7 +36,7 @@ export function createPublisherRepository(client: Pick<SupabaseClient, 'from' | 
       }
     },
     async saveDraft(userId: string, input: DevotionalInput, id?: string): Promise<PublisherDevotional> {
-      const fields = editorialFields({ ...input, status: 'draft', publish_at: null })
+      const fields = editorialFields({ ...input, status: 'draft', publish_at: null }, new Date(), guidedDevotionalsEnabled && !id)
       await authorize()
       const query = id
         ? client.from('devotionals').update(fields).eq('id', id).eq('author_id', userId)

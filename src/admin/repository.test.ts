@@ -7,7 +7,7 @@ describe('contrato editorial', () => {
     for (const patch of [{ author_name: '' }, { title: '' }, { title: 'x'.repeat(201) }, { bible_reference: '' }, { bible_reference: 'x'.repeat(201) }, { bible_text: '' }, { content: '' }, { reflection_question: '' }, { status: 'other' }, { publish_at: 'invalid' }, { status: 'scheduled', publish_at: null }, { status: 'scheduled', publish_at: '2000-01-01T00:00:00Z' }, { status: 'published', publish_at: '2099-01-01T00:00:00Z' }]) expect(() => editorialFields({ ...editorialFixture, ...patch } as never)).toThrow()
     const result = editorialFields({ ...editorialFixture, title: ' Título válido ' })
     expect(result.title).toBe('Título válido')
-    expect(Object.keys(result).sort()).toEqual(['author_name', 'title', 'bible_reference', 'bible_text', 'content', 'reflection_question', 'publish_at', 'status'].sort())
+    expect(Object.keys(result).sort()).toEqual(['author_name', 'title', 'bible_reference', 'bible_text', 'content', 'reflection_question', 'practical_challenge', 'prayer_prompt', 'publish_at', 'status'].sort())
   })
   it('mantém instante original e segundos quando o editor não altera a data', () => {
     const original = '2026-10-26T12:34:56.789Z'
