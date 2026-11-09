@@ -19,6 +19,7 @@ describe('devocional guiado', () => {
     render(<GuidedDevotional item={item} userId="reader" onCompleted={vi.fn()} />)
     expect(screen.getByText('Texto de teste')).toBeVisible()
     await user.click(screen.getByRole('button', { name: /02A Real/ }))
+    expect(screen.getByRole('button', { name: /01A Palavra/ })).toHaveAttribute('data-complete', 'true')
     expect(screen.getByText('A reflexão publicada.')).toBeVisible()
     await user.click(screen.getByRole('button', { name: /03Prática Coram Deo/ }))
     expect(screen.getByText('Faça uma pausa.')).toBeVisible()

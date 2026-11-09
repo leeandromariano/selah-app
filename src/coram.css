@@ -14,6 +14,8 @@
 .guided-devotional { margin-top: 2rem; }
 .guided-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; margin-bottom: 1.5rem; }
 .guided-steps button { text-align: left; padding: .85rem; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text-muted); font-size: .8rem; line-height: 1.4; }
+.guided-steps button::before { content: ''; display: block; height: 4px; margin-bottom: .7rem; border-radius: 999px; background: var(--border); }
+.guided-steps button[aria-current=step]::before, .guided-steps button[data-complete=true]::before { background: var(--brand-ember); }
 .guided-steps button span { display: block; font-weight: 700; color: var(--accent); margin-bottom: .25rem; }
 .guided-steps button[aria-current=step] { color: var(--text); border-color: var(--accent); background: var(--accent-bg); }
 .guided-panel { min-height: 18rem; padding: clamp(1.2rem, 3vw, 2rem); border-radius: 16px; border: 1px solid var(--border); background: var(--surface); }

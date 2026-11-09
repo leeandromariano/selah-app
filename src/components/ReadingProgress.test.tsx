@@ -33,6 +33,8 @@ describe('experiência de conclusão voluntária', () => {
     expect(screen.queryByText(/não comprova compreensão/)).not.toBeInTheDocument()
   })
   it('60000 habilita a ação, aguarda escolha e mostra confirmação persistida', async () => {
+    const vibrate = vi.fn()
+    vi.stubGlobal('navigator', { ...navigator, vibrate })
     const { onCompleted } = open({ ...initial, credited_ms: 60000, status: 'ready' }); await flush()
     const button = screen.getByRole('button', { name: 'Concluir devocional' })
     expect(button).toBeEnabled()
@@ -43,6 +45,7 @@ describe('experiência de conclusão voluntária', () => {
     fireEvent.click(button); await flush()
     expect(screen.getByRole('status')).toHaveTextContent('Devocional concluído')
     expect(onCompleted).toHaveBeenCalledTimes(1)
+    expect(vibrate).toHaveBeenCalledWith([45, 55, 45])
     expect(screen.queryByRole('button', { name: 'Concluir devocional' })).not.toBeInTheDocument()
   })
   it('ocultar a aba pausa e voltar retoma sem contar tempo oculto', async () => {
@@ -81,8 +84,11 @@ describe('experiência de conclusão voluntária', () => {
     expect(screen.getByRole('button', { name: 'Concluir devocional' })).toBeDisabled()
   })
   it('releitura conserva conclusão existente sem novo cronômetro', async () => {
+    const vibrate = vi.fn()
+    vi.stubGlobal('navigator', { ...navigator, vibrate })
     open({ ...initial, status: 'completed', credited_ms: 60000, completed_at: '2026-10-28T15:00:00Z', completed_day: '2026-10-28' }); await flush()
     expect(screen.getByRole('status')).toHaveTextContent('Devocional concluído')
+    expect(vibrate).not.toHaveBeenCalled()
     await act(async () => { await vi.advanceTimersByTimeAsync(20000) })
     expect(vi.mocked(supabase.rpc).mock.calls.map(([name]) => name)).toEqual(['get_my_reading_state'])
   })

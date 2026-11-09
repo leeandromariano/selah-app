@@ -9,6 +9,7 @@ const repository = createReadingRepository(supabase)
 export function ReadingProgress({ devotionalId, revision, onCompleted }: { devotionalId: string; revision: number; onCompleted: () => void }) {
   const [view, setView] = useState<ReadingView>({ state: null, loading: true, saving: false, active: false, error: '', notice: '' })
   const controller = useRef<ReadingController | null>(null)
+  const completionRequested = useRef(false)
   const completedCallback = useRef(onCompleted)
   useEffect(() => { completedCallback.current = onCompleted }, [onCompleted])
   useEffect(() => {
@@ -16,7 +17,12 @@ export function ReadingProgress({ devotionalId, revision, onCompleted }: { devot
     const reader = new ReadingController(repository, devotionalId, revision, next => {
       if (!alive) return
       setView(next)
-      if (next.state?.status === 'completed' && !reported) { reported = true; completedCallback.current() }
+      if (next.state?.status === 'completed' && !reported) {
+        reported = true
+        if (completionRequested.current && typeof navigator.vibrate === 'function') navigator.vibrate([45, 55, 45])
+        completionRequested.current = false
+        completedCallback.current()
+      }
     })
     controller.current = reader
     const isActive = () => document.visibilityState === 'visible' && document.hasFocus() && navigator.onLine
@@ -54,7 +60,7 @@ export function ReadingProgress({ devotionalId, revision, onCompleted }: { devot
     {view.notice && <p className="info">{view.notice}</p>}
     {view.error && <p className="info" role="alert">{view.error}</p>}
     <div className="actions">
-      {!completed && <button className="button primary" disabled={!ready || view.saving || Boolean(view.error) || Boolean(changed)} onClick={() => { void controller.current?.complete() }}>{view.saving ? 'Salvando conclusão…' : 'Concluir devocional'}</button>}
+      {!completed && <button className="button primary" disabled={!ready || view.saving || Boolean(view.error) || Boolean(changed)} onClick={() => { completionRequested.current = true; void controller.current?.complete() }}>{view.saving ? 'Salvando conclusão…' : 'Concluir devocional'}</button>}
       {state?.status === 'elsewhere' && <button className="button secondary" onClick={() => { void controller.current?.retry(true) }}>Continuar leitura aqui</button>}
       {(view.error || state?.status === 'out_of_order') && <button className="button secondary" onClick={() => { void controller.current?.retry() }}>Retomar confirmação</button>}
       {changed && <button className="button secondary" onClick={() => location.reload()}>Recarregar conteúdo atualizado</button>}

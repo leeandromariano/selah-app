@@ -37,7 +37,7 @@ export function GuidedDevotional({ item, userId, onCompleted }: { item: Publicat
     finally { setSaving(false) }
   }
   return <div className="guided-devotional">
-    <nav className="guided-steps" aria-label="Etapas do devocional">{steps.map((label, index) => <button key={label} type="button" aria-current={step === index ? 'step' : undefined} onClick={() => setStep(index)}><span>{String(index + 1).padStart(2, '0')}</span>{label}</button>)}</nav>
+    <nav className="guided-steps" aria-label="Etapas do devocional">{steps.map((label, index) => <button key={label} type="button" aria-current={step === index ? 'step' : undefined} data-complete={index < step ? 'true' : undefined} onClick={() => setStep(index)}><span>{String(index + 1).padStart(2, '0')}</span>{label}</button>)}</nav>
     <section className="guided-panel" aria-label={steps[step]}>
       <div className="eyebrow">{String(step + 1).padStart(2, '0')} / 04 · VIVER CORAM DEO</div>
       <h2>{steps[step]}</h2>
