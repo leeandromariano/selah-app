@@ -2415,3 +2415,5 @@ BibleVerseList.test.tsx cobre seleção de versículos avulsos no mesmo capítul
 `shareCard.test.ts` também verifica o uso da frase central original e rejeita texto que não cabe no card. `repository.test.ts`, `AdminPanel.test.tsx` e `PublisherPanel.test.tsx` verificam o limite editorial e o envio da frase ao salvar. A migração `20261109122110_devotional_share_phrase.sql` preserva publicações antigas com campo nulo e incrementa a revisão de leitura quando a frase é alterada.
 
 `DevotionalShareCard.test.tsx` verifica o menu nativo com arquivo PNG e link, a ausência de suporte a arquivos com download preservado e o cancelamento do compartilhamento sem mensagem de sucesso.
+
+O ícone Coram foi inspecionado visualmente em 16, 32, 64, 128 e 180 px. `coram.svg` e `favicon.svg` são XML válido e idêntico; `site.webmanifest` referencia os PNGs de 192 e 512 px, e o HTML inclui o ícone de 180 px para iOS. A conferência final do ícone na tela inicial de cada sistema requer instalação manual no dispositivo.

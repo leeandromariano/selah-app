@@ -1,6 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Coram">
-  <rect width="64" height="64" rx="15" fill="#0d0e11"/>
-  <path d="M48 16A23 23 0 1 0 48 48" fill="none" stroke="#ff5500" stroke-width="10" stroke-linecap="square"/>
-  <path d="M34 15c1 7-5 9-5 16 0 5 3 9 8 9 5 0 8-4 8-9 0-6-5-11-7-14 0 6-2 8-4 10-2-3-2-7 0-12Z" fill="#f4f1ea"/>
-  <path d="M38 29c1 2 3 4 3 6 0 2-1 4-4 4s-4-2-4-4c0-2 3-4 5-6Z" fill="#ff5500"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Coram">
+  <rect width="128" height="128" rx="28" fill="#0D0E11"/>
+  <path d="M99 19H62C36 19 18 39 18 64s18 45 44 45h37V89H63c-16 0-26-11-26-25s10-25 26-25h36V19Z" fill="#FF5500"/>
+  <path d="M77 42C77 52 65 57 65 69c0 10 6 17 15 17s15-7 15-17c0-8-5-14-11-21 0 9-3 14-8 18-3-7-2-15 1-24Z" fill="#F4F1EA"/>
 </svg>

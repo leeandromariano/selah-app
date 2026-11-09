@@ -2,6 +2,8 @@
 
 Esta etapa aplica a identidade Coram à interface existente. O nome, o ícone, o título do navegador, as mensagens visíveis, a paleta e a tipografia foram atualizados. Novos leitores entram em modo escuro; preferências `Claro` e `Sistema` já salvas continuam válidas. As chaves locais com prefixo `selah` e os nomes internos de ambiente permanecem para preservar preferências, posição de leitura, lembretes e contratos instalados.
 
+O ícone do item 6 foi refinado como um C geométrico em Laranja Brasa, com chama única em Papel Claro sobre fundo Obsidian. `coram.svg` é a arte vetorial usada na interface e no favicon; `favicon.svg` mantém o mesmo desenho. Os PNGs de 180, 192 e 512 px saem dessa arte para a tela inicial do celular. `site.webmanifest` identifica o app e seus ícones, e o HTML informa o ícone para iOS. A prévia foi conferida em 16, 32, 64 e 128 px; o pacote não adiciona modo offline nem notificações.
+
 A home usa o devocional publicado e a RPC pessoal `get_my_consistency`. A sequência exibida não é calculada pelo navegador. A faixa semanal usa as datas civis do servidor em `America/Sao_Paulo`, de segunda a domingo. Se a semana começa no mês anterior, consulta o mesmo RPC para esse mês; dias que não puderem ser consultados ficam como dados indisponíveis, sem receber uma conclusão fictícia. Meses anteriores ao primeiro mês com conclusões informado pelo servidor exibem zero. A chama só acende após uma conclusão registrada para o dia atual.
 
 A pergunta opcional “Como seu coração chega hoje?” oferece quatro respostas e mantém a escolha apenas no estado da sessão React da conta. Ela não abre o devocional, não envia a resposta ao servidor, não alimenta métricas e não bloqueia a leitura. A seleção desaparece ao atualizar a página.
