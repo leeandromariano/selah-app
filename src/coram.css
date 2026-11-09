@@ -48,7 +48,8 @@
 .private-response-history { margin-top: 2rem; }
 .private-response-history > .muted { margin: .4rem 0 1rem; }
 .private-response-history .admin-row p { margin: .4rem 0; white-space: pre-wrap; }
-.devotional-share-card { margin: 1.2rem 0; }
+.devotional-share-card { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin: 1.2rem 0; }
+.devotional-share-card-editor, .devotional-share-card > [role="status"] { flex: 1 0 100%; }
 .devotional-share-card-editor { display: grid; gap: 1rem; margin-top: 1rem; }
 .devotional-share-card-editor > p { font-size: .85rem; color: var(--text-muted); }
 .devotional-share-card-controls { display: flex; flex-wrap: wrap; gap: 1rem; }

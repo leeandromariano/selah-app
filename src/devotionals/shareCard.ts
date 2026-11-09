@@ -80,11 +80,12 @@ export function drawDevotionalCard(ctx: CanvasRenderingContext2D, options: { tit
   ctx.font = 'italic 52px "Instrument Serif", Georgia, serif'
   ctx.fillText('mais presença.', 84, height - 125)
   ctx.fillStyle = palette.subtle
-  ctx.font = '800 48px "Plus Jakarta Sans", sans-serif'
-  ctx.fillText('C', 84, height - 62)
   ctx.font = '800 25px "Plus Jakarta Sans", sans-serif'
-  ctx.fillText('CORAM', 145, height - 69)
+  ctx.fillText('CORAM', 84, height - 69)
   const url = options.url.trim()
-  ctx.font = '500 20px "JetBrains Mono", monospace'
-  ctx.fillText(url, 350, height - 70, width - 434)
+  ctx.font = '500 19px "JetBrains Mono", monospace'
+  const urlLines = lines(ctx, url, width - 434)
+  const urlTop = height - 70 - (urlLines.length - 1) * 25
+  ctx.fillText('ACESSE O APP:', 350, urlTop - 30)
+  urlLines.forEach((line, index) => ctx.fillText(line, 350, urlTop + index * 25, width - 434))
 }

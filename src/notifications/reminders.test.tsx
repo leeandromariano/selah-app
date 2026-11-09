@@ -90,7 +90,7 @@ describe('preferências e privacidade de lembretes', () => {
     vi.stubGlobal('navigator', { ...navigator, share, clipboard: { writeText: copy } })
     render(<ShareDevotional id={id} />)
     expect(share).not.toHaveBeenCalled(); expect(copy).not.toHaveBeenCalled()
-    expect(screen.getByRole('link', { name: 'Abrir WhatsApp para compartilhar' })).toHaveAttribute('rel', 'noopener noreferrer')
+    expect(screen.getByRole('link', { name: 'Compartilhar link pelo WhatsApp' })).toHaveAttribute('rel', 'noopener noreferrer')
     fireEvent.click(screen.getByRole('button', { name: 'Copiar link' }))
     await screen.findByText('Link copiado.'); expect(copy).toHaveBeenCalledOnce()
     expect(share).not.toHaveBeenCalled()
