@@ -18,7 +18,13 @@
 .guided-steps button[aria-current=step]::before, .guided-steps button[data-complete=true]::before { background: var(--brand-ember); }
 .guided-steps button span { display: block; font-weight: 700; color: var(--accent); margin-bottom: .25rem; }
 .guided-steps button[aria-current=step] { color: var(--text); border-color: var(--accent); background: var(--accent-bg); }
-.guided-panel { min-height: 18rem; padding: clamp(1.2rem, 3vw, 2rem); border-radius: 16px; border: 1px solid var(--border); background: var(--surface); }
+.guided-panel { min-height: 18rem; padding: clamp(1.2rem, 3vw, 2rem); border-radius: 16px; border: 1px solid var(--border); background: var(--surface); touch-action: pan-y pinch-zoom; }
+@media (prefers-reduced-motion: no-preference) {
+  .guided-panel[data-direction=forward] { animation: coram-step-forward .2s ease-out; }
+  .guided-panel[data-direction=backward] { animation: coram-step-backward .2s ease-out; }
+  @keyframes coram-step-forward { from { opacity: .55; transform: translateX(14px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes coram-step-backward { from { opacity: .55; transform: translateX(-14px); } to { opacity: 1; transform: translateX(0); } }
+}
 .guided-panel h2 { margin-bottom: 1.3rem; font-size: clamp(1.4rem, 3vw, 2rem); }
 .guided-panel > p { line-height: 1.8; margin: 0 0 1rem; }
 .guided-panel blockquote { margin: 1rem 0; }
@@ -33,6 +39,8 @@
 .devotional-chapter-verses p.selected { background: var(--accent-bg); }
 .devotional-chapter-content .bible-attribution { margin: 1rem 0 0; }
 .guided-panel .reflection { margin-top: 1.5rem; }
+.guided-swipe-hint { display: none; margin-top: .6rem; color: var(--text-muted); font-size: .75rem; }
+@media (hover: none) and (pointer: coarse) { .guided-swipe-hint { display: block; } }
 .guided-response { margin: 1.5rem 0 .5rem; }
 .guided-response textarea { min-height: 7rem; resize: vertical; }
 .guided-navigation { display: flex; justify-content: space-between; gap: 1rem; margin: 1rem 0 1.5rem; }
