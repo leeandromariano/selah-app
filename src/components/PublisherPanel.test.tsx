@@ -58,6 +58,7 @@ describe('espaço editorial PUBLICADOR', () => {
     for (const [label, value] of [
       ['Autor (crédito público)', 'Autora Fictícia'],
       ['Título', 'Reflexão para teste'],
+      ['Frase central para compartilhar', 'Cada pausa pode trazer esperança.'],
       ['Reflexão', 'Reflexão fictícia'],
       ['Para refletir', 'Pergunta fictícia?'],
       ['Prática Coram Deo', 'Faça uma pausa.'],
@@ -68,7 +69,7 @@ describe('espaço editorial PUBLICADOR', () => {
     await user.click(screen.getByRole('button', { name: 'Salvar rascunho' }))
     expect(await screen.findByRole('status')).toHaveTextContent('Rascunho salvo')
     expect(table.insert).toHaveBeenCalledWith(expect.objectContaining({
-      author_id: 'fictional-writer', author_name: 'Autora Fictícia', status: 'draft', publish_at: null, bible_text: null, bible_reference: 'Gênesis 1:1', bible_selection: { translation: 'nvt', book: 'genesis', chapter: 1, verse: 1, endVerse: 1 },
+      author_id: 'fictional-writer', author_name: 'Autora Fictícia', share_phrase: 'Cada pausa pode trazer esperança.', status: 'draft', publish_at: null, bible_text: null, bible_reference: 'Gênesis 1:1', bible_selection: { translation: 'nvt', book: 'genesis', chapter: 1, verse: 1, endVerse: 1 },
     }))
   })
 })

@@ -2411,3 +2411,5 @@ BibleVerseList.test.tsx cobre seleção de versículos avulsos no mesmo capítul
 `apiGateway.test.ts`, `search.test.ts` e `BibleReader.test.tsx` cobrem busca por palavra, recusa de entradas inválidas, projeção de referências sem texto licenciado e abertura do capítulo pela rota interna. O gateway usa os controles de autenticação e cota já existentes.
 
 `shareCard.test.ts` verifica dimensões e composição do PNG com dados fictícios. `DevotionalShareCard.test.tsx` cobre formatos, temas, bloqueio de referência em texto livre, falha de Canvas e geração de um Blob PNG com download simulado. O navegador local abriu na tela de login sem sessão de teste; a prévia do card dentro de um devocional real ainda precisa de inspeção visual após autenticação local.
+
+`shareCard.test.ts` também verifica o uso da frase central original e rejeita texto que não cabe no card. `repository.test.ts`, `AdminPanel.test.tsx` e `PublisherPanel.test.tsx` verificam o limite editorial e o envio da frase ao salvar. A migração `20261109122110_devotional_share_phrase.sql` preserva publicações antigas com campo nulo e incrementa a revisão de leitura quando a frase é alterada.

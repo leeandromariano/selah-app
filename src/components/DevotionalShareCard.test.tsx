@@ -8,9 +8,10 @@ describe('exportação do card devocional', () => {
     expect(screen.queryByRole('button', { name: 'Criar card do devocional' })).not.toBeInTheDocument()
   })
   it('offers both formats and three solid themes without placing scripture text in the preview', () => {
-    render(<DevotionalShareCard id="fiction" title="Paz para hoje" reference="João 14:27" link="https://coram.example/#leitura/fiction" />)
+    render(<DevotionalShareCard id="fiction" title="Paz para hoje" phrase="Hoje posso descansar." reference="João 14:27" link="https://coram.example/#leitura/fiction" />)
     fireEvent.click(screen.getByRole('button', { name: 'Criar card do devocional' }))
     expect(screen.getByRole('img', { name: /Prévia do card Obsidian para post/ })).toHaveTextContent('Paz para hoje')
+    expect(screen.getByRole('img')).toHaveTextContent('Hoje posso descansar.')
     expect(screen.getByRole('img')).toHaveTextContent('João 14:27')
     expect(screen.getByRole('img')).toHaveTextContent('https://coram.example/#leitura/fiction')
     fireEvent.change(screen.getByLabelText('Formato'), { target: { value: 'story' } })

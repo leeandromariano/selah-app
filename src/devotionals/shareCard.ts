@@ -30,7 +30,7 @@ function lines(ctx: CanvasRenderingContext2D, text: string, width: number): stri
   return output
 }
 
-export function drawDevotionalCard(ctx: CanvasRenderingContext2D, options: { title: string; reference: string; url: string; format: CardFormat; theme: CardTheme }) {
+export function drawDevotionalCard(ctx: CanvasRenderingContext2D, options: { title: string; phrase?: string | null; reference: string; url: string; format: CardFormat; theme: CardTheme }) {
   const { width, height } = cardDimensions[options.format]
   const palette = themes[options.theme]
   ctx.fillStyle = palette.background
@@ -38,7 +38,7 @@ export function drawDevotionalCard(ctx: CanvasRenderingContext2D, options: { tit
   ctx.fillStyle = palette.accent
   ctx.fillRect(84, 84, 90, 10)
   ctx.font = '600 26px "JetBrains Mono", monospace'
-  ctx.fillText('CORAM  /  DEVOCIONAL', 84, 145)
+  ctx.fillText('CORAM  /  FRASE DO DEVOCIONAL', 84, 145)
 
   const reference = options.reference.trim().slice(0, 200)
   ctx.font = '600 30px "JetBrains Mono", monospace'
@@ -51,17 +51,26 @@ export function drawDevotionalCard(ctx: CanvasRenderingContext2D, options: { tit
   ctx.fillStyle = palette.text
   const availableWidth = width - 168
   let size = options.format === 'story' ? 112 : 100
-  let titleLines: string[] = []
+  let phraseLines: string[] = []
+  const phrase = options.phrase?.trim() || options.title.trim()
   do {
     ctx.font = `800 ${size}px "Plus Jakarta Sans", sans-serif`
-    titleLines = lines(ctx, options.title, availableWidth)
-    if (titleLines.length <= 7 && titleLines.every(line => ctx.measureText(line).width <= availableWidth)) break
+    phraseLines = lines(ctx, phrase, availableWidth)
+    if (phraseLines.length <= 7 && phraseLines.every(line => ctx.measureText(line).width <= availableWidth)) break
     size -= 4
-  } while (size >= 48)
+  } while (size >= 44)
+  if (phraseLines.length > 7 || phraseLines.some(line => ctx.measureText(line).width > availableWidth)) throw Error('Frase longa demais para o card')
   const lineHeight = size * 1.12
-  const titleBlock = titleLines.length * lineHeight
-  const top = Math.max(470, Math.min((height - titleBlock) / 2, height - titleBlock - 330))
-  titleLines.forEach((line, index) => ctx.fillText(line, 84, top + index * lineHeight))
+  const phraseBlock = phraseLines.length * lineHeight
+  const top = Math.max(470, Math.min((height - phraseBlock) / 2, height - phraseBlock - 395))
+  phraseLines.forEach((line, index) => ctx.fillText(line, 84, top + index * lineHeight))
+
+  if (options.phrase?.trim() && options.phrase.trim() !== options.title.trim()) {
+    ctx.fillStyle = palette.subtle
+    ctx.font = '600 26px "JetBrains Mono", monospace'
+    const titleLines = lines(ctx, options.title.trim(), availableWidth).slice(0, 2)
+    titleLines.forEach((line, index) => ctx.fillText(line, 84, height - 327 + index * 34))
+  }
 
   ctx.fillStyle = palette.accent
   ctx.fillRect(84, height - 270, 110, 8)

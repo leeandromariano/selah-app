@@ -2,11 +2,11 @@ import { useState } from 'react'
 import { devotionalShareLink } from '../notifications/sharing'
 import { DevotionalShareCard } from './DevotionalShareCard'
 // Rendered only for a publication returned by the existing authorized repository.
-export function ShareDevotional({ id, title, reference }: { id: string; title?: string; reference?: string }) {
+export function ShareDevotional({ id, title, phrase, reference }: { id: string; title?: string; phrase?: string | null; reference?: string }) {
   const [message, setMessage] = useState('')
   const link = devotionalShareLink(id, location.origin)
   if (!link) return null
-  const text = 'Convite para uma pausa com a Palavra no Coram. O link exige uma conta.'
+  const text = `${phrase?.trim() || title?.trim() || 'Uma pausa com a Palavra no Coram.'} Leia o devocional no Coram. O link exige uma conta.`
   async function copy() {
     try { await navigator.clipboard.writeText(link!); setMessage('Link copiado.') }
     catch { setMessage('Selecione e copie o endereço abaixo.') }
@@ -21,7 +21,7 @@ export function ShareDevotional({ id, title, reference }: { id: string; title?: 
       {typeof navigator.share !== 'function' && <p>O compartilhamento nativo não está disponível. O botão Compartilhar copia o link.</p>}
       <button className="button secondary" onClick={() => void copy()}>Copiar link</button>
       <a className="button secondary" href={'https://wa.me/?text=' + encodeURIComponent(text + ' ' + link)} target="_blank" rel="noopener noreferrer">Abrir WhatsApp para compartilhar</a>
-    </div>{title && reference && <DevotionalShareCard id={id} title={title} reference={reference} link={link} />}<label>Link do devocional <input readOnly value={link} onFocus={event => event.target.select()} /></label>
+    </div>{title && reference && <DevotionalShareCard id={id} title={title} phrase={phrase} reference={reference} link={link} />}<label>Link do devocional <input readOnly value={link} onFocus={event => event.target.select()} /></label>
     {message && <p role="status">{message}</p>}
   </section>
 }

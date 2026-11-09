@@ -17,6 +17,11 @@ describe('contrato editorial', () => {
     expect(dateTimeInput(publicationInstant(changed, original))).toBe(changed)
     expect(() => publicationInstant('invalid', null)).toThrow()
   })
+  it('aceita frase original em uma linha e rejeita texto longo ou com quebra', () => {
+    expect(editorialFields({ ...editorialFixture, share_phrase: '  A esperança floresce hoje.  ' }).share_phrase).toBe('A esperança floresce hoje.')
+    expect(() => editorialFields({ ...editorialFixture, share_phrase: 'a'.repeat(181) })).toThrow('frase central')
+    expect(() => editorialFields({ ...editorialFixture, share_phrase: 'Uma frase\nOutra frase' })).toThrow('frase central')
+  })
   it('guarda seleção estruturada sem copiar conteúdo bíblico e preserva o contrato legado', () => {
     const selection = { translation: 'nvt', book: 'genesis', chapter: 1, verse: 1, endVerse: 1 }
     expect(editorialFields({ ...editorialFixture, bible_reference: 'Gênesis 1:1', bible_text: null, bible_selection: selection })).toEqual(expect.objectContaining({ bible_reference: 'Gênesis 1:1', bible_text: null, bible_selection: selection }))
