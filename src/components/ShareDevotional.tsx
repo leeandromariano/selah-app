@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { devotionalShareLink } from '../notifications/sharing'
+import { DevotionalShareCard } from './DevotionalShareCard'
 // Rendered only for a publication returned by the existing authorized repository.
-export function ShareDevotional({ id }: { id: string }) {
+export function ShareDevotional({ id, title, reference }: { id: string; title?: string; reference?: string }) {
   const [message, setMessage] = useState('')
   const link = devotionalShareLink(id, location.origin)
   if (!link) return null
@@ -20,7 +21,7 @@ export function ShareDevotional({ id }: { id: string }) {
       {typeof navigator.share !== 'function' && <p>O compartilhamento nativo não está disponível. O botão Compartilhar copia o link.</p>}
       <button className="button secondary" onClick={() => void copy()}>Copiar link</button>
       <a className="button secondary" href={'https://wa.me/?text=' + encodeURIComponent(text + ' ' + link)} target="_blank" rel="noopener noreferrer">Abrir WhatsApp para compartilhar</a>
-    </div><label>Link do devocional <input readOnly value={link} onFocus={event => event.target.select()} /></label>
+    </div>{title && reference && <DevotionalShareCard id={id} title={title} reference={reference} link={link} />}<label>Link do devocional <input readOnly value={link} onFocus={event => event.target.select()} /></label>
     {message && <p role="status">{message}</p>}
   </section>
 }
