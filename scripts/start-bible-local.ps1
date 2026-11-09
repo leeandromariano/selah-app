@@ -18,6 +18,8 @@ $startInfo.FileName = [Environment]::GetEnvironmentVariable('ComSpec')
 $startInfo.Arguments = '/d /c npm.cmd run dev'
 $startInfo.WorkingDirectory = $projectDirectory
 $startInfo.UseShellExecute = $false
+# Use the Windows trust store for the local Node process; keep TLS validation enabled.
+$startInfo.EnvironmentVariables['NODE_USE_SYSTEM_CA'] = '1'
 $startInfo.EnvironmentVariables['BIBLE_API_KEY'] = $inputBuffer.ToString()
 [void]$inputBuffer.Clear()
 try {

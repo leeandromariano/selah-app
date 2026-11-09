@@ -23,6 +23,10 @@ No servidor Vite local, as três traduções podem ser testadas via variável de
 processo `BIBLE_API_KEY` (não `VITE_*`); o endpoint local limita chamadas e recusa
 requisições entre sites. A chave não é persistida no código. O leitor exige uma
 atribuição e registra FUMS sem enviar ID do usuário antes de exibir o capítulo.
+O inicializador `scripts/start-bible-local.ps1` recebe a chave sem eco e inicia
+o Node com `NODE_USE_SYSTEM_CA=1`. Assim, a conexão usa os certificados
+confiáveis do Windows sem desabilitar a validação TLS. Nesta máquina, isso
+resolveu a falha `UNABLE_TO_VERIFY_LEAF_SIGNATURE` na conexão com a API.Bible.
 O tratamento de respostas não reconhecidas falha fechado. A rota local não é
 uma rota para STAGING/PROD.
 
