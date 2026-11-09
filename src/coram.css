@@ -30,7 +30,7 @@
 .coram-presence .eyebrow { color: var(--accent); font-size: 9px; font-weight: 700; }
 .coram-presence h2 { font: 800 clamp(19px, 3vw, 28px)/1.2 'Plus Jakarta Sans', sans-serif; letter-spacing: -.045em; margin: 4px 0; }
 .coram-presence p { font-size: 11px; color: var(--text-muted); }
-.coram-week { list-style: none; display: grid; grid-template-columns: repeat(7, minmax(35px, 1fr)); gap: 5px; margin: 0 0 0 auto; padding: 0; width: min(100%, 315px); }
+.coram-week { list-style: none; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; margin: 0 0 0 auto; padding: 0; width: min(100%, 315px); }
 .coram-week li { min-height: 48px; border: 1px solid var(--border); border-radius: 10px; display: flex; align-items: center; flex-direction: column; justify-content: center; background: var(--surface-soft); color: var(--text-muted); font: 500 10px/1.2 'JetBrains Mono', monospace; }
 .coram-week li strong { color: var(--text); font-size: 13px; }
 .coram-week li.done strong { color: var(--accent); }
