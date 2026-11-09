@@ -2416,4 +2416,4 @@ BibleVerseList.test.tsx cobre seleção de versículos avulsos no mesmo capítul
 
 `DevotionalShareCard.test.tsx` verifica o menu nativo com arquivo PNG e link, a ausência de suporte a arquivos com download preservado e o cancelamento do compartilhamento sem mensagem de sucesso.
 
-O ícone Coram foi inspecionado visualmente em 16, 32, 64, 128 e 180 px. `coram.svg` e `favicon.svg` são XML válido e idêntico; `site.webmanifest` referencia os PNGs de 192 e 512 px, e o HTML inclui o ícone de 180 px para iOS. A conferência final do ícone na tela inicial de cada sistema requer instalação manual no dispositivo.
+O logo oficial do Coram foi preservado em PNG original de 1024 px. Os recortes proporcionais de 32 e 180 px foram inspecionados visualmente. `site.webmanifest` referencia os PNGs de 192 e 512 px, e o HTML inclui favicon de 32 px e ícone de 180 px para iOS. A conferência final na tela inicial de cada sistema requer instalação manual no dispositivo.
