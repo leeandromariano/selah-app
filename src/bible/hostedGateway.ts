@@ -10,17 +10,25 @@ export type HostedBibleOptions = {
   supabaseUrl?: string
   supabasePublicKey?: string
   siteOrigin?: string
+  additionalSiteOrigin?: string
   quota?: BibleQuota
   fetcher?: typeof fetch
   now?: Date
 }
 const failure = (status: number) => Response.json({ error: 'Bíblia indisponível.' }, { status, headers: { 'Cache-Control': 'no-store' } })
+function validAdditionalOrigin(value: string) {
+  try {
+    const url = new URL(value)
+    return url.protocol === 'https:' && url.origin === value && !url.username && !url.password && !url.port && url.hostname.includes('.') && !url.hostname.endsWith('.local')
+  } catch { return false }
+}
 
 export async function hostedBibleGateway(request: Request, options: HostedBibleOptions): Promise<Response> {
-  const { apiKey, supabaseUrl, supabasePublicKey, siteOrigin, quota, fetcher = fetch, now = new Date() } = options
+  const { apiKey, supabaseUrl, supabasePublicKey, siteOrigin, additionalSiteOrigin, quota, fetcher = fetch, now = new Date() } = options
   if (!apiKey || !supabasePublicKey || !quota || !siteOrigin || !supabaseUrl || !/^https:\/\/[a-z0-9]{20}\.supabase\.co$/.test(supabaseUrl)) return failure(503)
+  if (additionalSiteOrigin && !validAdditionalOrigin(additionalSiteOrigin)) return failure(503)
   const url = new URL(request.url)
-  if (url.origin !== siteOrigin || request.method !== 'GET' || request.headers.get('origin') && request.headers.get('origin') !== siteOrigin || !['same-origin', 'none', null].includes(request.headers.get('sec-fetch-site'))) return failure(403)
+  if (![siteOrigin, additionalSiteOrigin].includes(url.origin) || request.method !== 'GET' || request.headers.get('origin') && request.headers.get('origin') !== url.origin || !['same-origin', 'none', null].includes(request.headers.get('sec-fetch-site'))) return failure(403)
   const authorization = request.headers.get('authorization')
   if (!authorization || !/^Bearer [A-Za-z0-9._-]+$/.test(authorization)) return failure(401)
   try {
