@@ -4,18 +4,18 @@
 .reading-font-control .reading-font-large { font-size:1.35rem; }
 .reading-font-control output { min-width:3ch; font-variant-numeric:tabular-nums; }
 .bible-chapter .bible-verse, .reading-column .reading>p:not(.muted), .reading-column .reading blockquote { font-size:var(--reading-font-size,18px); }
-.bible-multi-tools { box-shadow:0 8px 24px var(--shadow); }
+.bible-multi-tools { box-shadow:none; border:1px solid var(--border); }
 .bible-controls { display: grid; grid-template-columns: 1fr 1fr 120px; gap: 1rem; margin: 1.5rem 0; }
 .bible-controls label { display: grid; gap: .4rem; font-weight: 600; min-width: 0; }
 .bible-controls select { width: 100%; min-width: 0; }
 .bible-chapter h2 small { color: var(--text-muted); font-size: .7em; }
-.bible-chapter .bible-verse { line-height: 1.8; padding: .35rem .6rem; margin: .3rem 0; border-radius: .4rem; }
+.bible-chapter .bible-verse { font-family:Inter,'Segoe UI',sans-serif; line-height: 1.8; padding: .35rem .6rem; margin: .3rem 0; border-radius: .4rem; }
 .bible-number { color: var(--accent); font-weight: 700; margin-right: .35rem; }
 .bible-chapter .highlighted { background: var(--selection); }
 .bible-chapter .bible-mark-yellow { background: #fff0a8; color: #211b09; }
 .bible-chapter .bible-mark-blue { background: #cceeff; color: #102431; }
 .bible-chapter .bible-mark-pink { background: #ffd4e5; color: #2d1420; }
-.bible-mark-yellow .bible-number, .bible-mark-blue .bible-number, .bible-mark-pink .bible-number { color: #493171; }
+.bible-mark-yellow .bible-number, .bible-mark-blue .bible-number, .bible-mark-pink .bible-number { color: #3d332a; }
 .bible-verse-button { display: block; width: 100%; border: 0; padding: 0; background: none; color: inherit; font: inherit; line-height: inherit; text-align: left; cursor: pointer; }
 .bible-verse-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: .2rem; }
 .bible-chapter .bible-verse-selected { box-shadow: inset 3px 0 0 var(--accent); }
@@ -30,7 +30,7 @@
 .bible-color-divider { align-self: stretch; width: 1px; background: var(--border); margin: .1rem .4rem; }
 .bible-colors { display: flex; flex-wrap: wrap; align-items: center; gap: .55rem; }
 .bible-color { width: 27px; height: 27px; border: 2px solid transparent; border-radius: 50%; padding: 0; cursor: pointer; }
-.bible-color[aria-pressed="true"] { border-color: #34204f; outline: 2px solid var(--accent); outline-offset: 2px; }
+.bible-color[aria-pressed="true"] { border-color: #0d0e11; outline: 2px solid var(--accent); outline-offset: 2px; }
 .bible-color-yellow { background: #e6cc65; }
 .bible-color-blue { background: #92c5e4; }
 .bible-color-pink { background: #db91ae; }

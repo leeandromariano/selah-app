@@ -143,6 +143,18 @@ describe('acervo persistente do leitor', () => {
     expect(screen.getByRole('heading', { name: olderPublications[0].title })).toBeVisible()
     expect(boundary.historyQuery.insert).not.toHaveBeenCalled()
   })
+  it('permite informar como chega hoje sem abrir devocional nem gravar histórico', async () => {
+    const today = { ...olderPublications[0], id: 'mood-today-fiction', publish_at: new Date().toISOString() }
+    const boundary = libraryBoundary([today])
+    const user = userEvent.setup()
+    open()
+    expect(await screen.findByRole('heading', { name: 'Como seu coração chega hoje?' })).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'Cansado' }))
+    expect(screen.getByRole('button', { name: 'Cansado' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Grato' })).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('button', { name: /Entrar na Presença/ })).toBeEnabled()
+    expect(boundary.historyQuery.insert).not.toHaveBeenCalled()
+  })
   it('inclui o devocional publicado hoje na lista completa e ordena por mais recente', async () => {
     const today = { ...olderPublications[0], id: 'today-in-library', title: 'Devocional de Hoje no Acervo', publish_at: new Date(Date.now() - 60_000).toISOString() }
     const boundary = libraryBoundary([today, ...olderPublications])

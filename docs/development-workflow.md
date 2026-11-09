@@ -35,7 +35,9 @@
 > Modelo, transparência, limites e roteiro: [consistency-local.md](consistency-local.md).
 > Editorial não herda OWNER; promoção da conta efetiva exige auditoria no servidor.
 
-# Processo de desenvolvimento do Selah
+# Processo de desenvolvimento do Coram
+
+> Rebranding local em andamento: identidade Coram, modo escuro inicial, home com devocional e constância reais, faixa semanal e pergunta opcional de chegada. Contratos e dados existentes preservados. Ver [registro da etapa](coram-rebrand-local.md). A publicação requer aprovação específica.
 
 O painel `#owner` oferece comunidade e ofensivas e moderação em rotas próprias.
 O item de navegação depende da confirmação da RPC `get_my_discussion_access`

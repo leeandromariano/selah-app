@@ -23,13 +23,26 @@
 .button.primary, .hero .button.white { background: var(--action-bg); color: var(--on-action); border-color: var(--action-bg); min-height: 54px; border-radius: 14px; }
 .button.primary:hover, .hero .button.white:hover { background: var(--action-hover); color: var(--on-action); }
 .hero { background: var(--hero-bg); border: 1px solid var(--border); border-radius: 20px; box-shadow: none; min-height: 370px; }
-.coram-presence { display: flex; align-items: center; gap: 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 20px 24px; margin: 0 0 20px; }
+.coram-presence { display: flex; align-items: center; flex-wrap: wrap; gap: 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 20px 24px; margin: 0 0 20px; }
 .coram-presence-flame { width: 56px; height: 56px; display: grid; place-items: center; flex: none; border-radius: 16px; background: var(--surface-soft); color: var(--text-muted); }
 .coram-presence-flame svg { width: 28px; height: 28px; }
 .coram-presence-flame.lit { background: var(--brand-glow); color: var(--brand-ember); }
 .coram-presence .eyebrow { color: var(--accent); font-size: 9px; font-weight: 700; }
 .coram-presence h2 { font: 800 clamp(19px, 3vw, 28px)/1.2 'Plus Jakarta Sans', sans-serif; letter-spacing: -.045em; margin: 4px 0; }
 .coram-presence p { font-size: 11px; color: var(--text-muted); }
+.coram-week { list-style: none; display: grid; grid-template-columns: repeat(7, minmax(35px, 1fr)); gap: 5px; margin: 0 0 0 auto; padding: 0; width: min(100%, 315px); }
+.coram-week li { min-height: 48px; border: 1px solid var(--border); border-radius: 10px; display: flex; align-items: center; flex-direction: column; justify-content: center; background: var(--surface-soft); color: var(--text-muted); font: 500 10px/1.2 'JetBrains Mono', monospace; }
+.coram-week li strong { color: var(--text); font-size: 13px; }
+.coram-week li.done strong { color: var(--accent); }
+.coram-week li.today { border-color: var(--brand-ember); }
+.mood-checkin { display: flex; align-items: center; flex-wrap: wrap; gap: 16px 26px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 20px 24px; margin-bottom: 20px; }
+.mood-checkin h2 { font: 800 clamp(17px, 2.4vw, 23px)/1.25 'Plus Jakarta Sans', sans-serif; letter-spacing: -.04em; }
+.mood-checkin p { color: var(--text-muted); font-size: 11px; margin-top: 5px; }
+.mood-checkin .eyebrow { color: var(--accent); font-size: 9px; margin-bottom: 5px; }
+.mood-options { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+.mood-options button { background: var(--surface-soft); border: 1px solid var(--border); border-radius: 999px; min-height: 40px; padding: 8px 14px; font-size: 11px; font-weight: 700; }
+.mood-options button:hover, .mood-options button[aria-pressed="true"] { border-color: var(--brand-ember); color: var(--accent); }
+.mood-checkin .mood-response { flex-basis: 100%; margin: 0; }
 .hero-copy { padding: clamp(26px, 5vw, 50px); width: 72%; }
 .hero .eyebrow { color: var(--brand-ember); font-size: 10px; font-weight: 600; }
 .hero-tag { border-radius: 5px; margin-top: 22px; font-size: 9px; color: var(--brand-paper); }
@@ -64,6 +77,11 @@
 }
 
 @media (max-width: 520px) {
+  .mood-checkin { padding: 18px; }
+  .mood-options { margin-left: 0; }
+  .coram-presence { gap: 12px; padding: 18px; }
+  .coram-presence-flame { width: 45px; height: 45px; }
+  .coram-week { width: 100%; }
   .hero { min-height: 420px; }
   .hero-copy { position: relative; z-index: 1; }
   .hero-brand-art { width: 60%; opacity: .3; }

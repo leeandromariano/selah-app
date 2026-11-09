@@ -1,5 +1,9 @@
 # Inventário e execução de testes
 
+## Rebranding Coram
+
+`appearance/contrast.test.ts` verifica a paleta de ambos os temas; `appearance/bootstrap.test.ts` cobre o novo padrão escuro e a preservação de preferências explícitas. `consistency/calendar.test.ts` cobre a semana civil com virada de mês e futuro; `ConsistencySection.test.tsx` verifica a busca da semana anterior pela RPC e a sequência recebida do servidor. `ReaderLibrary.test.tsx` verifica a escolha opcional de estado de espírito sem abertura ou gravação. A suíte não prova o layout em navegador real nem publicação hospedada. Ver [limites](coram-rebrand-local.md).
+
 ## Destaques e anotações bíblicas
 
 `hostedGateway.test.ts` exercita o candidato de rota hospedada com dependências
