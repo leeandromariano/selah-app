@@ -5,6 +5,7 @@ import { supabase } from './lib/supabase'
 import App from './App'
 import { libraryBoundary, olderPublications } from './test/libraryBoundary'
 import { adminBoundary, editorialFixture } from './test/adminBoundary'
+import { openMenu } from './test/menu'
 
 describe('fluxos locais do Selah', () => {
   it('espera a sessão antes de mostrar navegação ou conteúdo privado', async () => {
@@ -24,8 +25,45 @@ describe('fluxos locais do Selah', () => {
     location.hash = 'inicio'
     render(<App />)
     expect(await screen.findByRole('heading', { name: greeting })).toBeVisible()
+    await openMenu()
     expect(screen.queryByRole('link', { name: 'Painel administrativo' })).not.toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Navegação principal' })).toBeVisible()
+  })
+  describe('menu hambúrguer', () => {
+    async function signedIn() {
+      vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'fictional-reader' } } }, error: null } as never)
+      libraryBoundary(olderPublications)
+      location.hash = 'inicio'
+      render(<App />)
+      return screen.findByRole('button', { name: 'Abrir menu' })
+    }
+    it('começa fechado e lista as páginas do leitor ao abrir', async () => {
+      const toggle = await signedIn()
+      expect(toggle).toHaveAttribute('aria-expanded', 'false')
+      expect(screen.queryByRole('navigation', { name: 'Navegação principal' })).not.toBeInTheDocument()
+      await userEvent.setup().click(toggle)
+      const nav = screen.getByRole('navigation', { name: 'Navegação principal' })
+      expect(within(nav).getAllByRole('link').map(l => l.textContent)).toEqual(['Início', 'Devocionais', 'Bíblia', 'Minha Jornada', 'Minhas aberturas'])
+      expect(screen.getByRole('button', { name: 'Fechar menu' })).toHaveAttribute('aria-expanded', 'true')
+    })
+    it('fecha com Esc e ao escolher uma página', async () => {
+      const user = userEvent.setup()
+      await signedIn()
+      await openMenu()
+      await user.keyboard('{Escape}')
+      expect(screen.queryByRole('navigation', { name: 'Navegação principal' })).not.toBeInTheDocument()
+      await openMenu()
+      await user.click(screen.getByRole('link', { name: 'Bíblia' }))
+      expect(location.hash).toBe('#biblia')
+      expect(screen.queryByRole('navigation', { name: 'Navegação principal' })).not.toBeInTheDocument()
+    })
+    it('não oferece o botão sem sessão', async () => {
+      vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: null }, error: null })
+      location.hash = 'login'
+      render(<App />)
+      await screen.findByRole('heading', { name: 'Que bom te ver de novo' })
+      expect(screen.queryByRole('button', { name: /menu/i })).not.toBeInTheDocument()
+    })
   })
   it('busca publicação anterior por referência sem diferenciar maiúsculas e recupera resultado vazio', async () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'fictional-reader' } } }, error: null } as never)

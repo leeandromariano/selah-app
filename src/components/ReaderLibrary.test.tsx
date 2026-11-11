@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import App from '../App'
 import { supabase } from '../lib/supabase'
 import { libraryBoundary, olderPublications } from '../test/libraryBoundary'
+import { openMenu } from '../test/menu'
 
 function open(page = 'inicio') {
   location.hash = page
@@ -185,6 +186,7 @@ describe('acervo persistente do leitor', () => {
     open('historico')
     expect(await screen.findByText('Ainda não há devocionais publicados.')).toBeVisible()
     expect(screen.queryByText('Confie no tempo de Deus')).not.toBeInTheDocument()
+    await openMenu()
     await user.click(screen.getByRole('link', { name: 'Minhas aberturas' }))
     expect(await screen.findByText('Você ainda não abriu nenhum devocional.')).toBeVisible()
   })

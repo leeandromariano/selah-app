@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import App from '../App'
 import { supabase } from '../lib/supabase'
+import { openMenu } from '../test/menu'
 
 function openPendingGoogle() {
   location.hash = 'historico'
@@ -43,6 +44,7 @@ describe('cadastro obrigatório após autenticação Google', () => {
       p_name: null,
       p_feedback_contact_allowed: false,
     })
+    await openMenu()
     expect(await screen.findByRole('link', { name: 'Devocionais' })).toBeVisible()
     expect(location.hash).toBe('#inicio')
   })

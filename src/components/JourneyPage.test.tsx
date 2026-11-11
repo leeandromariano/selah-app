@@ -5,6 +5,7 @@ import App from '../App'
 import { supabase } from '../lib/supabase'
 import { consistencyFixture } from '../test/consistencyBoundary'
 import { libraryBoundary, olderPublications } from '../test/libraryBoundary'
+import { openMenu } from '../test/menu'
 
 const session = { user: { id: 'journey-fiction' } }
 const history = consistencyFixture({ first_month: '2026-01-01', total_days: 2, total_devotionals: 3, current_streak: 2, best_streak: 2, status: 'completed_today', today_completed: true, last_completed_day: '2026-10-28' })
@@ -60,6 +61,7 @@ describe('Minha Jornada pessoal', () => {
     expect(entries[1]).toHaveTextContent('27 de outubro de 2026')
     expect(screen.getByText('Dias com conclusões no mês').nextElementSibling).toHaveTextContent('2')
     expect(screen.getByText('Devocionais concluídos no mês').nextElementSibling).toHaveTextContent('3')
+    await openMenu()
     expect(screen.getByRole('link', { name: 'Minha Jornada' })).toHaveAttribute('aria-current', 'page')
     expect(supabase.from).toHaveBeenCalledWith('devotional_views')
     expect(supabase.from).not.toHaveBeenCalledWith('devotionals')

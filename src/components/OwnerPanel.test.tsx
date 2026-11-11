@@ -2,6 +2,7 @@ import { act, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import App from '../App'
 import { supabase } from '../lib/supabase'
+import { openMenu } from '../test/menu'
 
 vi.mock('./CommunityPanel', () => ({ CommunityPanel: () => <div>Comunidade fictícia</div> }))
 vi.mock('./ModerationPanel', () => ({ ModerationPanel: () => <div>Moderação fictícia</div>, ModerationLink: () => null }))
@@ -24,6 +25,7 @@ describe('Painel OWNER', () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: session('owner') }, error: null })
     render(<App />)
     expect(await screen.findByText(content, { selector: route === 'owner' ? 'h1' : 'div' })).toBeInTheDocument()
+    await openMenu()
     expect(screen.getByRole('link', { name: 'Painel OWNER' })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Painel administrativo' })).not.toBeInTheDocument()
   })
@@ -34,6 +36,7 @@ describe('Painel OWNER', () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: session('fiction') }, error: null })
     render(<App />)
     expect(await screen.findByText('Acesso restrito ao OWNER.')).toBeInTheDocument()
+    await openMenu()
     expect(screen.queryByRole('link', { name: 'Painel OWNER' })).not.toBeInTheDocument()
     expect(screen.queryByText('Comunidade fictícia')).not.toBeInTheDocument()
     if (admin) expect(await screen.findByRole('link', { name: 'Painel administrativo' })).toBeInTheDocument()
@@ -44,6 +47,7 @@ describe('Painel OWNER', () => {
     rpc(async () => ({ data: true, error: null }), true)
     vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: session('owner') }, error: null })
     render(<App />)
+    await openMenu()
     expect(await screen.findByRole('link', { name: 'Painel OWNER' })).toBeInTheDocument()
     expect(await screen.findByRole('link', { name: 'Painel administrativo' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Gerenciar devocionais' })).toHaveAttribute('href', '#admin')
@@ -61,6 +65,7 @@ describe('Painel OWNER', () => {
     authEvent(session('second'))
     expect(await screen.findByText('Acesso restrito ao OWNER.')).toBeInTheDocument()
     await act(async () => { resolveFirst({ data: true, error: null }); await first })
+    await openMenu()
     expect(screen.queryByRole('link', { name: 'Painel OWNER' })).not.toBeInTheDocument()
     authEvent(null)
     expect(screen.queryByRole('link', { name: 'Painel OWNER' })).not.toBeInTheDocument()
@@ -72,6 +77,7 @@ describe('Painel OWNER', () => {
     rpc(async () => ({ data: allowed, error: null }))
     vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: session('owner') }, error: null })
     render(<App />)
+    await openMenu()
     expect(await screen.findByRole('link', { name: 'Painel OWNER' })).toBeInTheDocument()
     expect(screen.getByText('Leitor fictício')).toBeInTheDocument()
     authEvent(null)
@@ -79,6 +85,7 @@ describe('Painel OWNER', () => {
     allowed = false
     authEvent(session('reader'))
     expect(await screen.findByText('Leitor fictício')).toBeInTheDocument()
+    await openMenu()
     await waitFor(() => expect(screen.queryByRole('link', { name: 'Painel OWNER' })).not.toBeInTheDocument())
   })
 })

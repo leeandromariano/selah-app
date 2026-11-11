@@ -2417,3 +2417,5 @@ BibleVerseList.test.tsx cobre seleção de versículos avulsos no mesmo capítul
 `DevotionalShareCard.test.tsx` verifica que o botão principal gera imediatamente o arquivo PNG de 1080 × 1920 px com o link no texto compartilhado, baixa o arquivo quando o navegador não aceita compartilhar arquivos e trata o cancelamento sem mensagem de sucesso.
 
 O logo oficial do Coram foi preservado em PNG original de 1024 px. Os recortes proporcionais de 32 e 180 px foram inspecionados visualmente. `site.webmanifest` referencia os PNGs de 192 e 512 px, e o HTML inclui favicon de 32 px e ícone de 180 px para iOS. A conferência final na tela inicial de cada sistema requer instalação manual no dispositivo.
+
+`App.test.tsx` cobre o menu hambúrguer: fechado por padrão, itens do leitor ao abrir, fechamento por Esc e ao escolher página, e ausência do botão sem sessão. Os testes de ADMIN, OWNER e PUBLICADOR abrem o menu (`test/menu.ts`) antes de verificar os links, inclusive nas asserções negativas. A suite não prova o layout da gaveta em navegador real.

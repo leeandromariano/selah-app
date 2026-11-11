@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import App from '../App'
 import { supabase } from '../lib/supabase'
+import { openMenu } from '../test/menu'
 vi.mock('./BiblePassagePicker', () => ({ BiblePassagePicker: ({ onSelect }: { onSelect: (value: unknown) => void }) => <button type="button" onClick={() => onSelect({ translation: 'nvt', book: 'genesis', chapter: 1, verse: 1, endVerse: 1, reference: 'Gênesis 1:1' })}>Usar passagem fictícia</button> }))
 vi.mock('../bible/editorialFeature', () => ({ bibleEditorialEnabled: true }))
 
@@ -41,6 +42,7 @@ describe('espaço editorial PUBLICADOR', () => {
     const table = prepare(false)
     render(<App />)
     expect(await screen.findByRole('alert')).toHaveTextContent('Acesso restrito a PUBLICADORES')
+    await openMenu()
     expect(screen.queryByRole('link', { name: 'Espaço PUBLICADOR' })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Painel administrativo' })).not.toBeInTheDocument()
     expect(table.insert).not.toHaveBeenCalled()
@@ -50,6 +52,7 @@ describe('espaço editorial PUBLICADOR', () => {
     const user = userEvent.setup()
     render(<App />)
     await user.click(await screen.findByRole('button', { name: '+ Novo devocional' }))
+    await openMenu()
     expect(screen.getByRole('link', { name: 'Espaço PUBLICADOR' })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Painel administrativo' })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Salvar rascunho' }))

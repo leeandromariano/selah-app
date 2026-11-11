@@ -5,6 +5,7 @@ import App from '../App'
 import { supabase } from '../lib/supabase'
 import { adminBoundary, editorialFixture } from '../test/adminBoundary'
 import { dateTimeInput } from '../admin/repository'
+import { openMenu } from '../test/menu'
 
 vi.mock('./BiblePassagePicker', () => ({ BiblePassagePicker: ({ onSelect }: { onSelect: (value: unknown) => void }) => <button type="button" onClick={() => onSelect({ translation: 'nvt', book: 'genesis', chapter: 1, verse: 1, endVerse: 1, reference: 'Gênesis 1:1' })}>Usar passagem fictícia</button> }))
 vi.mock('../bible/editorialFeature', () => ({ bibleEditorialEnabled: true }))
@@ -48,6 +49,7 @@ describe('painel administrativo real', () => {
     openAdmin()
     await screen.findByText(editorialFixture.title)
     expect(screen.queryByRole('button', { name: 'Comunidade e ofensivas' })).not.toBeInTheDocument()
+    await openMenu()
     expect(screen.queryByRole('link', { name: 'Painel OWNER' })).not.toBeInTheDocument()
   })
   it('exibe verificação de acesso durante autorização pendente, sem falso acesso negado', async () => {
@@ -60,11 +62,13 @@ describe('painel administrativo real', () => {
     expect(supabase.from).not.toHaveBeenCalled()
     await act(async () => { finish({ data: [], error: null }) })
     expect(await screen.findByText(editorialFixture.title)).toBeVisible()
+    await openMenu()
     expect(screen.getByRole('link', { name: 'Painel administrativo' })).toBeVisible()
   })
   it('nega leitor antes de consultar conteúdo administrativo', async () => {
     openAdmin()
     expect(await screen.findByRole('alert')).toHaveTextContent('Acesso restrito')
+    await openMenu()
     expect(screen.queryByRole('link', { name: 'Painel administrativo' })).not.toBeInTheDocument()
     expect(supabase.from).not.toHaveBeenCalled()
   })
