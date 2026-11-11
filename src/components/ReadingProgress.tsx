@@ -6,12 +6,13 @@ import { createReadingRepository } from '../reading/repository'
 import { displayDate } from '../devotionals/repository'
 
 const repository = createReadingRepository(supabase)
-export function ReadingProgress({ devotionalId, revision, onCompleted }: { devotionalId: string; revision: number; onCompleted: () => void }) {
+export function ReadingProgress({ devotionalId, revision, onCompleted, onCompletedNow }: { devotionalId: string; revision: number; onCompleted: () => void; onCompletedNow?: () => void }) {
   const [view, setView] = useState<ReadingView>({ state: null, loading: true, saving: false, active: false, error: '', notice: '' })
   const controller = useRef<ReadingController | null>(null)
   const completionRequested = useRef(false)
   const completedCallback = useRef(onCompleted)
-  useEffect(() => { completedCallback.current = onCompleted }, [onCompleted])
+  const completedNowCallback = useRef(onCompletedNow)
+  useEffect(() => { completedCallback.current = onCompleted; completedNowCallback.current = onCompletedNow }, [onCompleted, onCompletedNow])
   useEffect(() => {
     let alive = true, reported = false
     const reader = new ReadingController(repository, devotionalId, revision, next => {
@@ -19,9 +20,12 @@ export function ReadingProgress({ devotionalId, revision, onCompleted }: { devot
       setView(next)
       if (next.state?.status === 'completed' && !reported) {
         reported = true
-        if (completionRequested.current && typeof navigator.vibrate === 'function') navigator.vibrate([45, 55, 45])
+        const justCompleted = completionRequested.current
+        if (justCompleted && typeof navigator.vibrate === 'function') navigator.vibrate([45, 55, 45])
         completionRequested.current = false
         completedCallback.current()
+        // só quando o leitor acabou de concluir (não ao reabrir um devocional já concluído)
+        if (justCompleted) completedNowCallback.current?.()
       }
     })
     controller.current = reader

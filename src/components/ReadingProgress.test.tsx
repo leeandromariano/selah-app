@@ -14,8 +14,9 @@ function open(state = initial) {
     return { data: saved, error: null }
   } }) as never)
   const onCompleted = vi.fn()
-  const component = render(<ReadingProgress devotionalId="fiction" revision={1} onCompleted={onCompleted} />)
-  return { ...component, onCompleted }
+  const onCompletedNow = vi.fn()
+  const component = render(<ReadingProgress devotionalId="fiction" revision={1} onCompleted={onCompleted} onCompletedNow={onCompletedNow} />)
+  return { ...component, onCompleted, onCompletedNow }
 }
 async function flush() { await act(async () => { await Promise.resolve() }) }
 beforeEach(() => {
@@ -47,6 +48,16 @@ describe('experiência de conclusão voluntária', () => {
     expect(onCompleted).toHaveBeenCalledTimes(1)
     expect(vibrate).toHaveBeenCalledWith([45, 55, 45])
     expect(screen.queryByRole('button', { name: 'Concluir devocional' })).not.toBeInTheDocument()
+  })
+  it('avisa que acabou de concluir só quando o leitor clica, não ao carregar um devocional já concluído', async () => {
+    const first = open({ ...initial, credited_ms: 60000, status: 'ready' }); await flush()
+    expect(first.onCompletedNow).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Concluir devocional' })); await flush()
+    expect(first.onCompletedNow).toHaveBeenCalledTimes(1)
+    first.unmount()
+    const second = open({ ...initial, credited_ms: 60000, status: 'completed', completed_at: '2026-10-28T15:00:00Z', completed_day: '2026-10-28' }); await flush()
+    expect(second.onCompleted).toHaveBeenCalledTimes(1)
+    expect(second.onCompletedNow).not.toHaveBeenCalled()
   })
   it('ocultar a aba pausa e voltar retoma sem contar tempo oculto', async () => {
     open(); await flush()

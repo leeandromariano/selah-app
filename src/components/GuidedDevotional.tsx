@@ -15,7 +15,7 @@ function blocksSwipe(target: EventTarget | null) {
   return target instanceof Element && Boolean(target.closest('a, button, input, textarea, select, summary, .devotional-chapter'))
 }
 
-export function GuidedDevotional({ item, userId, onCompleted }: { item: Publication; userId: string; onCompleted: () => void }) {
+export function GuidedDevotional({ item, userId, onCompleted, onCompletedNow }: { item: Publication; userId: string; onCompleted: () => void; onCompletedNow?: () => void }) {
   const [step, setStep] = useState(0)
   const [direction, setDirection] = useState<'forward' | 'backward' | null>(null)
   const touchStart = useRef<{ x: number; y: number } | null>(null)
@@ -74,6 +74,6 @@ export function GuidedDevotional({ item, userId, onCompleted }: { item: Publicat
     </section>
     <p className="guided-swipe-hint">Deslize para o lado para mudar de etapa.</p>
     <div className="guided-navigation"><button type="button" className="button secondary" disabled={step === 0} onClick={() => navigate(step - 1)}>Voltar</button>{step < 3 && <button type="button" className="button primary" onClick={() => navigate(step + 1)}>Continuar →</button>}</div>
-    <div hidden={step !== 3}><ReadingProgress devotionalId={item.id} revision={item.reading_revision} onCompleted={onCompleted} /></div>
+    <div hidden={step !== 3}><ReadingProgress devotionalId={item.id} revision={item.reading_revision} onCompleted={onCompleted} onCompletedNow={onCompletedNow} /></div>
   </div>
 }

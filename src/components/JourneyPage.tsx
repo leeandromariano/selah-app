@@ -3,6 +3,7 @@ import { ConsistencySection } from './ConsistencySection'
 import { Heading } from './UI'
 import { JourneyRewards } from './JourneyRewards'
 import { JourneyLastOpening } from './JourneyLastOpening'
+import { ReaderLibrary } from './ReaderLibrary'
 
 export function JourneyPage() {
   const { session, loading, recovery } = useAuth()
@@ -14,6 +15,7 @@ export function JourneyPage() {
     <JourneyLastOpening key={session.user.id} userId={session.user.id} />
     <ConsistencySection userId={session.user.id} showHistory />
     <JourneyRewards userId={session.user.id} />
-    <div className="actions journey-links"><a className="button secondary" href="#minhas-leituras">Ver minhas aberturas e conclusões</a><a className="text-link" href="#historico">Escolher um devocional →</a></div>
+    <ReaderLibrary page="minhas-leituras" embedded />
+    <div className="actions journey-links"><a className="text-link" href="#historico">Escolher um devocional →</a></div>
   </>
 }
