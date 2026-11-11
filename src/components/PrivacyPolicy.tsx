@@ -1,8 +1,7 @@
 import { Heading } from './UI'
-import { environmentName } from '../lib/supabase'
 export function PrivacyPolicy() {
   return <article className="reading">
-    <Heading eyebrow="TRANSPARÊNCIA" title="Privacidade no Coram" description={`Informações para o ambiente ${environmentName === 'DEV' ? 'local' : 'de homologação'} de testes. Use somente dados fictícios.`} />
+    <Heading eyebrow="TRANSPARÊNCIA" title="Privacidade no Coram" description="Como o Coram trata as suas informações." />
     <h2>Conta e histórico pessoal</h2>
     <p>O cadastro usa nome, username, e-mail, senha e WhatsApp. Instagram é opcional no perfil. O nome do cadastro fica nos metadados de autenticação e é usado na saudação. Aberturas ficam no histórico pessoal e não comprovam conclusão. O perfil permite corrigir campos editáveis e registrar um pedido de exclusão para análise manual; esse pedido não apaga a conta automaticamente.</p>
     <h2>Conclusões e consistência</h2>
@@ -14,7 +13,6 @@ export function PrivacyPolicy() {
     <p>Comentar é opcional. Uma reflexão aprovada fica visível a leitores autenticados, com username e data aproximada; não é confidencial. Textos novos e editados ficam pendentes para revisão exclusiva do proprietário. Não publique dados de contato, informações pessoais de terceiros, assédio ou ameaças. Você pode editar ou remover sua reflexão e denunciar comentários aprovados.</p>
     <p>Reações são privadas, sem lista de votantes ou placar público. Denúncias não revelam a identidade do denunciante aos demais leitores. O proprietário acessa as filas e um histórico mínimo de ações, sem cópias antigas do texto. Remover apaga o texto imediatamente; registros mínimos de unicidade são preservados enquanto a conta e o devocional existirem. Textos não aprovados com mais de 30 dias são apagados na manutenção; denúncias resolvidas duram até 30 dias, demais denúncias e auditoria até 90 dias. A rotina local precisa ser executada pelo operador. Reflexões aprovadas permanecem até remoção ou exclusão da conta/devocional.</p>
     <h2>Antes da abertura ao público</h2>
-    <p>Este aviso descreve o funcionamento neste ambiente de testes e não afirma conformidade integral com a legislação de privacidade. Antes de disponibilizar o aplicativo ao público, o responsável precisa avaliar a base aplicável ao tratamento, retenção e exclusão, atendimento de direitos, comunicação a contas existentes e proteção dos indicadores de hábitos religiosos.</p>
     <p>O uso por menores de idade exige avaliação adicional sobre público etário, proteção apropriada, participação de responsáveis quando aplicável e limites de acompanhamento e contato. Esses pontos e o atendimento operacional de privacidade permanecem pendentes de definição.</p>
     <a className="text-link" href="#cadastro">Voltar ao cadastro</a>
   </article>

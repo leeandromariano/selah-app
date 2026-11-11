@@ -29,6 +29,19 @@ describe('fluxos locais do Selah', () => {
     expect(screen.queryByRole('link', { name: 'Painel administrativo' })).not.toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Navegação principal' })).toBeVisible()
   })
+  it('mostra o convite para instalar o app só no fim da página Início', async () => {
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'fictional-reader' } } }, error: null } as never)
+    libraryBoundary(olderPublications)
+    location.hash = 'inicio'
+    render(<App />)
+    const install = await screen.findByRole('button', { name: 'Instalar app' })
+    const main = screen.getByRole('main')
+    expect(main.lastElementChild).toContainElement(install)
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Abrir menu' }))
+    await userEvent.setup().click(screen.getByRole('link', { name: 'Minha Jornada' }))
+    expect(await screen.findByRole('heading', { name: /Minha Jornada/ })).toBeVisible()
+    expect(screen.queryByRole('button', { name: 'Instalar app' })).not.toBeInTheDocument()
+  })
   describe('menu hambúrguer', () => {
     async function signedIn() {
       vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'fictional-reader' } } }, error: null } as never)
@@ -63,6 +76,7 @@ describe('fluxos locais do Selah', () => {
       render(<App />)
       await screen.findByRole('heading', { name: 'Que bom te ver de novo' })
       expect(screen.queryByRole('button', { name: /menu/i })).not.toBeInTheDocument()
+      expect(screen.queryByText(/homologação|STAGING|Ambiente local|informações fictícias|Conteúdo e administração no ambiente/i)).not.toBeInTheDocument()
     })
   })
   it('busca publicação anterior por referência sem diferenciar maiúsculas e recupera resultado vazio', async () => {

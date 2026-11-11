@@ -15,11 +15,11 @@ describe('transparência de consistência', () => {
     expect(supabase.rpc).not.toHaveBeenCalled()
     expect(supabase.from).not.toHaveBeenCalled()
   })
-  it('cadastro informa métricas e oferece somente checkbox separado para feedback', () => {
+  it('cadastro oferece somente checkbox separado para feedback e não exibe aviso longo', () => {
     render(<AuthForm register />)
-    expect(screen.getByText(/Conclusões geram métricas individuais/)).toHaveTextContent('proprietário')
+    expect(screen.queryByText(/Conclusões geram métricas individuais|O cadastro exige nome|ranking é administrativo/)).not.toBeInTheDocument()
     expect(screen.getAllByRole('checkbox')).toHaveLength(1)
-    expect(screen.getByRole('checkbox')).toHaveAccessibleName(/WhatsApp.*opcional/)
     expect(screen.getByRole('link', { name: 'Política de privacidade' })).toHaveAttribute('href', '#privacidade')
+    expect(screen.getByRole('checkbox')).toHaveAccessibleName(/WhatsApp.*opcional/)
   })
 })
