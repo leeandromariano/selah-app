@@ -2432,7 +2432,7 @@ Ao clicar em "Concluir devocional" (só quando o leitor acabou de concluir, não
 
 ## Quiz bíblico e ranking do owner
 
-Aba "Quiz bíblico" no menu (`#quiz`), com modalidades Antigo Testamento, Novo Testamento e Bíblia toda. Rodadas de até 10 perguntas de múltipla escolha; ao responder, o leitor vê na hora se acertou, a alternativa certa e a referência bíblica. As respostas certas ficam só no servidor (tabelas sem acesso direto; funções `quiz_start`, `quiz_answer`, `get_my_quiz_stats`) e só a primeira resposta a cada pergunta conta. O owner vê o ranking em `#owner/quiz` (`get_owner_quiz_ranking`, exige owner). Migração: `20261111000100_bible_quiz.sql` (inclui 48 perguntas iniciais). Cobertura: `quiz/repository.test.ts`, `QuizPage.test.tsx`, `QuizRankingPanel.test.tsx`, `OwnerPanel.test.tsx` e `App.test.tsx`. As funções SQL foram verificadas à mão no banco local (leitor comum, owner e acesso direto negado); não há teste automatizado de SQL.
+Aba "Quiz bíblico" no menu (`#bereia/quiz`), com modalidades Antigo Testamento, Novo Testamento e Bíblia toda. Rodadas de até 10 perguntas de múltipla escolha; ao responder, o leitor vê na hora se acertou, a alternativa certa e a referência bíblica. As respostas certas ficam só no servidor (tabelas sem acesso direto; funções `quiz_start`, `quiz_answer`, `get_my_quiz_stats`) e só a primeira resposta a cada pergunta conta. O owner vê o ranking em `#owner/quiz` (`get_owner_quiz_ranking`, exige owner). Migração: `20261111000100_bible_quiz.sql` (inclui 48 perguntas iniciais). Cobertura: `quiz/repository.test.ts`, `QuizPage.test.tsx`, `QuizRankingPanel.test.tsx`, `OwnerPanel.test.tsx` e `App.test.tsx`. As funções SQL foram verificadas à mão no banco local (leitor comum, owner e acesso direto negado); não há teste automatizado de SQL.
 
 ## Quiz: níveis e versículo
 
@@ -2462,3 +2462,10 @@ Aba "Quiz bíblico" no menu (`#quiz`), com modalidades Antigo Testamento, Novo T
 - Rota `#bereia/linha-do-tempo`: pares sorteados de `timeline_events` (61 acontecimentos em ordem da narrativa bíblica; a coluna `position` só sai do servidor depois da resposta). O lado de cada evento é sorteado no servidor.
 - RPC `timeline_start`, `timeline_answer`, `get_my_timeline_stats` (security definer). Só a primeira resposta a cada par, em qualquer ordem, conta pontos.
 - Eras são rótulos amplos (Origens, Patriarcas, Êxodo e conquista, Juízes, Reino unido, Reino dividido, Exílio e volta, Vida de Jesus, Igreja primitiva); não há datas exatas porque a cronologia varia entre estudiosos. Evitei eventos de ordem controversa (por exemplo, Sansão e Samuel, ou Rute).
+
+## Ranking da Bereia (owner)
+
+- Rota `#owner/bereia` (substitui `#owner/quiz`), com abas: Geral, Quiz bíblico (ranking já existente), Tá na Bíblia ou Tá Amarrado?, Quem disse isso?, Linha do Tempo e Versículo Oculto.
+- RPC `get_owner_bereia_ranking(p_game, p_search, p_page, p_size)`, só para o owner (`private.app_owner`); sem e-mail nem dados pessoais além do username. Conta a primeira resposta de cada leitor. "Geral" = acertos do quiz e dos jogos de resposta + dias de Versículo Oculto resolvidos.
+- Para ver o painel no navegador local, a conta logada precisa ser o owner (tabela `private.app_owner` tem uma única linha); restaure o owner original depois.
+- No navegador de teste (janela oculta) o app refaz as checagens de sessão e remonta os painéis do owner a cada poucos segundos; isso também ocorre no painel de Comunidade e não é do ranking.
