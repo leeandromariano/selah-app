@@ -2449,3 +2449,10 @@ Aba "Quiz bíblico" no menu (`#quiz`), com modalidades Antigo Testamento, Novo T
 
 - Rota `#bereia/quem-disse`; modos Base e Profundo (`who_cards.mode`). Tabelas `who_cards`/`who_answers` só acessíveis via RPC `who_start`, `who_answer`, `get_my_who_stats` (security definer); resposta e contexto só saem depois de responder.
 - Após responder mostra quem disse, o contexto e o texto em ARA (`QuizVerse`; no local o texto não aparece, pois falta `/api/bible`).
+
+## Bereia: Versículo Oculto
+
+- Rota `#bereia/versiculo`: um desafio por dia (fuso America/Sao_Paulo; nº = dias desde 11/11/2026, ciclando entre as linhas ativas de `verse_puzzles`). 2–3 palavras escondidas, 4 tentativas.
+- O servidor guarda só a referência e as palavras escondidas (índice, palavra, palavra anterior), nunca o texto do versículo. O texto vem de `/api/bible` (ARA) e `locateBlanks` confere tamanho e palavra anterior; se não bater, o jogo mostra erro em vez de um desafio quebrado. **Ao publicar, abra o jogo de cada um dos 16 versículos (mude `verse_puzzles.seq` ou a data) para confirmar que a redação ARA bate.**
+- RPC `verse_today` e `verse_guess` (security definer); as palavras só saem quando o desafio termina. A grade de compartilhamento usa só 🟧/⬛, sem spoiler.
+- Localmente `/api/bible` não existe; para testar no navegador, simule `window.fetch` para `/api/bible` com um capítulo fictício.

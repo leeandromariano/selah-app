@@ -269,3 +269,16 @@ a.quiz-mode { text-decoration: none; }
 .claims-badge[data-verdict='invencao'] { background: rgba(214, 69, 69, 0.25); }
 
 .who-quote { font-size: 1.3rem; line-height: 1.35; font-style: italic; }
+
+/* Bereia: Versículo Oculto */
+.verse-board { position: relative; display: grid; gap: 14px; padding: 20px; border: 1px solid var(--line, rgba(128, 128, 128, 0.3)); border-radius: 20px; background: var(--card, transparent); }
+.verse-meta { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 0.85rem; opacity: 0.85; }
+.verse-text { margin: 0; font-size: 1.2rem; line-height: 1.7; }
+.verse-blank { display: inline-block; padding: 0 6px; margin: 0 2px; border-radius: 8px; letter-spacing: 2px; background: rgba(128, 128, 128, 0.25); }
+.verse-word { padding: 0 4px; border-radius: 6px; color: inherit; background: rgba(214, 69, 69, 0.28); }
+.verse-word[data-ok='true'] { background: rgba(46, 157, 91, 0.3); }
+.verse-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 1.6rem; line-height: 1.2; }
+.verse-form { display: grid; gap: 12px; }
+.verse-form label { display: grid; gap: 4px; font-weight: 700; }
+.verse-form input { min-height: 48px; padding: 8px 12px; font: inherit; font-size: 1rem; border-radius: 12px; border: 1px solid var(--line, rgba(128, 128, 128, 0.45)); background: transparent; color: inherit; }
+.verse-share { margin: 0; padding: 12px; white-space: pre-wrap; border-radius: 12px; background: rgba(128, 128, 128, 0.15); font: inherit; font-size: 1.1rem; }

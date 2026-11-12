@@ -5,6 +5,7 @@ const games = [
   { href: '#bereia/quiz', title: 'Quiz bíblico', description: 'Perguntas de múltipla escolha em quatro níveis, do Iniciante ao Bigode grosso.' },
   { href: '#bereia/mito', title: 'Tá na Bíblia ou Tá Amarrado?', description: 'Cinco cartas: arraste para dizer se a frase está mesmo na Bíblia.' },
   { href: '#bereia/quem-disse', title: 'Quem disse isso?', description: 'Uma frase da Bíblia e quatro personagens: quem a pronunciou? Modo Base e Modo Profundo.' },
+  { href: '#bereia/versiculo', title: 'Versículo Oculto', description: 'Desafio diário: complete as palavras escondidas em 4 tentativas e compartilhe a grade sem spoiler.' },
 ]
 
 export function BereiaHub() {
