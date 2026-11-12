@@ -6,6 +6,7 @@ const games = [
   { href: '#bereia/mito', title: 'Tá na Bíblia ou Tá Amarrado?', description: 'Cinco cartas: arraste para dizer se a frase está mesmo na Bíblia.' },
   { href: '#bereia/quem-disse', title: 'Quem disse isso?', description: 'Uma frase da Bíblia e quatro personagens: quem a pronunciou? Modo Base e Modo Profundo.' },
   { href: '#bereia/versiculo', title: 'Versículo Oculto', description: 'Desafio diário: complete as palavras escondidas em 4 tentativas e compartilhe a grade sem spoiler.' },
+  { href: '#bereia/linha-do-tempo', title: 'Linha do Tempo', description: 'Antes ou depois? Toque no acontecimento bíblico que veio primeiro.' },
 ]
 
 export function BereiaHub() {

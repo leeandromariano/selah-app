@@ -282,3 +282,11 @@ a.quiz-mode { text-decoration: none; }
 .verse-form label { display: grid; gap: 4px; font-weight: 700; }
 .verse-form input { min-height: 48px; padding: 8px 12px; font: inherit; font-size: 1rem; border-radius: 12px; border: 1px solid var(--line, rgba(128, 128, 128, 0.45)); background: transparent; color: inherit; }
 .verse-share { margin: 0; padding: 12px; white-space: pre-wrap; border-radius: 12px; background: rgba(128, 128, 128, 0.15); font: inherit; font-size: 1.1rem; }
+
+/* Bereia: Linha do Tempo */
+.timeline-pair { display: grid; gap: 12px; }
+.timeline-card { min-height: 84px; justify-content: center; text-align: center; font-weight: 700; font-size: 1.05rem; }
+.timeline-order { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.timeline-order li { display: flex; gap: 12px; align-items: flex-start; }
+.timeline-step { display: inline-grid; place-items: center; flex: none; min-width: 32px; height: 32px; border-radius: 50%; background: var(--accent, #c2410c); color: #fff; font-weight: 700; font-size: 0.85rem; }
+@media (min-width: 640px) { .timeline-pair { grid-template-columns: 1fr 1fr; } }

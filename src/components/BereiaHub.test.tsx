@@ -11,5 +11,6 @@ describe('Bereia', () => {
     expect(screen.getByRole('link', { name: /Tá na Bíblia ou Tá Amarrado\?/ })).toHaveAttribute('href', '#bereia/mito')
     expect(screen.getByRole('link', { name: /Quem disse isso\?/ })).toHaveAttribute('href', '#bereia/quem-disse')
     expect(screen.getByRole('link', { name: /Versículo Oculto/ })).toHaveAttribute('href', '#bereia/versiculo')
+    expect(screen.getByRole('link', { name: /Linha do Tempo/ })).toHaveAttribute('href', '#bereia/linha-do-tempo')
   })
 })

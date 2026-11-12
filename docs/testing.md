@@ -2456,3 +2456,9 @@ Aba "Quiz bíblico" no menu (`#quiz`), com modalidades Antigo Testamento, Novo T
 - O servidor guarda só a referência e as palavras escondidas (índice, palavra, palavra anterior), nunca o texto do versículo. O texto vem de `/api/bible` (ARA) e `locateBlanks` confere tamanho e palavra anterior; se não bater, o jogo mostra erro em vez de um desafio quebrado. **Ao publicar, abra o jogo de cada um dos 16 versículos (mude `verse_puzzles.seq` ou a data) para confirmar que a redação ARA bate.**
 - RPC `verse_today` e `verse_guess` (security definer); as palavras só saem quando o desafio termina. A grade de compartilhamento usa só 🟧/⬛, sem spoiler.
 - Localmente `/api/bible` não existe; para testar no navegador, simule `window.fetch` para `/api/bible` com um capítulo fictício.
+
+## Bereia: Linha do Tempo (Antes ou Depois?)
+
+- Rota `#bereia/linha-do-tempo`: pares sorteados de `timeline_events` (61 acontecimentos em ordem da narrativa bíblica; a coluna `position` só sai do servidor depois da resposta). O lado de cada evento é sorteado no servidor.
+- RPC `timeline_start`, `timeline_answer`, `get_my_timeline_stats` (security definer). Só a primeira resposta a cada par, em qualquer ordem, conta pontos.
+- Eras são rótulos amplos (Origens, Patriarcas, Êxodo e conquista, Juízes, Reino unido, Reino dividido, Exílio e volta, Vida de Jesus, Igreja primitiva); não há datas exatas porque a cronologia varia entre estudiosos. Evitei eventos de ordem controversa (por exemplo, Sansão e Samuel, ou Rute).
