@@ -154,7 +154,7 @@ export function OwnerDashboard({ page, repo = defaultRepository }: { page: strin
           <button type="button" className="button secondary" onClick={() => setAttempt(n => n + 1)}>Atualizar</button>
         </div>
       </div>
-      {data && <p className="muted dash-asof">Dados até {dateLabel(data.server_today)} · últimos {data.days} dias · horário de Brasília</p>}
+      {data && <p className="muted dash-asof">{data.days === 1 ? `Dados de hoje, ${dateLabel(data.server_today)}` : `Dados até ${dateLabel(data.server_today)} · últimos ${data.days} dias`} · horário de Brasília</p>}
       {!data && !failed && <p role="status">Carregando indicadores…</p>}
       {failed && <div className="info" role="alert">Não foi possível carregar os indicadores. Acesso exclusivo do proprietário; verifique sua sessão e tente novamente. <button type="button" className="button secondary" onClick={() => setAttempt(n => n + 1)}>Repetir consulta</button></div>}
       {data && <div className="dash-body" data-mode={mode}>

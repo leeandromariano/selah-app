@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-export type Period = 7 | 30 | 90
+export type Period = 1 | 7 | 30 | 90
 export type Series = { day: string; n: number }[]
 export type GameId = 'quiz' | 'claims' | 'who' | 'timeline' | 'verse'
 export type GameStat = { id: GameId; players: number; answers: number; correct: number }
@@ -13,7 +13,7 @@ export type Dashboard = {
   content: { quiz: number; quiz_levels: { level: number; n: number }[]; who: number; claims: number; verse: number; timeline: number }
 }
 
-export const periods: { days: Period; label: string }[] = [{ days: 7, label: '7 dias' }, { days: 30, label: '30 dias' }, { days: 90, label: '90 dias' }]
+export const periods: { days: Period; label: string }[] = [{ days: 1, label: 'Hoje' }, { days: 7, label: '7 dias' }, { days: 30, label: '30 dias' }, { days: 90, label: '90 dias' }]
 export const gameNames: Record<GameId, string> = { quiz: 'Quiz bíblico', claims: 'Tá na Bíblia ou Tá Amarrado?', who: 'Quem disse isso?', timeline: 'Linha do Tempo', verse: 'Versículo Oculto' }
 const gameOrder: GameId[] = ['quiz', 'claims', 'who', 'timeline', 'verse']
 

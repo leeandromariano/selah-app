@@ -11,7 +11,7 @@ vi.mock('./OwnerContentPanel', () => ({ OwnerContentPanel: () => <div>Perguntas 
 vi.mock('./BereiaRankingPanel', () => ({ BereiaRankingPanel: () => <div>Ranking fictício</div> }))
 vi.mock('./PublisherManagement', () => ({ PublisherManagement: () => <div>Publicadores fictícios</div> }))
 
-const repo = (overrides: Record<string, unknown> = {}) => ({ load: vi.fn(async (days: 7 | 30 | 90) => parseDashboard(payload(days), days)), ...overrides })
+const repo = (overrides: Record<string, unknown> = {}) => ({ load: vi.fn(async (days: 1 | 7 | 30 | 90) => parseDashboard(payload(days), days)), ...overrides })
 
 describe('Painel OWNER em dashboard', () => {
   it('mostra a visão geral com cartões, gráficos e os devocionais mais lidos', async () => {
@@ -47,8 +47,17 @@ describe('Painel OWNER em dashboard', () => {
     expect(await screen.findByText(/últimos 7 dias/)).toBeVisible()
     expect(screen.getByRole('button', { name: '7 dias' })).toHaveAttribute('aria-pressed', 'true')
   })
+  it('a opção Hoje mostra só os números do dia', async () => {
+    const r = repo()
+    render(<OwnerDashboard page="owner" repo={r as never} />)
+    await screen.findByText('Leitores', { selector: '.dash-kpi-label' })
+    expect(screen.getAllByRole('button', { name: /^(Hoje|7 dias|30 dias|90 dias)$/ }).map(button => button.textContent)).toEqual(['Hoje', '7 dias', '30 dias', '90 dias'])
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Hoje' }))
+    expect(r.load).toHaveBeenLastCalledWith(1)
+    expect(await screen.findByText('Dados de hoje, 12/11/2026', { exact: false })).toBeVisible()
+  })
   it('mostra erro de acesso e permite repetir a consulta', async () => {
-    const load = vi.fn().mockRejectedValueOnce(Error('x')).mockImplementation(async (days: 7 | 30 | 90) => parseDashboard(payload(days), days))
+    const load = vi.fn().mockRejectedValueOnce(Error('x')).mockImplementation(async (days: 1 | 7 | 30 | 90) => parseDashboard(payload(days), days))
     render(<OwnerDashboard page="owner" repo={{ load } as never} />)
     expect(await screen.findByRole('alert')).toHaveTextContent('Acesso exclusivo do proprietário')
     await userEvent.setup().click(screen.getByRole('button', { name: 'Repetir consulta' }))

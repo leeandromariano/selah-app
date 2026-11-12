@@ -1,7 +1,7 @@
 begin;
 
 -- Dashboard do OWNER: indicadores agregados (sem textos de leitores, pedidos de oração, respostas pessoais, e-mail ou
--- telefone). Uma única consulta devolve todas as áreas para o período escolhido (7, 30 ou 90 dias, fuso de São Paulo).
+-- telefone). Uma única consulta devolve todas as áreas para o período escolhido (hoje, 7, 30 ou 90 dias, fuso de São Paulo).
 create function public.get_owner_dashboard(p_days integer default 30) returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
 declare
@@ -10,7 +10,7 @@ declare
   v_result jsonb;
 begin
   perform private.owner_identity();
-  if p_days is null or p_days not in (7, 30, 90) then raise exception 'Invalid period' using errcode = '22023'; end if;
+  if p_days is null or p_days not in (1, 7, 30, 90) then raise exception 'Invalid period' using errcode = '22023'; end if;
   v_from := v_today - (p_days - 1);
   with
   participants as materialized (

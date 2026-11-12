@@ -2488,6 +2488,6 @@ Aba "Quiz bíblico" no menu (`#bereia/quiz`), com modalidades Antigo Testamento,
 ## Painel OWNER em formato de dashboard
 
 - `#owner` abre a **Visão geral**; o trilho lateral (no celular, chips no topo) troca a área sem sair da tela: **Leitores** (`#owner/comunidade`), **Bereia** (`#owner/bereia`), **Reflexões** (`#owner/moderacao`) e **Conteúdo** (`#owner/perguntas` e `#owner/publicadores`). Cada área mostra seus cartões e gráficos e, embaixo, o detalhamento (ranking de ofensivas, ranking da Bereia, fila de moderação, perguntas dos jogos, publicadores). Atalho fixo para Gerenciar devocionais.
-- Seletor de período (7, 30 ou 90 dias) e botão Atualizar. Uma única RPC, `get_owner_dashboard(p_days)` (security definer, exige `private.owner_identity`), devolve todos os agregados; trocar de área não busca de novo, trocar de período sim.
+- Seletor de período (Hoje, 7, 30 ou 90 dias) e botão Atualizar. Uma única RPC, `get_owner_dashboard(p_days)` (security definer, exige `private.owner_identity`), devolve todos os agregados; trocar de área não busca de novo, trocar de período sim.
 - Só agregados: nada de textos de leitores, pedidos de oração, respostas pessoais, e-mail ou telefone. Atividade = conclusões, aberturas, jogos (quiz, Tá na Bíblia, Quem disse isso, Linha do Tempo, Versículo Oculto), reflexões e fila de moderação, conteúdo ativo.
 - Gráficos em SVG próprio (`DashboardCharts.tsx`), sem biblioteca. Cores dos cartões fixas; o resto usa as variáveis de tema.

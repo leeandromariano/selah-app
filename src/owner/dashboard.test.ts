@@ -21,6 +21,7 @@ describe('dashboard do owner (dados)', () => {
   it('recusa período inválido e propaga erro de acesso', async () => {
     const { rpc, repository } = client(payload())
     await expect(repository.load(15 as never)).rejects.toThrow('Período inválido')
+    expect((await client(payload(1)).repository.load(1)).reading.daily_views).toHaveLength(1)
     expect(rpc).not.toHaveBeenCalled()
     await expect(client(null, { code: '42501' }).repository.load(7)).rejects.toEqual({ code: '42501' })
   })
