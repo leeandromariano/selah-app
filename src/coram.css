@@ -199,16 +199,31 @@
 .share-dialog > .actions { margin-top: 16px; justify-content: flex-end; }
 
 /* Quiz bíblico */
-.quiz-modes { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin: 16px 0; }
-.quiz-mode { display: flex; flex-direction: column; gap: 4px; padding: 18px; text-align: left; cursor: pointer; border: 1px solid var(--line, rgba(128, 128, 128, 0.3)); border-radius: 16px; background: var(--card, transparent); color: inherit; font: inherit; }
-.quiz-mode:hover, .quiz-mode:focus-visible { border-color: var(--accent, #c2410c); }
-.quiz-levels { border: 0; padding: 0; margin: 16px 0 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
-.quiz-levels legend { padding: 0; margin-bottom: 8px; font-weight: 700; }
-.quiz-level { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; cursor: pointer; border: 1px solid var(--line, rgba(128, 128, 128, 0.3)); border-radius: 14px; }
-.quiz-level input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
-.quiz-level span { opacity: 0.75; font-size: 0.85rem; }
-.quiz-level[data-checked='true'] { border-color: var(--accent, #c2410c); box-shadow: 0 0 0 2px var(--accent, #c2410c) inset; }
+.quiz-step { margin: 18px 0; }
+.quiz-step-title, .quiz-levels legend { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; padding: 0; font-size: 1.05rem; font-weight: 700; }
+.quiz-step-number { display: inline-grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--accent, #c2410c); color: #fff; font-size: 0.85rem; }
+.quiz-levels { border: 0; padding: 0; margin: 0; min-width: 0; }
+.quiz-level-grid { display: grid; gap: 10px; grid-template-columns: repeat(2, 1fr); }
+.quiz-level { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px 14px; min-height: 64px; cursor: pointer; border: 1px solid var(--line, rgba(128, 128, 128, 0.3)); border-radius: 14px; }
+.quiz-level input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.quiz-level strong { font-size: 0.95rem; }
+.quiz-meter { display: flex; gap: 3px; }
+.quiz-meter i { width: 18px; height: 6px; border-radius: 3px; background: rgba(128, 128, 128, 0.3); }
+.quiz-meter i[data-on='true'] { background: var(--accent, #c2410c); }
+.quiz-level[data-checked='true'] { border-color: var(--accent, #c2410c); box-shadow: 0 0 0 2px var(--accent, #c2410c) inset; background: color-mix(in srgb, var(--accent, #c2410c) 8%, transparent); }
 .quiz-level:focus-within { outline: 2px solid var(--accent, #c2410c); outline-offset: 2px; }
+.quiz-level-note { margin: 10px 2px 0; opacity: 0.8; font-size: 0.9rem; }
+.quiz-modes { display: grid; gap: 10px; }
+.quiz-mode { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 18px; min-height: 64px; text-align: left; cursor: pointer; border: 1px solid var(--line, rgba(128, 128, 128, 0.3)); border-radius: 16px; background: var(--card, transparent); color: inherit; font: inherit; }
+.quiz-mode:hover, .quiz-mode:focus-visible { border-color: var(--accent, #c2410c); }
+.quiz-mode-text { display: flex; flex-direction: column; gap: 2px; }
+.quiz-mode-text span { opacity: 0.75; font-size: 0.9rem; }
+.quiz-mode-go { flex: none; font-size: 1.3rem; color: var(--accent, #c2410c); }
+@media (min-width: 640px) {
+  .quiz-level-grid { grid-template-columns: repeat(4, 1fr); }
+  .quiz-modes { grid-template-columns: repeat(3, 1fr); }
+  .quiz-mode { flex-direction: column; align-items: flex-start; justify-content: flex-start; }
+}
 .quiz-card { position: relative; }
 .quiz-close { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line, rgba(128, 128, 128, 0.3)); background: transparent; color: inherit; font-size: 1.4rem; line-height: 1; cursor: pointer; }
 .quiz-close:hover, .quiz-close:focus-visible { border-color: var(--accent, #c2410c); }
@@ -216,7 +231,6 @@
 .quiz-verse p { margin: 0 0 6px; }
 .quiz-verse cite { display: block; font-style: normal; font-weight: 700; font-size: 0.9rem; }
 .quiz-verse small { display: block; opacity: 0.7; }
-.quiz-mode span { opacity: 0.75; font-size: 0.9rem; }
 .quiz-card { display: grid; gap: 14px; padding: 20px; border: 1px solid var(--line, rgba(128, 128, 128, 0.3)); border-radius: 20px; background: var(--card, transparent); }
 .quiz-card h2 { margin: 0; }
 .quiz-card progress { width: 100%; }

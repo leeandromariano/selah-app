@@ -50,16 +50,28 @@ export function QuizPage() {
   }
 
   const question = questions[index]
+  const levelDescription = quizLevels.find(item => item.id === level)?.description
   const levelName = quizLevels.find(item => item.id === level)?.name
   const modeName = quizModes.find(item => item.id === mode)?.name
   return <>
     <Heading eyebrow="TESTE SEU CONHECIMENTO" title="Quiz bíblico" description="Responda e descubra na hora se acertou, com a referência bíblica para conferir." />
     {phase === 'choose' && <section aria-label="Escolha a modalidade">
       {error && <p className="info" role="alert">{error}</p>}
-      <fieldset className="quiz-levels"><legend>Nível de dificuldade</legend>
-        {quizLevels.map(item => <label key={item.id} className="quiz-level" data-checked={level === item.id}><input type="radio" name="quiz-level" checked={level === item.id} onChange={() => setLevel(item.id)} /><strong>{item.name}</strong><span>{item.description}</span></label>)}
-      </fieldset>
-      <div className="quiz-modes">{quizModes.map(item => <button key={item.id} type="button" className="quiz-mode" onClick={() => void start(item.id, level)}><strong>{item.name}</strong><span>{item.description}</span></button>)}</div>
+      <div className="quiz-step">
+        <fieldset className="quiz-levels">
+          <legend><span className="quiz-step-number">1</span> Escolha o nível de dificuldade</legend>
+          <div className="quiz-level-grid">{quizLevels.map(item => <label key={item.id} className="quiz-level" data-checked={level === item.id} data-level={item.id}>
+            <input type="radio" name="quiz-level" checked={level === item.id} onChange={() => setLevel(item.id)} />
+            <span className="quiz-meter" aria-hidden="true">{quizLevels.map(bar => <i key={bar.id} data-on={bar.id <= item.id} />)}</span>
+            <strong>{item.name}</strong>
+          </label>)}</div>
+          <p className="quiz-level-note" aria-live="polite">{levelDescription}</p>
+        </fieldset>
+      </div>
+      <div className="quiz-step">
+        <h2 className="quiz-step-title"><span className="quiz-step-number">2</span> Escolha o que quer responder</h2>
+        <div className="quiz-modes">{quizModes.map(item => <button key={item.id} type="button" className="quiz-mode" onClick={() => void start(item.id, level)}><span className="quiz-mode-text"><strong>{item.name}</strong><span>{item.description}</span></span><span className="quiz-mode-go" aria-hidden="true">→</span></button>)}</div>
+      </div>
       <p className="muted">Cada rodada tem até 10 perguntas de múltipla escolha. Só a primeira resposta a cada pergunta conta para a sua pontuação.</p>
     </section>}
     {phase === 'loading' && <p role="status">Preparando as perguntas…</p>}
