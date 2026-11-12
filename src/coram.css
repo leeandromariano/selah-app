@@ -209,6 +209,9 @@
 .quiz-level span { opacity: 0.75; font-size: 0.85rem; }
 .quiz-level[data-checked='true'] { border-color: var(--accent, #c2410c); box-shadow: 0 0 0 2px var(--accent, #c2410c) inset; }
 .quiz-level:focus-within { outline: 2px solid var(--accent, #c2410c); outline-offset: 2px; }
+.quiz-card { position: relative; }
+.quiz-close { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line, rgba(128, 128, 128, 0.3)); background: transparent; color: inherit; font-size: 1.4rem; line-height: 1; cursor: pointer; }
+.quiz-close:hover, .quiz-close:focus-visible { border-color: var(--accent, #c2410c); }
 .quiz-verse { margin: 12px 0; padding: 10px 14px; border-left: 3px solid var(--accent, #c2410c); }
 .quiz-verse p { margin: 0 0 6px; }
 .quiz-verse cite { display: block; font-style: normal; font-weight: 700; font-size: 0.9rem; }

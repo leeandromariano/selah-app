@@ -100,6 +100,16 @@ describe('Quiz bíblico', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível carregar o quiz')
     expect(screen.getByRole('button', { name: /Bíblia toda/ })).toBeVisible()
   })
+  it('permite sair no meio da rodada com o X e voltar à escolha', async () => {
+    boundary()
+    const user = userEvent.setup()
+    render(<QuizPage />)
+    await user.click(screen.getByRole('button', { name: /Novo Testamento/ }))
+    await screen.findByRole('heading', { name: 'Quem foi a mãe de Jesus?' })
+    await user.click(screen.getByRole('button', { name: 'Sair do quiz' }))
+    expect(screen.queryByRole('heading', { name: 'Quem foi a mãe de Jesus?' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Bíblia toda/ })).toBeVisible()
+  })
   it('informa quando a modalidade ainda não tem perguntas', async () => {
     boundary([])
     const user = userEvent.setup()

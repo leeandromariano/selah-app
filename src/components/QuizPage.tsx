@@ -42,6 +42,7 @@ export function QuizPage() {
     } catch { setSelected(null); setError('Não foi possível registrar sua resposta. Tente novamente.') }
     finally { setBusy(false) }
   }
+  function leave() { setQuestions([]); setIndex(0); setSelected(null); setResult(null); setError(''); setPhase('choose') }
   async function next() {
     if (index + 1 < questions.length) { setIndex(index + 1); setSelected(null); setResult(null); return }
     setPhase('done')
@@ -63,6 +64,7 @@ export function QuizPage() {
     </section>}
     {phase === 'loading' && <p role="status">Preparando as perguntas…</p>}
     {phase === 'playing' && question && <section className="quiz-card" aria-label={`Pergunta ${index + 1} de ${questions.length}`}>
+      <button type="button" className="quiz-close" aria-label="Sair do quiz" title="Sair do quiz" onClick={leave}>×</button>
       <div className="eyebrow">{modeName?.toUpperCase()} · {levelName?.toUpperCase()} · PERGUNTA {index + 1} DE {questions.length}</div>
       <progress aria-label="Progresso do quiz" max={questions.length} value={index + (result ? 1 : 0)} />
       <h2>{question.prompt}</h2>
