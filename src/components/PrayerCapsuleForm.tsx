@@ -30,7 +30,7 @@ export function PrayerCapsuleForm({ devotionalId = null, repo = defaultRepositor
   return <section className="prayer-capsule" aria-labelledby="prayer-capsule-title">
     <div className="eyebrow">NO SECRETO</div>
     <h3 id="prayer-capsule-title">Cápsula de oração</h3>
-    <p className="muted">Guarde um pedido e marque quando quer rever. Quando a data chegar, ele volta na sua Home para você contar como Deus agiu. Só você vê.</p>
+    <p className="muted">Guarde um pedido e marque quando quer rever. Quando a data chegar, ele volta na sua Home para você contar como Deus agiu.</p>
     {savedOn ? <div role="status" className="success">
       <p>Guardado no secreto. Vou te lembrar na Home em <b>{formatDay(savedOn)}</b>.</p>
       <div className="actions"><button type="button" className="button secondary" onClick={() => setSavedOn(null)}>Guardar outro pedido</button><a className="text-link" href="#minha-jornada">Ver meus pedidos →</a></div>

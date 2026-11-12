@@ -59,7 +59,7 @@ export function PrayerMural({ repo = defaultRepository }: { repo?: Repo }) {
   return <section className="prayer-mural" aria-labelledby="prayer-mural-title">
     <div className="eyebrow">NO SECRETO</div>
     <h2 id="prayer-mural-title">Mural de testemunhos</h2>
-    <p className="muted">Os pedidos que Deus respondeu ficam aqui, só para você. Ninguém mais vê, nem o proprietário do app.</p>
+    <p className="muted">Os pedidos que Deus respondeu ficam aqui.</p>
     <PrayerListView key={`answered:${reloadKey}`} status="answered" repo={repo} reloadKey={reloadKey} onChange={reload} />
     <h3>Pedidos em oração</h3>
     <PrayerListView key={`open:${reloadKey}`} status="open" repo={repo} reloadKey={reloadKey} onChange={reload} />

@@ -54,7 +54,7 @@ export function DiscussionSection({ devotionalId }: { devotionalId: string }) {
     {loading && <p role="status">Carregando reflexões…</p>}
     <button className="text-link" disabled={busy || loading} onClick={() => setAttempt(n => n + 1)}>Atualizar reflexões</button>
     {data && <>
-      <div className="actions" role="group" aria-label="Sua reação privada">
+      <div className="actions" role="group" aria-label="Sua reação">
         <button className="button secondary" aria-pressed={data.reaction === 'like'} disabled={busy || loading} onClick={() => void act(() => repository.react(devotionalId, data.reaction === 'like' ? null : 'like'), 'Reação atualizada.')}>Gostei</button>
         <button className="button secondary" aria-pressed={data.reaction === 'dislike'} disabled={busy || loading} onClick={() => void act(() => repository.react(devotionalId, data.reaction === 'dislike' ? null : 'dislike'), 'Reação atualizada.')}>Não gostei</button>
       </div>

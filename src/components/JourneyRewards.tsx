@@ -65,7 +65,7 @@ function RewardsView() {
         <p>{badge.days} dias consecutivos</p><strong>{badge.unlocked ? 'Alcançado' : 'Próximo marco'}</strong>
       </li>)}</ul>
       <h2>Desafios Pessoais</h2>
-      <p>Uma escolha opcional e privada. Semana de segunda a domingo, no horário de Brasília. Ao iniciar, os dias já concluídos nesta semana também contam. Uma meta por semana; você pode encerrar sem penalização.</p>
+      <p>Uma escolha opcional. Semana de segunda a domingo, no horário de Brasília. Ao iniciar, os dias já concluídos nesta semana também contam. Uma meta por semana; você pode encerrar sem penalização.</p>
       {!current && <div className="actions"><label htmlFor={select}>Sua meta nesta semana</label><select id={select} value={target} onChange={e => setTarget(Number(e.target.value))} disabled={busy}>{[3, 5, 7].map(n => <option key={n} value={n}>{n} dias distintos</option>)}</select><button className="button" disabled={busy} onClick={() => change(() => repository.start(target))}>Iniciar desafio</button></div>}
       {!data.challenges.length && <p>Nenhum desafio iniciado. Você pode seguir no seu ritmo.</p>}
       <ul className="journey-challenges" aria-label="Seus desafios">{data.challenges.map(c => <li key={c.week_start}>

@@ -32,6 +32,5 @@ export function JourneyLastOpening({ userId }: { userId: string }) {
       : <div className="journey-last-content"><div><strong>{result.title ?? 'Devocional indisponível'}</strong><p>Aberto em {displayDate(result.opening.opened_at)} · Horário de Brasília</p>{!result.title && <p>Esta publicação não está disponível para leitura agora.</p>}</div>
         {result.title && result.opening.devotional_id && <a className="button primary" href={`#leitura/${encodeURIComponent(result.opening.devotional_id)}/retomar`}>Continuar leitura</a>}</div>}
     <p className="journey-last-note">A abertura indica que você acessou o devocional; ela não representa uma conclusão.</p>
-    <p className="journey-last-note">A posição é salva somente neste navegador e dispositivo; ela não é sincronizada.</p>
   </section>
 }
