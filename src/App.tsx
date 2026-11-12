@@ -23,6 +23,7 @@ import { InstallApp } from './components/InstallApp'
 import { QuizPage } from './components/QuizPage'
 import { BereiaHub } from './components/BereiaHub'
 import { ClaimsGame } from './components/ClaimsGame'
+import { WhoSaidPage } from './components/WhoSaidPage'
 
 const bibleAnnotationStore = createBibleAnnotationStore(supabase)
 
@@ -63,12 +64,13 @@ function AppContent() {
     {page === 'bereia' && <BereiaHub />}
     {page === 'bereia/quiz' && <QuizPage />}
     {page === 'bereia/mito' && <ClaimsGame />}
+    {page === 'bereia/quem-disse' && <WhoSaidPage />}
     {(page === 'biblia' || page.startsWith('biblia/')) && <BibleReader page={page} userId={auth.session?.user.id} annotationStore={bibleAnnotationStore} />}
     {(page === 'admin' || page === 'admin/comunidade' || page === 'admin/moderacao') && ((auth.loading || auth.adminLoading) ? <p role="status">Verificando acesso administrativo…</p> : auth.session && auth.admin && !auth.recovery ? <AdminPanel community={page === 'admin/comunidade'} moderation={page === 'admin/moderacao'} /> : <div className="info" role="alert">Acesso restrito a administradores. <a href="#login">Entrar</a></div>)}
     {(page === 'owner' || page === 'owner/comunidade' || page === 'owner/moderacao' || page === 'owner/quiz' || page === 'owner/publicadores') && (auth.ownerLoading ? <p role="status">Verificando acesso OWNER…</p> : auth.owner ? <OwnerPanel page={page} /> : <div className="info" role="alert">Acesso restrito ao OWNER.</div>)}
     {page === 'publicador' && <PublisherPanel />}
     {(page === 'recuperar-senha' || page === 'nova-senha' || auth.recovery) && <PasswordForm update={page === 'nova-senha' || auth.recovery} />}
-    {!['biblia', 'configuracoes', 'minha-jornada', 'bereia', 'bereia/quiz', 'bereia/mito', 'inicio', 'historico', 'leitura', 'login', 'cadastro', 'admin', 'admin/comunidade', 'admin/moderacao', 'owner', 'owner/comunidade', 'owner/moderacao', 'owner/quiz', 'owner/publicadores', 'publicador', 'recuperar-senha', 'nova-senha', 'perfil', 'privacidade'].includes(page) && !page.startsWith('leitura/') && !page.startsWith('biblia/') && <div className="info">Página não encontrada. <a href="#inicio">Voltar ao início →</a></div>}
+    {!['biblia', 'configuracoes', 'minha-jornada', 'bereia', 'bereia/quiz', 'bereia/mito', 'bereia/quem-disse', 'inicio', 'historico', 'leitura', 'login', 'cadastro', 'admin', 'admin/comunidade', 'admin/moderacao', 'owner', 'owner/comunidade', 'owner/moderacao', 'owner/quiz', 'owner/publicadores', 'publicador', 'recuperar-senha', 'nova-senha', 'perfil', 'privacidade'].includes(page) && !page.startsWith('leitura/') && !page.startsWith('biblia/') && <div className="info">Página não encontrada. <a href="#inicio">Voltar ao início →</a></div>}
   </>}</main><footer><span className="footer-logo">CORAM</span><span>Viver coram deo. Menos rotina. Mais presença.</span></footer></div></div>
 }
 function SessionContent() {

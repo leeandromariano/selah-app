@@ -267,3 +267,5 @@ a.quiz-mode { text-decoration: none; }
 .claims-badge[data-verdict='biblia'] { background: rgba(46, 157, 91, 0.25); }
 .claims-badge[data-verdict='distorcida'] { background: rgba(224, 160, 30, 0.28); }
 .claims-badge[data-verdict='invencao'] { background: rgba(214, 69, 69, 0.25); }
+
+.who-quote { font-size: 1.3rem; line-height: 1.35; font-style: italic; }

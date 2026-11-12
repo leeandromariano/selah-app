@@ -4,6 +4,7 @@ import { Heading } from './UI'
 const games = [
   { href: '#bereia/quiz', title: 'Quiz bíblico', description: 'Perguntas de múltipla escolha em quatro níveis, do Iniciante ao Bigode grosso.' },
   { href: '#bereia/mito', title: 'Tá na Bíblia ou Tá Amarrado?', description: 'Cinco cartas: arraste para dizer se a frase está mesmo na Bíblia.' },
+  { href: '#bereia/quem-disse', title: 'Quem disse isso?', description: 'Uma frase da Bíblia e quatro personagens: quem a pronunciou? Modo Base e Modo Profundo.' },
 ]
 
 export function BereiaHub() {

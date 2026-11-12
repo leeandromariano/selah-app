@@ -9,5 +9,6 @@ describe('Bereia', () => {
     expect(screen.getByText(/Inspirado em/)).toHaveTextContent('Atos 17:11')
     expect(screen.getByRole('link', { name: /Quiz bíblico/ })).toHaveAttribute('href', '#bereia/quiz')
     expect(screen.getByRole('link', { name: /Tá na Bíblia ou Tá Amarrado\?/ })).toHaveAttribute('href', '#bereia/mito')
+    expect(screen.getByRole('link', { name: /Quem disse isso\?/ })).toHaveAttribute('href', '#bereia/quem-disse')
   })
 })

@@ -2444,3 +2444,8 @@ Aba "Quiz bíblico" no menu (`#quiz`), com modalidades Antigo Testamento, Novo T
 - A aba "Quiz bíblico" virou "Bereia" (`#bereia`), com os dois jogos: `#bereia/quiz` e `#bereia/mito`.
 - Cartas em `claim_cards` (veredito biblia/distorcida/invencao); respostas em `claim_answers`. Tudo só via RPC `claims_start`, `claims_answer`, `get_my_claims_stats` (security definer). O veredito só sai depois de responder.
 - Direita = "Tá na Bíblia"; esquerda = "Tá amarrado" (distorcida e invenção). Também funciona por botões e setas do teclado.
+
+## Bereia: "Quem disse isso?"
+
+- Rota `#bereia/quem-disse`; modos Base e Profundo (`who_cards.mode`). Tabelas `who_cards`/`who_answers` só acessíveis via RPC `who_start`, `who_answer`, `get_my_who_stats` (security definer); resposta e contexto só saem depois de responder.
+- Após responder mostra quem disse, o contexto e o texto em ARA (`QuizVerse`; no local o texto não aparece, pois falta `/api/bible`).
