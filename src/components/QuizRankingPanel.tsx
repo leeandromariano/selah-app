@@ -35,7 +35,7 @@ export function QuizRankingPanel() {
         <thead><tr>{['Posição', 'Username', 'Acertos', 'Respondidas', 'Aproveitamento', 'Antigo Testamento', 'Novo Testamento'].map(title => <th scope="col" key={title}>{title}</th>)}</tr></thead>
         <tbody>{data.players.map((p, i) => <tr key={`${page}:${i}`}><td>{page * data.size + i + 1}º</td><th scope="row">{p.username ? '@' + p.username : 'Conta legada sem username'}</th><td><strong className="community-streak">{p.correct}</strong></td><td>{p.answered}</td><td>{p.accuracy}%</td><td>{p.antigo_correct}</td><td>{p.novo_correct}</td></tr>)}</tbody>
       </table></div>}
-      <div className="actions community-pagination"><button className="button secondary" disabled={page === 0} onClick={() => setPage(n => n - 1)}>Página anterior</button><span>Página {page + 1} · {data.matched_players} participantes encontrados</span><button className="button secondary" disabled={(page + 1) * data.size >= data.matched_players} onClick={() => setPage(n => n + 1)}>Próxima página</button></div>
+      <div className="actions community-pagination"><button className="button secondary" disabled={page === 0} onClick={() => setPage(n => n - 1)}>Página anterior</button><span>Página {page + 1} de {Math.max(1, Math.ceil(data.matched_players / data.size))} · {data.matched_players} participantes encontrados</span><button className="button secondary" disabled={(page + 1) * data.size >= data.matched_players} onClick={() => setPage(n => n + 1)}>Próxima página</button></div>
     </>}
   </section>
 }

@@ -26,6 +26,11 @@ describe('Perguntas dos jogos (owner)', () => {
     expect(within(list).getByText(/4 respostas/)).toBeVisible()
     expect(repo.list).toHaveBeenCalledWith('quiz', '', '', 0)
   })
+  it('mostra a página atual e o total de páginas', async () => {
+    const repo = { list: vi.fn(async (game: string) => ({ game, total: 45, page: 0, size: 20, items: [item] })), save: vi.fn(), remove: vi.fn() }
+    render(<OwnerContentPanel repo={repo as never} />)
+    expect(await screen.findByText('Página 1 de 3')).toBeVisible()
+  })
   it('filtra por nível e troca de jogo', async () => {
     const repo = setup([item, who])
     const user = userEvent.setup()

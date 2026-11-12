@@ -116,7 +116,7 @@ export function OwnerContentPanel({ repo = repository }: { repo?: Repository }) 
             <div className="actions"><button type="button" className="button primary" onClick={() => void confirmRemove(item)}>Sim, excluir</button><button type="button" className="button secondary" onClick={() => setRemoving(null)}>Cancelar</button></div></div>
             : <div className="actions"><button type="button" className="button secondary" onClick={() => { setNote(''); setEditor({ original: item }) }} aria-label={`Editar: ${item.prompt}`}>Editar</button><button type="button" className="button secondary" onClick={() => setRemoving(item)} aria-label={`Excluir: ${item.prompt}`}>Excluir</button></div>}
         </li>)}</ul>}
-        <div className="actions community-pagination"><button className="button secondary" disabled={page === 0} onClick={() => setPage(n => n - 1)}>Página anterior</button><span>Página {page + 1}</span><button className="button secondary" disabled={(page + 1) * data.size >= data.total} onClick={() => setPage(n => n + 1)}>Próxima página</button></div>
+        <div className="actions community-pagination"><button className="button secondary" disabled={page === 0} onClick={() => setPage(n => n - 1)}>Página anterior</button><span>Página {page + 1} de {Math.max(1, Math.ceil(data.total / data.size))}</span><button className="button secondary" disabled={(page + 1) * data.size >= data.total} onClick={() => setPage(n => n + 1)}>Próxima página</button></div>
       </>}
     </>}
   </section>

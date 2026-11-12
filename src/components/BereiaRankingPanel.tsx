@@ -49,7 +49,7 @@ function GameRanking({ game }: { game: BereiaGame }) {
         <thead><tr><th scope="col">Posição</th><th scope="col">Username</th>{columns[game].map(column => <th scope="col" key={column.title}>{column.title}</th>)}</tr></thead>
         <tbody>{data.players.map((p, i) => <tr key={`${page}:${i}`}><td>{page * data.size + i + 1}º</td><th scope="row">{p.username ? '@' + p.username : 'Conta legada sem username'}</th>{columns[game].map(column => <td key={column.title}>{column.cell(p)}</td>)}</tr>)}</tbody>
       </table></div>}
-      <div className="actions community-pagination"><button className="button secondary" disabled={page === 0} onClick={() => setPage(n => n - 1)}>Página anterior</button><span>Página {page + 1} · {data.matched_players} participantes encontrados</span><button className="button secondary" disabled={(page + 1) * data.size >= data.matched_players} onClick={() => setPage(n => n + 1)}>Próxima página</button></div>
+      <div className="actions community-pagination"><button className="button secondary" disabled={page === 0} onClick={() => setPage(n => n - 1)}>Página anterior</button><span>Página {page + 1} de {Math.max(1, Math.ceil(data.matched_players / data.size))} · {data.matched_players} participantes encontrados</span><button className="button secondary" disabled={(page + 1) * data.size >= data.matched_players} onClick={() => setPage(n => n + 1)}>Próxima página</button></div>
     </>}
   </div>
 }
