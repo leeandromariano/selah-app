@@ -2491,3 +2491,11 @@ Aba "Quiz bíblico" no menu (`#bereia/quiz`), com modalidades Antigo Testamento,
 - Seletor de período (Hoje, 7, 30 ou 90 dias) e botão Atualizar. Uma única RPC, `get_owner_dashboard(p_days)` (security definer, exige `private.owner_identity`), devolve todos os agregados; trocar de área não busca de novo, trocar de período sim.
 - Só agregados: nada de textos de leitores, pedidos de oração, respostas pessoais, e-mail ou telefone. Atividade = conclusões, aberturas, jogos (quiz, Tá na Bíblia, Quem disse isso, Linha do Tempo, Versículo Oculto), reflexões e fila de moderação, conteúdo ativo.
 - Gráficos em SVG próprio (`DashboardCharts.tsx`), sem biblioteca. Cores dos cartões fixas; o resto usa as variáveis de tema.
+
+## Editor do owner para todos os jogos, sorteio diário estável e lembrete da cápsula
+
+- `#owner/perguntas` ("Conteúdo dos jogos") cobre os cinco jogos: Quiz, Quem disse isso?, **Tá na Bíblia ou Tá Amarrado?** (frase, veredito, explicação, referência opcional), **Linha do Tempo** (acontecimento, era, referência, posição — inserir numa posição empurra os seguintes) e **Versículo Oculto** (referência + palavras escondidas escolhidas tocando no texto ARA carregado de `/api/bible`; no ambiente local o texto não carrega e as palavras atuais são mantidas).
+- Zera respostas: Quiz/Quem disse (alternativas ou resposta certa), Tá na Bíblia (veredito entra ou sai de "Tá na Bíblia"), Linha do Tempo (posição), Versículo Oculto (só as tentativas de hoje). Versículo já sorteado ou jogado não pode ser excluído, só desativado.
+- **Sorteio diário estável**: `verse_days` grava o versículo de cada dia (próximo ativo depois do último sorteado, em ciclo). Editar, adicionar ou desativar versículos não troca o desafio de um dia já iniciado.
+- Versículos conferidos com o texto ARA em 13/11/2026: corrigidos Salmos 46:1 ("…bem-presente nas tribulações") e Jeremias 29:11.
+- **Lembrete da cápsula**: além do card na Home, um aviso "🙏 N pedidos para rever" aparece no topo do app nas outras páginas. Notificação push ou e-mail não foi feita: o worker de lembretes existe só como protótipo local (sem serviço agendado nem chave VAPID em produção).

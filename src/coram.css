@@ -413,3 +413,11 @@ a.quiz-mode { text-decoration: none; }
 .dash-stack span { border-radius: 0; }
 .dash-stack span:last-child { border-radius: 4px 4px 0 0; }
 .dash-tip-total { margin-top: 2px; padding-top: 4px; border-top: 1px solid rgba(255, 255, 255, .2); }
+.owner-line { margin: 4px 0; }
+.owner-verse { margin: 0; line-height: 2.2; font-size: 1.05rem; }
+.owner-word { padding: 2px 6px; border-radius: 8px; border: 1px dashed var(--border); background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.owner-word:hover:not(:disabled), .owner-word:focus-visible { border-color: var(--accent); }
+.owner-word[aria-pressed='true'] { border-style: solid; border-color: var(--accent); background: var(--accent-bg); font-weight: 700; }
+.owner-word:disabled { opacity: .55; cursor: default; }
+.prayer-notice { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--accent); background: var(--accent-bg); color: var(--text); font-size: .8rem; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.owner-list > li > div > strong { display: block; }

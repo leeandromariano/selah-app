@@ -13,14 +13,15 @@ function setup(items: ContentItem[] = [item], saved: unknown = { item, answers_r
     save: vi.fn(async () => saved),
     remove: vi.fn(async () => ({ answers_removed: 4 })),
   }
-  render(<OwnerContentPanel repo={repo as never} />)
+  const loadVerse = vi.fn(async (location: { book: string }) => { if (location.book !== 'joao') throw Error('offline'); return { verses: [{ number: 16, text: 'Alfa beta gama delta épsilon.' }], copyright: 'Texto fictício.', fumsToken: 'token' } })
+  render(<OwnerContentPanel repo={repo as never} loadVerse={loadVerse as never} reportVerse={async () => {}} />)
   return repo
 }
 
 describe('Perguntas dos jogos (owner)', () => {
   it('lista as perguntas com a resposta certa em destaque', async () => {
     const repo = setup()
-    const list = await screen.findByRole('list', { name: 'Perguntas' })
+    const list = await screen.findByRole('list', { name: 'Itens' })
     expect(within(list).getByText('Pergunta fictícia de teste?')).toBeVisible()
     expect(within(list).getByText(/Beta/)).toHaveTextContent('(resposta certa)')
     expect(within(list).getByText(/4 respostas/)).toBeVisible()
@@ -34,7 +35,7 @@ describe('Perguntas dos jogos (owner)', () => {
   it('filtra por nível e troca de jogo', async () => {
     const repo = setup([item, who])
     const user = userEvent.setup()
-    await screen.findByRole('list', { name: 'Perguntas' })
+    await screen.findByRole('list', { name: 'Itens' })
     await user.selectOptions(screen.getByLabelText('Nível'), '3')
     expect(repo.list).toHaveBeenLastCalledWith('quiz', '', '3', 0)
     await user.click(screen.getByRole('button', { name: 'Quem disse isso?' }))
@@ -63,7 +64,7 @@ describe('Perguntas dos jogos (owner)', () => {
     await user.click(screen.getByLabelText(/Entendo e quero continuar/))
     await user.click(screen.getByRole('button', { name: 'Salvar' }))
     expect(repo.save).toHaveBeenCalledWith('quiz', id, expect.objectContaining({ correct_index: 0 }))
-    expect(await screen.findByText(/4 respostas de leitores a esta pergunta foram zeradas/)).toBeVisible()
+    expect(await screen.findByText(/4 respostas de leitores a este item foram zeradas/)).toBeVisible()
   })
   it('editar só o texto da pergunta não pede confirmação', async () => {
     const repo = setup()
@@ -102,7 +103,64 @@ describe('Perguntas dos jogos (owner)', () => {
     expect(repo.remove).not.toHaveBeenCalled()
     await user.click(screen.getByRole('button', { name: 'Sim, excluir' }))
     expect(repo.remove).toHaveBeenCalledWith('quiz', id)
-    expect(await screen.findByText(/Excluída\. 4 respostas/)).toBeVisible()
+    expect(await screen.findByText(/Excluído\. 4 respostas/)).toBeVisible()
+  })
+  it('edita uma carta do Tá na Bíblia: veredito, explicação e aviso ao mudar o veredito', async () => {
+    const card: ContentItem = { id: '33333333-3333-4333-8333-333333333333', game: 'claims', prompt: 'Carta fictícia de teste', reference: '', active: true, answers_count: 2, verdict: 'invencao', explanation: 'Explicação fictícia longa.' }
+    const repo = setup([card], { item: card, answers_reset: 2 })
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Tá na Bíblia ou Tá Amarrado?' }))
+    expect(await screen.findByText('Carta fictícia de teste')).toBeVisible()
+    expect(screen.getByLabelText('Veredito')).toBeVisible()
+    await user.click(screen.getByRole('button', { name: /Editar: Carta/ }))
+    await user.selectOptions(screen.getByLabelText('Veredito'), 'biblia')
+    await user.click(screen.getByLabelText(/Entendo e quero continuar/))
+    await user.click(screen.getByRole('button', { name: 'Salvar' }))
+    expect(repo.save).toHaveBeenCalledWith('claims', card.id, expect.objectContaining({ verdict: 'biblia', explanation: 'Explicação fictícia longa.' }))
+  })
+  it('cria um acontecimento da Linha do Tempo com era e posição', async () => {
+    const event: ContentItem = { id: '44444444-4444-4444-8444-444444444444', game: 'timeline', prompt: 'Acontecimento fictício', reference: 'Gênesis 1:1', active: true, answers_count: 0, era: 'Origens', position: 1 }
+    const repo = setup([event], { item: event, answers_reset: 0 })
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Linha do Tempo' }))
+    expect(await screen.findByText('1º · Acontecimento fictício')).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'Novo acontecimento' }))
+    await user.type(screen.getByLabelText('Acontecimento'), 'Outro acontecimento')
+    await user.type(screen.getByLabelText('Era'), 'Patriarcas')
+    await user.clear(screen.getByLabelText(/Posição na linha do tempo/))
+    await user.type(screen.getByLabelText(/Posição na linha do tempo/), '7')
+    await user.type(screen.getByLabelText('Referência bíblica'), 'Gênesis 12:1')
+    await user.click(screen.getByRole('button', { name: 'Salvar' }))
+    expect(repo.save).toHaveBeenCalledWith('timeline', null, expect.objectContaining({ prompt: 'Outro acontecimento', era: 'Patriarcas', position: 7, reference: 'Gênesis 12:1' }))
+  })
+  it('no Versículo Oculto, carrega o texto e deixa escolher as palavras tocando nelas', async () => {
+    const repo = setup([], { item: { id: '55555555-5555-4555-8555-555555555555', game: 'verse', prompt: 'João 3:16', reference: 'João 3:16', active: true, answers_count: 0, seq: 1, blanks: [{ index: 2, answer: 'beta', prev: 'Alfa' }, { index: 4, answer: 'delta', prev: 'gama' }] }, answers_reset: 0 })
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Versículo Oculto' }))
+    await user.click(await screen.findByRole('button', { name: 'Novo versículo' }))
+    expect(screen.getByRole('button', { name: 'Carregar texto do versículo' })).toBeDisabled()
+    await user.type(screen.getByLabelText('Referência do versículo'), 'João 3:16')
+    await user.click(screen.getByRole('button', { name: 'Carregar texto do versículo' }))
+    await user.click(await screen.findByRole('button', { name: 'beta' }))
+    await user.click(screen.getByRole('button', { name: 'delta' }))
+    expect(screen.getByText(/Escondidas:/)).toHaveTextContent('beta, delta')
+    await user.click(screen.getByRole('button', { name: 'Salvar' }))
+    expect(repo.save).toHaveBeenCalledWith('verse', null, expect.objectContaining({ reference: 'João 3:16', blanks: [{ index: 2, answer: 'beta', prev: 'Alfa' }, { index: 4, answer: 'delta', prev: 'gama' }] }))
+  })
+  it('no Versículo Oculto, limita a 3 palavras e avisa se o texto não carregar', async () => {
+    setup([])
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Versículo Oculto' }))
+    await user.click(await screen.findByRole('button', { name: 'Novo versículo' }))
+    await user.type(screen.getByLabelText('Referência do versículo'), 'João 3:16')
+    await user.click(screen.getByRole('button', { name: 'Carregar texto do versículo' }))
+    for (const word of ['Alfa', 'beta', 'gama']) await user.click(await screen.findByRole('button', { name: word }))
+    expect(screen.getByRole('button', { name: 'delta' })).toBeDisabled()
+    await user.clear(screen.getByLabelText('Referência do versículo'))
+    await user.type(screen.getByLabelText('Referência do versículo'), 'Salmos 1:1')
+    expect(screen.getByText(/Escondidas:/)).toHaveTextContent('nenhuma ainda')
+    await user.click(screen.getByRole('button', { name: 'Carregar texto do versículo' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível carregar o texto')
   })
   it('mostra erro de acesso com opção de repetir', async () => {
     const repo = { list: vi.fn().mockRejectedValueOnce(Error('x')).mockResolvedValue({ game: 'quiz', total: 0, page: 0, size: 20, items: [] }), save: vi.fn(), remove: vi.fn() }
