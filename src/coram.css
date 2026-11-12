@@ -421,3 +421,8 @@ a.quiz-mode { text-decoration: none; }
 .owner-word:disabled { opacity: .55; cursor: default; }
 .prayer-notice { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--accent); background: var(--accent-bg); color: var(--text); font-size: .8rem; font-weight: 700; text-decoration: none; white-space: nowrap; }
 .owner-list > li > div > strong { display: block; }
+
+/* Logo: PNG transparente; o tema escolhe a versão (C creme no escuro, C escuro no claro) */
+html[data-theme='light'] .logo-on-dark { display: none; }
+html:not([data-theme='light']) .logo-on-light { display: none; }
+.install-app > img { border-radius: 0; }

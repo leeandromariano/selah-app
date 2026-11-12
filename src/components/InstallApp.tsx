@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { BrandLogo } from './BrandLogo'
 import { hasInstallPrompt, isAppInstalled, isIos, subscribeInstall, takeInstallPrompt } from '../lib/installPrompt'
 
 export function InstallApp() {
@@ -15,7 +16,7 @@ export function InstallApp() {
   }
 
   return <section className="install-app" aria-label="Instalar o Coram como aplicativo">
-    <img src="/coram-icon-192.png" alt="" />
+    <BrandLogo />
     <div className="install-app-text">
       <h2>Instale o Coram no seu celular</h2>
       <p>Abra direto da tela inicial, sem navegador, como um aplicativo.</p>
