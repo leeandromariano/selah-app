@@ -57,6 +57,7 @@ function Settings({ user }: { user: string }) {
       {!snapshot && !error && <p role="status">Carregando lembretes…</p>}
       {snapshot && <>
         <label><input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} disabled={busy} /> Ativar lembretes da minha conta</label>
+        <p className="muted">Inclui o aviso de que chegou a hora de rever um pedido da sua cápsula de oração.</p>
         <p><label>Horário neste dispositivo <input type="time" value={time} required onChange={e => setTime(e.target.value)} disabled={busy} /></label></p>
         <p>Fuso configurado: <strong>{timezone}</strong>. Fuso detectado: {Intl.DateTimeFormat().resolvedOptions().timeZone}.</p>
         <button className="text-link" disabled={busy} onClick={() => setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC')}>Usar fuso atual do dispositivo</button>
@@ -93,7 +94,7 @@ function Settings({ user }: { user: string }) {
         </div>
         {snapshot.mode === 'simulation' && <p>Modo local: somente intenções de envio. O dispositivo fictício não representa a permissão do navegador e não recebe notificações reais.</p>}
         <p>Salvar não solicita permissão nem cria automaticamente uma assinatura. Sair da conta cancela a assinatura deste dispositivo; outros dispositivos mantêm suas próprias configurações.</p>
-        {snapshot.last && <p>Última intenção: {snapshot.last.kind === 'share' ? 'compartilhamento' : snapshot.last.kind === 'reading' ? 'leitura' : 'sem conteúdo enviado'} — {snapshot.last.status}; dia de Brasília {snapshot.last.brt_day}, dia local {snapshot.last.local_day}.</p>}
+        {snapshot.last && <p>Última intenção: {snapshot.last.kind === 'share' ? 'compartilhamento' : snapshot.last.kind === 'reading' ? 'leitura' : snapshot.last.kind === 'prayer' ? 'pedido de oração' : 'sem conteúdo enviado'} — {snapshot.last.status}; dia de Brasília {snapshot.last.brt_day}, dia local {snapshot.last.local_day}.</p>}
         <p>As notificações podem aparecer na tela bloqueada. Não incluem seu nome, histórico ou contatos. A entrega depende do navegador e não é garantida.</p>
       </>}
       {message && <p role="status">{message}</p>}

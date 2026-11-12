@@ -110,6 +110,17 @@ describe('protocolo real do service worker', () => {
     const message = protocol().notification({ v: 1, kind, binding, day: '2026-10-28', devotional: id, title: 'injection' }, binding)
     expect(message.title).not.toContain('injection'); expect(message.path).toBe('/#leitura/' + id + (kind === 'share' ? '/compartilhar' : ''))
   })
+  it('lembrete da cápsula de oração tem texto fixo, não leva nada do pedido e abre a Home', () => {
+    const p = protocol()
+    const message = p.notification({ v: 1, kind: 'prayer', binding, day: '2026-10-28', request: 'texto secreto', title: 'injection' }, binding)
+    expect(message.title).toBe('Cápsula de oração')
+    expect(JSON.stringify(message)).not.toMatch(/secreto|injection/)
+    expect(message.path).toBe('/#inicio')
+    expect(p.safePath('/#inicio')).toBe(true)
+    expect(p.notification({ v: 1, kind: 'prayer', binding, day: '2026-10-27' }, binding)).toBeNull()
+    expect(p.notification({ v: 1, kind: 'prayer', binding, day: '2026-10-28', devotional: id }, binding)).toBeNull()
+    expect(p.notification({ v: 1, kind: 'prayer', binding, day: '2026-10-28' }, id)).toBeNull()
+  })
   it('outro binding ou rota maliciosa não gera notificação', () => {
     const p = protocol()
     expect(p.notification({ v: 1, kind: 'reading', binding, day: '2026-10-28', devotional: id }, id)).toBeNull()
