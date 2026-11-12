@@ -2429,3 +2429,7 @@ As aberturas deixaram de ser uma página e item do menu: `App.test.tsx` e `Journ
 ## Pop-up de compartilhar ao concluir
 
 Ao clicar em "Concluir devocional" (só quando o leitor acabou de concluir, não ao reabrir um devocional já concluído), abre um pop-up central com as opções de compartilhar (`ShareCompletionDialog`). Fecha com "Agora não", Esc ou clique fora. Cobertura: `ShareCompletionDialog.test.tsx`, `ReadingProgress.test.tsx` (`onCompletedNow`) e `ReaderLibrary.test.tsx`.
+
+## Quiz bíblico e ranking do owner
+
+Aba "Quiz bíblico" no menu (`#quiz`), com modalidades Antigo Testamento, Novo Testamento e Bíblia toda. Rodadas de até 10 perguntas de múltipla escolha; ao responder, o leitor vê na hora se acertou, a alternativa certa e a referência bíblica. As respostas certas ficam só no servidor (tabelas sem acesso direto; funções `quiz_start`, `quiz_answer`, `get_my_quiz_stats`) e só a primeira resposta a cada pergunta conta. O owner vê o ranking em `#owner/quiz` (`get_owner_quiz_ranking`, exige owner). Migração: `20261111000100_bible_quiz.sql` (inclui 48 perguntas iniciais). Cobertura: `quiz/repository.test.ts`, `QuizPage.test.tsx`, `QuizRankingPanel.test.tsx`, `OwnerPanel.test.tsx` e `App.test.tsx`. As funções SQL foram verificadas à mão no banco local (leitor comum, owner e acesso direto negado); não há teste automatizado de SQL.

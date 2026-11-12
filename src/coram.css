@@ -197,3 +197,24 @@
 .share-dialog h2 { margin: 4px 0 8px; }
 .share-dialog .reflection { margin-top: 16px; }
 .share-dialog > .actions { margin-top: 16px; justify-content: flex-end; }
+
+/* Quiz bíblico */
+.quiz-modes { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin: 16px 0; }
+.quiz-mode { display: flex; flex-direction: column; gap: 4px; padding: 18px; text-align: left; cursor: pointer; border: 1px solid var(--line, rgba(128, 128, 128, 0.3)); border-radius: 16px; background: var(--card, transparent); color: inherit; font: inherit; }
+.quiz-mode:hover, .quiz-mode:focus-visible { border-color: var(--accent, #c2410c); }
+.quiz-mode span { opacity: 0.75; font-size: 0.9rem; }
+.quiz-card { display: grid; gap: 14px; padding: 20px; border: 1px solid var(--line, rgba(128, 128, 128, 0.3)); border-radius: 20px; background: var(--card, transparent); }
+.quiz-card h2 { margin: 0; }
+.quiz-card progress { width: 100%; }
+.quiz-options { display: grid; gap: 10px; }
+.quiz-option { display: flex; align-items: center; gap: 12px; padding: 14px 16px; text-align: left; cursor: pointer; border: 1px solid var(--line, rgba(128, 128, 128, 0.35)); border-radius: 14px; background: transparent; color: inherit; font: inherit; }
+.quiz-option:disabled { cursor: default; }
+.quiz-option:not(:disabled):hover { border-color: var(--accent, #c2410c); }
+.quiz-letter { display: inline-grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; border: 1px solid currentColor; font-size: 0.85rem; font-weight: 700; }
+.quiz-option[data-state='correct'] { border-color: #2e8b57; background: rgba(46, 139, 87, 0.18); }
+.quiz-option[data-state='wrong'] { border-color: #c0392b; background: rgba(192, 57, 43, 0.18); }
+.quiz-feedback { display: grid; gap: 8px; padding: 14px 16px; border-radius: 14px; background: rgba(128, 128, 128, 0.12); }
+.quiz-feedback[data-correct='true'] strong { color: #2e8b57; }
+.quiz-feedback[data-correct='false'] strong { color: #c0392b; }
+.quiz-feedback p { margin: 0; }
+.quiz-feedback .button { justify-self: start; }
