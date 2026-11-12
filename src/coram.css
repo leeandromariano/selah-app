@@ -395,3 +395,21 @@ a.quiz-mode { text-decoration: none; }
 .dash-rail-shortcuts { display: none; }
 .dash-rail-short { padding: 8px 14px; font-size: .85rem; }
 @media (min-width: 1000px) { .dash-rail-shortcuts { display: block; margin-top: 10px; border-top: 1px solid var(--border); padding-top: 14px; } }
+
+/* Gráficos interativos: valor ao passar o mouse, focar ou tocar */
+.dash-bars { position: relative; display: flex; align-items: stretch; gap: 3px; height: 150px; border-bottom: 1px solid var(--border); }
+.dash-bar { flex: 1; min-width: 0; display: flex; align-items: flex-end; padding: 0; border: 0; border-radius: 6px 6px 0 0; background: transparent; cursor: pointer; }
+.dash-bar span { display: block; width: 100%; border-radius: 5px 5px 0 0; background: var(--bar, #7c4dff); transition: filter .12s; }
+.dash-bar:hover, .dash-bar[data-active] { background: color-mix(in srgb, var(--bar, #7c4dff) 14%, transparent); }
+.dash-bar:hover span, .dash-bar[data-active] span { filter: brightness(1.25); }
+.dash-bar:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.dash-tip { position: absolute; z-index: 3; transform: translateX(-50%); display: grid; gap: 2px; min-width: 64px; padding: 6px 10px; border-radius: 10px; background: #0f1115; color: #fff; border: 1px solid rgba(255, 255, 255, .18); box-shadow: 0 8px 20px -8px rgba(0, 0, 0, .6); font-size: .8rem; pointer-events: none; white-space: nowrap; text-align: center; }
+.dash-tip small { opacity: .75; font-size: .68rem; }
+.dash-tip b { font-size: 1rem; }
+.dash-tip span { display: flex; align-items: center; gap: 6px; text-align: left; }
+.dash-tip span b { margin-left: auto; padding-left: 10px; font-size: .85rem; }
+.dash-tip i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.dash-stack { flex-direction: column-reverse; justify-content: flex-start; align-items: stretch; }
+.dash-stack span { border-radius: 0; }
+.dash-stack span:last-child { border-radius: 4px 4px 0 0; }
+.dash-tip-total { margin-top: 2px; padding-top: 4px; border-top: 1px solid rgba(255, 255, 255, .2); }

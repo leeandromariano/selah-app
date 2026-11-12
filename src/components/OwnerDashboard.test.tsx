@@ -20,7 +20,7 @@ describe('Painel OWNER em dashboard', () => {
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Painel OWNER')
     expect(screen.getByText('Para moderar').closest('.dash-kpi')).toHaveTextContent('3')
     expect(screen.getByText('Para moderar').closest('.dash-kpi')).toHaveAttribute('data-alert', 'true')
-    expect(screen.getByRole('img', { name: /Atividade por dia/ })).toBeVisible()
+    expect(screen.getByRole('group', { name: /Atividade por dia/ })).toBeVisible()
     expect(screen.getByRole('img', { name: /Respostas por jogo/ })).toHaveAccessibleName(/Quiz bíblico 10/)
     expect(screen.getByRole('table')).toHaveTextContent('Leitura fictícia')
     expect(screen.getByText(/Dados até 12\/11\/2026 · últimos 30 dias/)).toBeVisible()

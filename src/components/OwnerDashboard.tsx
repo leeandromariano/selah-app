@@ -4,7 +4,7 @@ import { createOwnerDashboardRepository, gameNames, periods } from '../owner/das
 import type { Dashboard, Period } from '../owner/dashboard'
 import { levelNames } from '../owner/content'
 import { BereiaRankingPanel } from './BereiaRankingPanel'
-import { Bars, Card, Donut, HBars, KpiCard, Lines, Ring } from './DashboardCharts'
+import { Bars, Card, Donut, HBars, KpiCard, Ring, StackedBars } from './DashboardCharts'
 import { number, palette, percent } from '../owner/format'
 import { modeForPage, modes } from '../owner/modes'
 import { CommunityPanel } from './CommunityPanel'
@@ -29,7 +29,7 @@ function Overview({ d }: { d: Dashboard }) {
     </div>
     <div className="dash-grid">
       <Card title="Atividade por dia" wide note="Conclusões, aberturas de devocionais e jogos">
-        <Lines label="Atividade por dia" days={days} series={[
+        <StackedBars label="Atividade por dia" days={days} series={[
           { name: 'Conclusões', color: palette[0], values: g.daily_completions.map(item => item.n) },
           { name: 'Aberturas', color: palette[1], values: g.daily_views.map(item => item.n) },
           { name: 'Jogos', color: palette[2], values: games.daily.map(item => item.n) }]} />

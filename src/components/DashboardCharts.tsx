@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { number, palette, percent, shortDay } from '../owner/format'
 
@@ -32,7 +33,7 @@ export function Donut({ items, label }: { items: { label: string; value: number 
       <circle cx="60" cy="60" r={radius} fill="none" stroke="var(--border)" strokeWidth="14" />
       {total > 0 && items.map((item, index) => {
         const length = (item.value / total) * circumference
-        const circle = <circle key={item.label} cx="60" cy="60" r={radius} fill="none" stroke={palette[index % palette.length]} strokeWidth="14" strokeDasharray={`${length} ${circumference - length}`} strokeDashoffset={-offset} transform="rotate(-90 60 60)" />
+        const circle = <circle key={item.label} cx="60" cy="60" r={radius} fill="none" stroke={palette[index % palette.length]} strokeWidth="14" strokeDasharray={`${length} ${circumference - length}`} strokeDashoffset={-offset} transform="rotate(-90 60 60)"><title>{`${item.label}: ${number(item.value)}`}</title></circle>
         offset += length
         return circle
       })}
@@ -42,31 +43,51 @@ export function Donut({ items, label }: { items: { label: string; value: number 
   </figure>
 }
 
-// Barras verticais (uma série).
+// Mostra o valor ao passar o mouse, focar ou tocar; um toque fixa o valor até tocar de novo.
+function useActive() {
+  const [hover, setHover] = useState<number | null>(null)
+  const [pinned, setPinned] = useState<number | null>(null)
+  return { active: hover ?? pinned, setHover, toggle: (index: number) => setPinned(current => current === index ? null : index) }
+}
+const edge = (percentage: number) => `clamp(52px, ${percentage}%, calc(100% - 52px))`
+
+// Barras verticais (uma série), cada coluna é um botão com o valor no balão.
 export function Bars({ data, label, color = palette[1], format = shortDay }: { data: { label: string; value: number }[]; label: string; color?: string; format?: (value: string) => string }) {
-  const max = Math.max(1, ...data.map(item => item.value)), width = 100 / Math.max(1, data.length)
-  const step = Math.max(1, Math.ceil(data.length / 8))
-  return <figure className="dash-chart" role="img" aria-label={`${label}: total ${number(data.reduce((sum, item) => sum + item.value, 0))}`}>
-    <svg viewBox="0 0 100 52" preserveAspectRatio="none" aria-hidden="true">
-      {data.map((item, index) => { const h = (item.value / max) * 40; return <rect key={index} x={index * width + width * 0.18} y={44 - h} width={width * 0.64} height={Math.max(h, item.value ? 0.8 : 0.3)} rx="0.8" fill={color}><title>{`${format(item.label)}: ${number(item.value)}`}</title></rect> })}
-    </svg>
-    <div className="dash-axis" aria-hidden="true">{data.map((item, index) => index % step === 0 ? <span key={index} style={{ left: `${index * width + width / 2}%` }}>{format(item.label)}</span> : null)}</div>
+  const { active, setHover, toggle } = useActive()
+  const max = Math.max(1, ...data.map(item => item.value)), count = Math.max(1, data.length), step = Math.max(1, Math.ceil(count / 8))
+  const height = (value: number) => value > 0 ? Math.max((value / max) * 100, 3) : 0
+  return <figure className="dash-chart" role="group" aria-label={`${label}: total ${number(data.reduce((sum, item) => sum + item.value, 0))}. Toque ou passe o mouse numa coluna para ver o valor.`}>
+    <div className="dash-bars" style={{ ['--bar' as string]: color }} onMouseLeave={() => setHover(null)}>
+      {data.map((item, index) => <button key={index} type="button" className="dash-bar" data-active={active === index || undefined} aria-label={`${format(item.label)}: ${number(item.value)}`}
+        onMouseEnter={() => setHover(index)} onFocus={() => setHover(index)} onBlur={() => setHover(null)} onClick={() => toggle(index)}>
+        <span style={{ height: `${height(item.value)}%` }} />
+      </button>)}
+      {active !== null && data[active] && <div className="dash-tip" role="status" style={{ left: edge(((active + 0.5) / count) * 100), bottom: `calc(${height(data[active].value)}% + 10px)` }}><small>{format(data[active].label)}</small><b>{number(data[active].value)}</b></div>}
+    </div>
+    <div className="dash-axis" aria-hidden="true">{data.map((item, index) => index % step === 0 ? <span key={index} style={{ left: `${((index + 0.5) / count) * 100}%` }}>{format(item.label)}</span> : null)}</div>
   </figure>
 }
 
-// Linhas/áreas (várias séries com o mesmo eixo de dias).
-export function Lines({ series, days, label }: { series: { name: string; color: string; values: number[] }[]; days: string[]; label: string }) {
-  const max = Math.max(1, ...series.flatMap(item => item.values)), last = Math.max(1, days.length - 1), step = Math.max(1, Math.ceil(days.length / 8))
-  const x = (index: number) => (index / last) * 100, y = (value: number) => 44 - (value / max) * 40
-  return <figure className="dash-chart" role="img" aria-label={`${label}: ${series.map(item => `${item.name} ${number(item.values.reduce((sum, value) => sum + value, 0))}`).join(', ')}`}>
-    <svg viewBox="0 0 100 52" preserveAspectRatio="none" aria-hidden="true">
-      {[0, 1, 2, 3].map(line => <line key={line} x1="0" x2="100" y1={4 + line * 13.3} y2={4 + line * 13.3} stroke="var(--border)" strokeWidth="0.25" />)}
-      {series.map(item => <g key={item.name}>
-        <polygon points={`0,44 ${item.values.map((value, index) => `${x(index)},${y(value)}`).join(' ')} 100,44`} fill={item.color} opacity="0.14" />
-        <polyline points={item.values.map((value, index) => `${x(index)},${y(value)}`).join(' ')} fill="none" stroke={item.color} strokeWidth="0.9" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
-      </g>)}
-    </svg>
-    <div className="dash-axis" aria-hidden="true">{days.map((value, index) => index % step === 0 ? <span key={index} style={{ left: `${x(index)}%` }}>{shortDay(value)}</span> : null)}</div>
+// Colunas empilhadas por dia (várias séries); o balão mostra o valor de cada série e o total do dia.
+export function StackedBars({ series, days, label }: { series: { name: string; color: string; values: number[] }[]; days: string[]; label: string }) {
+  const { active, setHover, toggle } = useActive()
+  const totals = days.map((_, index) => series.reduce((sum, item) => sum + item.values[index], 0))
+  const max = Math.max(1, ...totals), count = Math.max(1, days.length), step = Math.max(1, Math.ceil(count / 8))
+  const part = (value: number) => value > 0 ? Math.max((value / max) * 100, 1.5) : 0
+  return <figure className="dash-chart" role="group" aria-label={`${label}: ${series.map(item => `${item.name} ${number(item.values.reduce((sum, value) => sum + value, 0))}`).join(', ')}. Toque ou passe o mouse numa coluna para ver cada dia.`}>
+    <div className="dash-bars" onMouseLeave={() => setHover(null)}>
+      {days.map((day, index) => <button key={day} type="button" className="dash-bar dash-stack" data-active={active === index || undefined}
+        aria-label={`${shortDay(day)}: ${series.map(item => `${item.name} ${number(item.values[index])}`).join(', ')}`}
+        onMouseEnter={() => setHover(index)} onFocus={() => setHover(index)} onBlur={() => setHover(null)} onClick={() => toggle(index)}>
+        {series.map(item => <span key={item.name} style={{ height: `${part(item.values[index])}%`, background: item.color }} />)}
+      </button>)}
+      {active !== null && days[active] && <div className="dash-tip" role="status" style={{ left: edge(((active + 0.5) / count) * 100), bottom: `calc(${Math.min(100, (totals[active] / max) * 100)}% + 10px)` }}>
+        <small>{shortDay(days[active])}</small>
+        {series.map(item => <span key={item.name}><i style={{ background: item.color }} aria-hidden="true" />{item.name}<b>{number(item.values[active])}</b></span>)}
+        <span className="dash-tip-total">Total<b>{number(totals[active])}</b></span>
+      </div>}
+    </div>
+    <div className="dash-axis" aria-hidden="true">{days.map((value, index) => index % step === 0 ? <span key={index} style={{ left: `${((index + 0.5) / count) * 100}%` }}>{shortDay(value)}</span> : null)}</div>
     <ul className="dash-legend dash-legend-inline">{series.map(item => <li key={item.name}><i style={{ background: item.color }} aria-hidden="true" />{item.name}</li>)}</ul>
   </figure>
 }
