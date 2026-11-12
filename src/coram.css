@@ -246,3 +246,24 @@
 .quiz-feedback[data-correct='false'] strong { color: #c0392b; }
 .quiz-feedback p { margin: 0; }
 .quiz-feedback .button { justify-self: start; }
+
+/* Bereia: Tá na Bíblia ou Tá Amarrado? */
+a.quiz-mode { text-decoration: none; }
+.claims-how { padding-left: 20px; display: grid; gap: 8px; margin: 0 0 16px; }
+.claims-board { position: relative; display: grid; gap: 14px; padding: 20px; border: 1px solid var(--line, rgba(128, 128, 128, 0.3)); border-radius: 20px; background: var(--card, transparent); }
+.claims-board progress { width: 100%; }
+.claims-stage { display: grid; place-items: center; padding: 12px 18px; overflow: hidden; touch-action: pan-y; }
+.claims-card { width: min(100%, 420px); min-height: 190px; display: grid; place-items: center; padding: 24px; text-align: center; font-size: 1.25rem; font-weight: 700; line-height: 1.35; border: 2px solid var(--line, rgba(128, 128, 128, 0.4)); border-radius: 22px; background: var(--card, transparent); cursor: grab; user-select: none; touch-action: pan-y; }
+.claims-card p { margin: 0; }
+.claims-card:focus-visible { outline: 2px solid var(--accent, #c2410c); outline-offset: 3px; }
+.claims-card[data-mood='yes'], .claims-card[data-state='correct'] { border-color: #2e9d5b; }
+.claims-card[data-mood='no'], .claims-card[data-state='wrong'] { border-color: #d64545; }
+.claims-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.claims-actions button { min-height: 52px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line, rgba(128, 128, 128, 0.4)); background: transparent; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }
+.claims-actions button:disabled { opacity: 0.6; cursor: default; }
+.claims-no:hover:not(:disabled), .claims-no:focus-visible { border-color: #d64545; }
+.claims-yes:hover:not(:disabled), .claims-yes:focus-visible { border-color: #2e9d5b; }
+.claims-badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-weight: 700; font-size: 0.85rem; background: rgba(128, 128, 128, 0.2); }
+.claims-badge[data-verdict='biblia'] { background: rgba(46, 157, 91, 0.25); }
+.claims-badge[data-verdict='distorcida'] { background: rgba(224, 160, 30, 0.28); }
+.claims-badge[data-verdict='invencao'] { background: rgba(214, 69, 69, 0.25); }

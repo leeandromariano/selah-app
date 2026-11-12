@@ -2438,3 +2438,9 @@ Aba "Quiz bíblico" no menu (`#quiz`), com modalidades Antigo Testamento, Novo T
 
 - Níveis 1–4 (Iniciante, Intermediário, Avançado, Bigode grosso): `quiz_questions.level`; `quiz_start(p_mode, p_level, p_count)`.
 - Depois de responder, `QuizVerse` busca o capítulo em ARA pela rota `/api/bible` e mostra o texto. Localmente a rota não existe: o componente some em silêncio e a referência continua visível. Só em produção/staging com a Bíblia habilitada o texto aparece.
+
+## Bereia e "Tá na Bíblia ou Tá Amarrado?"
+
+- A aba "Quiz bíblico" virou "Bereia" (`#bereia`), com os dois jogos: `#bereia/quiz` e `#bereia/mito`.
+- Cartas em `claim_cards` (veredito biblia/distorcida/invencao); respostas em `claim_answers`. Tudo só via RPC `claims_start`, `claims_answer`, `get_my_claims_stats` (security definer). O veredito só sai depois de responder.
+- Direita = "Tá na Bíblia"; esquerda = "Tá amarrado" (distorcida e invenção). Também funciona por botões e setas do teclado.

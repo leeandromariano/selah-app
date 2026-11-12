@@ -68,7 +68,7 @@ describe('fluxos locais do Selah', () => {
       expect(screen.queryByRole('navigation', { name: 'Navegação principal' })).not.toBeInTheDocument()
       await userEvent.setup().click(toggle)
       const nav = await screen.findByRole('navigation', { name: 'Navegação principal' })
-      expect(within(nav).getAllByRole('link').map(l => l.textContent)).toEqual(['Início', 'Devocionais', 'Bíblia', 'Quiz bíblico', 'Minha Jornada'])
+      expect(within(nav).getAllByRole('link').map(l => l.textContent)).toEqual(['Início', 'Devocionais', 'Bíblia', 'Bereia', 'Minha Jornada'])
       expect(screen.getByRole('button', { name: 'Fechar menu' })).toHaveAttribute('aria-expanded', 'true')
     })
     it('fecha com Esc e ao escolher uma página', async () => {

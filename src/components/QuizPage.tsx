@@ -54,7 +54,8 @@ export function QuizPage() {
   const levelName = quizLevels.find(item => item.id === level)?.name
   const modeName = quizModes.find(item => item.id === mode)?.name
   return <>
-    <Heading eyebrow="TESTE SEU CONHECIMENTO" title="Quiz bíblico" description="Responda e descubra na hora se acertou, com a referência bíblica para conferir." />
+    <a className="text-link" href="#bereia">← Bereia</a>
+    <Heading eyebrow="BEREIA · TESTE SEU CONHECIMENTO" title="Quiz bíblico" description="Responda e descubra na hora se acertou, com a referência bíblica para conferir." />
     {phase === 'choose' && <section aria-label="Escolha a modalidade">
       {error && <p className="info" role="alert">{error}</p>}
       <div className="quiz-step">
