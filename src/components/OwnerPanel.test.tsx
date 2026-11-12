@@ -6,6 +6,7 @@ import { openMenu } from '../test/menu'
 
 vi.mock('./CommunityPanel', () => ({ CommunityPanel: () => <div>Comunidade fictícia</div> }))
 vi.mock('./ModerationPanel', () => ({ ModerationPanel: () => <div>Moderação fictícia</div>, ModerationLink: () => null }))
+vi.mock('./OwnerContentPanel', () => ({ OwnerContentPanel: () => <div>Perguntas dos jogos fictício</div> }))
 vi.mock('./BereiaRankingPanel', () => ({ BereiaRankingPanel: () => <div>Ranking da Bereia fictício</div> }))
 vi.mock('./ReaderLibrary', () => ({ ReaderLibrary: () => <div>Leitor fictício</div> }))
 
@@ -21,7 +22,7 @@ function rpc(owner: () => Promise<{ data: unknown; error: unknown }>, admin = fa
 function path(hash: string) { window.history.replaceState(null, '', `/#${hash}`) }
 
 describe('Painel OWNER', () => {
-  it.each([['owner', 'Painel OWNER'], ['owner/comunidade', 'Comunidade fictícia'], ['owner/moderacao', 'Moderação fictícia'], ['owner/bereia', 'Ranking da Bereia fictício']])('abre %s após confirmação do servidor', async (route, content) => {
+  it.each([['owner', 'Painel OWNER'], ['owner/comunidade', 'Comunidade fictícia'], ['owner/moderacao', 'Moderação fictícia'], ['owner/bereia', 'Ranking da Bereia fictício'], ['owner/perguntas', 'Perguntas dos jogos fictício']])('abre %s após confirmação do servidor', async (route, content) => {
     path(route); rpc(async () => ({ data: true, error: null }))
     vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: session('owner') }, error: null })
     render(<App />)

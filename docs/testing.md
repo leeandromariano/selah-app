@@ -2469,3 +2469,10 @@ Aba "Quiz bíblico" no menu (`#bereia/quiz`), com modalidades Antigo Testamento,
 - RPC `get_owner_bereia_ranking(p_game, p_search, p_page, p_size)`, só para o owner (`private.app_owner`); sem e-mail nem dados pessoais além do username. Conta a primeira resposta de cada leitor. "Geral" = acertos do quiz e dos jogos de resposta + dias de Versículo Oculto resolvidos.
 - Para ver o painel no navegador local, a conta logada precisa ser o owner (tabela `private.app_owner` tem uma única linha); restaure o owner original depois.
 - No navegador de teste (janela oculta) o app refaz as checagens de sessão e remonta os painéis do owner a cada poucos segundos; isso também ocorre no painel de Comunidade e não é do ranking.
+
+## Perguntas dos jogos (owner)
+
+- Rota `#owner/perguntas` (botão "Perguntas dos jogos" no Painel OWNER): o owner lista, busca, filtra (nível ou modo), cria, edita e exclui perguntas e alternativas do **Quiz bíblico** (`quiz_questions`) e as frases de **Quem disse isso?** (`who_cards`). A resposta certa é um botão de opção ao lado de cada alternativa, então a marcação acompanha o texto; a tela mostra "Resposta certa: C — texto".
+- RPC `owner_content_list`, `owner_content_save`, `owner_content_delete` (security definer, exigem `private.owner_identity`); leitor recebe erro de acesso. Validação no cliente (`validateDraft`) e no servidor: 4 alternativas diferentes, resposta certa 0–3, referência, tamanhos.
+- Mudar alternativas ou a resposta certa **zera as respostas já dadas** àquela pergunta (a tela pede confirmação), para o ranking não guardar acertos de uma versão antiga. Excluir apaga também as respostas dos leitores (confirmação mostra quantas).
+- Ainda sem editor para Tá na Bíblia (veredito, sem alternativas), Versículo Oculto e Linha do Tempo.

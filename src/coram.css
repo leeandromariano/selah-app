@@ -290,3 +290,25 @@ a.quiz-mode { text-decoration: none; }
 .timeline-order li { display: flex; gap: 12px; align-items: flex-start; }
 .timeline-step { display: inline-grid; place-items: center; flex: none; min-width: 32px; height: 32px; border-radius: 50%; background: var(--accent, #c2410c); color: #fff; font-weight: 700; font-size: 0.85rem; }
 @media (min-width: 640px) { .timeline-pair { grid-template-columns: 1fr 1fr; } }
+
+/* Painel do owner: perguntas dos jogos */
+.owner-editor { display: grid; gap: 14px; margin: 16px 0; padding: 18px; border: 1px solid var(--line, rgba(128, 128, 128, 0.3)); border-radius: 18px; }
+.owner-editor label { display: grid; gap: 4px; font-weight: 700; }
+.owner-editor textarea, .owner-editor input:not([type='radio']):not([type='checkbox']), .owner-editor select { min-height: 44px; padding: 8px 12px; font: inherit; border-radius: 12px; border: 1px solid var(--line, rgba(128, 128, 128, 0.45)); background: transparent; color: inherit; }
+.owner-editor .owner-check { display: flex; flex-direction: row; align-items: flex-start; gap: 10px; font-weight: 400; }
+.owner-editor .owner-check input { width: 22px; min-width: 22px; height: 22px; margin: 0; flex: none; }
+.owner-warning { padding: 10px 12px; border-radius: 12px; background: rgba(224, 160, 30, 0.18); }
+.owner-options { border: 0; padding: 0; margin: 0; display: grid; gap: 10px; min-width: 0; }
+.owner-options legend { font-weight: 700; margin-bottom: 8px; }
+.owner-option { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: end; padding: 8px; border-radius: 14px; border: 1px solid transparent; }
+.owner-option[data-correct='true'] { border-color: #2e9d5b; background: rgba(46, 157, 91, 0.12); }
+.owner-option input[type='radio'] { width: 22px; height: 22px; margin-bottom: 11px; accent-color: #2e9d5b; }
+.owner-correct { margin: 0; }
+.owner-row { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
+.owner-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.owner-list > li { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--line, rgba(128, 128, 128, 0.3)); border-radius: 16px; }
+.owner-list > li[data-active='false'] { opacity: 0.6; }
+.owner-answers { margin: 6px 0; padding-left: 22px; }
+.owner-answers li[data-correct='true'] { font-weight: 700; color: #2e9d5b; }
+.owner-confirm { padding: 10px 12px; border-radius: 12px; background: rgba(214, 69, 69, 0.15); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

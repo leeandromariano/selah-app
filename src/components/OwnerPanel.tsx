@@ -1,6 +1,7 @@
 import { CommunityPanel } from './CommunityPanel'
 import { ModerationPanel } from './ModerationPanel'
 import { BereiaRankingPanel } from './BereiaRankingPanel'
+import { OwnerContentPanel } from './OwnerContentPanel'
 import { Heading } from './UI'
 import { PublisherManagement } from './PublisherManagement'
 
@@ -10,6 +11,7 @@ export function OwnerPanel({ page }: { page: string }) {
     <div className="actions">
       <a className="button secondary" href="#owner/comunidade" aria-current={page === 'owner/comunidade' ? 'page' : undefined}>Comunidade e ofensivas</a>
       <a className="button secondary" href="#owner/bereia" aria-current={page === 'owner/bereia' ? 'page' : undefined}>Ranking da Bereia</a>
+      <a className="button secondary" href="#owner/perguntas" aria-current={page === 'owner/perguntas' ? 'page' : undefined}>Perguntas dos jogos</a>
       <a className="button secondary" href="#owner/moderacao" aria-current={page === 'owner/moderacao' ? 'page' : undefined}>Moderação de reflexões</a>
       <a className="button secondary" href="#admin">Gerenciar devocionais</a>
       <a className="button secondary" href="#owner/publicadores" aria-current={page === 'owner/publicadores' ? 'page' : undefined}>Gerenciar PUBLICADORES</a>
@@ -17,6 +19,7 @@ export function OwnerPanel({ page }: { page: string }) {
     {page === 'owner/comunidade' && <CommunityPanel />}
     {page === 'owner/moderacao' && <ModerationPanel />}
     {page === 'owner/bereia' && <BereiaRankingPanel />}
+    {page === 'owner/perguntas' && <OwnerContentPanel />}
     {page === 'owner/publicadores' && <PublisherManagement />}
   </>
 }
