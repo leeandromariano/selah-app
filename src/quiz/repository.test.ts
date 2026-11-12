@@ -6,25 +6,28 @@ function client(data: unknown, error: unknown = null) {
   const rpc = vi.fn(() => ({ abortSignal: async () => ({ data, error }) }))
   return { rpc, repository: createQuizRepository({ rpc } as never) }
 }
-const question = { id, testament: 'novo', prompt: 'Pergunta fictícia?', options: ['a', 'b', 'c', 'd'] }
+const question = { id, testament: 'novo', level: 2, prompt: 'Pergunta fictícia?', options: ['a', 'b', 'c', 'd'] }
 
 describe('repositório do quiz', () => {
   it('inicia uma rodada e descarta campos inesperados, como a resposta certa', async () => {
     const { rpc, repository } = client([{ ...question, correct_index: 2 }])
-    const list = await repository.start('novo')
-    expect(rpc).toHaveBeenCalledWith('quiz_start', { p_mode: 'novo', p_count: 10 })
+    const list = await repository.start('novo', 2)
+    expect(rpc).toHaveBeenCalledWith('quiz_start', { p_mode: 'novo', p_level: 2, p_count: 10 })
     expect(list).toEqual([question])
     expect(JSON.stringify(list)).not.toContain('correct_index')
   })
-  it.each([['modalidade desconhecida', 'todas', 10], ['tamanho zero', 'novo', 0], ['tamanho grande demais', 'novo', 21]])('recusa %s antes de chamar o servidor', async (_name, mode, size) => {
+  it.each([['modalidade desconhecida', 'todas', 1, 10], ['tamanho zero', 'novo', 1, 0], ['tamanho grande demais', 'novo', 1, 21], ['nível inexistente', 'novo', 5, 10]])('recusa %s antes de chamar o servidor', async (_name, mode, level, size) => {
     const { rpc, repository } = client([])
-    await expect(repository.start(mode as never, size)).rejects.toThrow('Modalidade inválida')
+    await expect(repository.start(mode as never, level as never, size)).rejects.toThrow('Modalidade inválida')
     expect(rpc).not.toHaveBeenCalled()
   })
   it('rejeita pergunta malformada e propaga erro do servidor', async () => {
-    await expect(client([{ ...question, options: ['a', 'b'] }]).repository.start('biblia')).rejects.toThrow('Invalid quiz question')
-    await expect(client([{ ...question, id: 'nao-uuid' }]).repository.start('biblia')).rejects.toThrow('Invalid quiz question')
-    await expect(client(null, { code: '42501' }).repository.start('biblia')).rejects.toEqual({ code: '42501' })
+    await expect(client([{ ...question, options: ['a', 'b'] }]).repository.start('biblia', 2)).rejects.toThrow('Invalid quiz question')
+    await expect(client([{ ...question, id: 'nao-uuid' }]).repository.start('biblia', 2)).rejects.toThrow('Invalid quiz question')
+    await expect(client(null, { code: '42501' }).repository.start('biblia', 2)).rejects.toEqual({ code: '42501' })
+  })
+  it('recusa pergunta de outro nível do que o pedido', async () => {
+    await expect(client([question]).repository.start('novo', 3)).rejects.toThrow('Invalid quiz question')
   })
   it('valida e devolve o resultado de uma resposta', async () => {
     const { rpc, repository } = client({ correct: true, correct_index: 1, reference: 'João 3:16', counted: true })

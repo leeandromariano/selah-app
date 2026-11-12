@@ -4,10 +4,12 @@ import { describe, expect, it, vi } from 'vitest'
 import { supabase } from '../lib/supabase'
 import { QuizPage } from './QuizPage'
 
+vi.mock('./QuizVerse', () => ({ QuizVerse: ({ reference }: { reference: string }) => <blockquote>Texto completo fictício de {reference}</blockquote> }))
+
 const ids = ['11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222']
 const questions = [
-  { id: ids[0], testament: 'novo', prompt: 'Quem foi a mãe de Jesus?', options: ['Maria', 'Marta', 'Isabel', 'Ana'] },
-  { id: ids[1], testament: 'novo', prompt: 'Em qual cidade Jesus nasceu?', options: ['Nazaré', 'Belém', 'Jerusalém', 'Cafarnaum'] },
+  { id: ids[0], testament: 'novo', level: 1, prompt: 'Quem foi a mãe de Jesus?', options: ['Maria', 'Marta', 'Isabel', 'Ana'] },
+  { id: ids[1], testament: 'novo', level: 1, prompt: 'Em qual cidade Jesus nasceu?', options: ['Nazaré', 'Belém', 'Jerusalém', 'Cafarnaum'] },
 ]
 const answers: Record<string, { correct_index: number; reference: string }> = {
   [ids[0]]: { correct_index: 0, reference: 'Lucas 1:31' },
@@ -30,7 +32,18 @@ describe('Quiz bíblico', () => {
     for (const name of ['Antigo Testamento', 'Novo Testamento', 'Bíblia toda']) expect(screen.getByRole('button', { name: new RegExp(name) })).toBeVisible()
     await user.click(screen.getByRole('button', { name: /Novo Testamento/ }))
     expect(await screen.findByRole('heading', { name: 'Quem foi a mãe de Jesus?' })).toBeVisible()
-    expect(supabase.rpc).toHaveBeenCalledWith('quiz_start', { p_mode: 'novo', p_count: 10 })
+    expect(supabase.rpc).toHaveBeenCalledWith('quiz_start', { p_mode: 'novo', p_level: 1, p_count: 10 })
+  })
+  it('oferece os quatro níveis, do mais fácil ao mais difícil, e usa o escolhido', async () => {
+    boundary()
+    const user = userEvent.setup()
+    render(<QuizPage />)
+    const names = screen.getAllByRole('radio').map(radio => radio.closest('label')!.querySelector('strong')!.textContent)
+    expect(names).toEqual(['Iniciante', 'Intermediário', 'Avançado', 'Bigode grosso'])
+    expect(screen.getByRole('radio', { name: /Iniciante/ })).toBeChecked()
+    await user.click(screen.getByRole('radio', { name: /Bigode grosso/ }))
+    await user.click(screen.getByRole('button', { name: /Antigo Testamento/ }))
+    expect(supabase.rpc).toHaveBeenCalledWith('quiz_start', { p_mode: 'antigo', p_level: 4, p_count: 10 })
   })
   it('mostra na hora se acertou, a alternativa certa e a referência bíblica', async () => {
     boundary()
@@ -41,6 +54,7 @@ describe('Quiz bíblico', () => {
     const feedback = await screen.findByRole('status')
     expect(feedback).toHaveTextContent('Você acertou!')
     expect(feedback).toHaveTextContent('Lucas 1:31')
+    expect(feedback).toHaveTextContent('Texto completo fictício de Lucas 1:31')
     expect(screen.getByRole('button', { name: /Maria/ })).toHaveAttribute('data-state', 'correct')
     // depois de responder, as alternativas ficam travadas
     expect(screen.getByRole('button', { name: /Marta/ })).toBeDisabled()
@@ -67,7 +81,7 @@ describe('Quiz bíblico', () => {
     const result = await screen.findByRole('region', { name: 'Resultado do quiz' })
     expect(within(result).getByRole('heading')).toHaveTextContent('Você acertou 1 de 2')
     await waitFor(() => expect(result).toHaveTextContent('já acertou 1 de 2 perguntas respondidas'))
-    await user.click(within(result).getByRole('button', { name: 'Trocar modalidade' }))
+    await user.click(within(result).getByRole('button', { name: 'Trocar modalidade ou nível' }))
     expect(screen.getByRole('button', { name: /Bíblia toda/ })).toBeVisible()
   })
   it('avisa quando a pergunta já tinha sido respondida e não soma pontos de novo', async () => {

@@ -1,7 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type QuizMode = 'antigo' | 'novo' | 'biblia'
-export type QuizQuestion = { id: string; testament: 'antigo' | 'novo'; prompt: string; options: string[] }
+export type QuizLevel = 1 | 2 | 3 | 4
+export type QuizQuestion = { id: string; testament: 'antigo' | 'novo'; level: QuizLevel; prompt: string; options: string[] }
 export type QuizAnswerResult = { correct: boolean; correct_index: number; reference: string; counted: boolean }
 export type QuizStats = { answered: number; correct: number; total_questions: number }
 export type QuizPlayer = { username: string | null; answered: number; correct: number; accuracy: number; antigo_correct: number; novo_correct: number; last_answered_at: string }
@@ -11,6 +12,13 @@ export const quizModes: { id: QuizMode; name: string; description: string }[] = 
   { id: 'antigo', name: 'Antigo Testamento', description: 'Da criação aos profetas.' },
   { id: 'novo', name: 'Novo Testamento', description: 'Dos Evangelhos ao Apocalipse.' },
   { id: 'biblia', name: 'Bíblia toda', description: 'Perguntas dos dois testamentos misturadas.' },
+]
+
+export const quizLevels: { id: QuizLevel; name: string; description: string }[] = [
+  { id: 1, name: 'Iniciante', description: 'Histórias e personagens que todo mundo conhece.' },
+  { id: 2, name: 'Intermediário', description: 'Detalhes dos relatos e dos livros.' },
+  { id: 3, name: 'Avançado', description: 'Personagens secundários, lugares e citações.' },
+  { id: 4, name: 'Bigode grosso', description: 'Só para quem leu a Bíblia com lupa.' },
 ]
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -24,16 +32,16 @@ export function createQuizRepository(client: Rpc) {
     return data as unknown
   }
   return {
-    async start(mode: QuizMode, size = 10): Promise<QuizQuestion[]> {
-      if (!quizModes.some(item => item.id === mode) || !Number.isInteger(size) || size < 1 || size > 20) throw Error('Modalidade inválida.')
-      const data = await call('quiz_start', { p_mode: mode, p_count: size })
+    async start(mode: QuizMode, level: QuizLevel, size = 10): Promise<QuizQuestion[]> {
+      if (!quizModes.some(item => item.id === mode) || !quizLevels.some(item => item.id === level) || !Number.isInteger(size) || size < 1 || size > 20) throw Error('Modalidade inválida.')
+      const data = await call('quiz_start', { p_mode: mode, p_level: level, p_count: size })
       if (!Array.isArray(data) || data.length > size) throw Error('Invalid quiz response')
       // Projeção explícita: nunca guardar campos inesperados (por exemplo, a resposta certa).
       return data.map(item => {
         const q = item as QuizQuestion
-        if (!q || typeof q.id !== 'string' || !uuid.test(q.id) || !['antigo', 'novo'].includes(q.testament) || typeof q.prompt !== 'string'
+        if (!q || typeof q.id !== 'string' || !uuid.test(q.id) || !['antigo', 'novo'].includes(q.testament) || q.level !== level || typeof q.prompt !== 'string'
           || !Array.isArray(q.options) || q.options.length !== 4 || q.options.some(option => typeof option !== 'string')) throw Error('Invalid quiz question')
-        return { id: q.id, testament: q.testament, prompt: q.prompt, options: [...q.options] }
+        return { id: q.id, testament: q.testament, level: q.level, prompt: q.prompt, options: [...q.options] }
       })
     },
     async answer(questionId: string, selected: number): Promise<QuizAnswerResult> {
