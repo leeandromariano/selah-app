@@ -2476,3 +2476,11 @@ Aba "Quiz bíblico" no menu (`#bereia/quiz`), com modalidades Antigo Testamento,
 - RPC `owner_content_list`, `owner_content_save`, `owner_content_delete` (security definer, exigem `private.owner_identity`); leitor recebe erro de acesso. Validação no cliente (`validateDraft`) e no servidor: 4 alternativas diferentes, resposta certa 0–3, referência, tamanhos.
 - Mudar alternativas ou a resposta certa **zera as respostas já dadas** àquela pergunta (a tela pede confirmação), para o ranking não guardar acertos de uma versão antiga. Excluir apaga também as respostas dos leitores (confirmação mostra quantas).
 - Ainda sem editor para Tá na Bíblia (veredito, sem alternativas), Versículo Oculto e Linha do Tempo.
+
+## Cápsula de Oração ("No secreto" com retorno)
+
+- No fim do devocional (etapa "Oração e resposta" no guiado; depois do texto no devocional simples) o leitor escreve um pedido e escolhe quando rever (7, 14, 30 — padrão —, 60, 90 ou 180 dias). Tabela `prayer_capsules`, privada: sem leitura direta; RPC `prayer_create`, `prayer_due`, `prayer_list`, `prayer_answer`, `prayer_snooze`, `prayer_delete` (security definer, sempre limitadas a `auth.uid()`). Nem o owner nem outros leitores acessam os pedidos; a exclusão da conta apaga os pedidos (on delete cascade). Limite de 50 pedidos abertos por leitor.
+- Quando a data chega (fuso America/Sao_Paulo), a Home mostra "Você orou por isso há N dias. Como Deus agiu?" com "Deus respondeu 🙌" (testemunho opcional, vai para o mural) e "Ainda aguardando" (adia 30 dias).
+- Em Minha Jornada: "Mural de testemunhos" (pedidos respondidos) e "Pedidos em oração" (marcar como respondido, excluir com confirmação).
+- Para testar a data chegando no banco local: `update public.prayer_capsules set created_on = created_on - 30, review_on = review_on - 30;`
+- A Política de privacidade ainda não cita as cápsulas de oração; vale revisar o texto antes de publicar.

@@ -312,3 +312,16 @@ a.quiz-mode { text-decoration: none; }
 .owner-answers li[data-correct='true'] { font-weight: 700; color: #2e9d5b; }
 .owner-confirm { padding: 10px 12px; border-radius: 12px; background: rgba(214, 69, 69, 0.15); }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Cápsula de oração */
+.prayer-capsule, .prayer-card, .prayer-mural { display: grid; gap: 12px; padding: 18px; margin: 16px 0; border: 1px solid var(--line, rgba(128, 128, 128, 0.3)); border-radius: 18px; background: var(--card, transparent); }
+.prayer-capsule h3, .prayer-card h3, .prayer-mural h2, .prayer-mural h3 { margin: 0; }
+.prayer-capsule form { display: grid; gap: 12px; }
+.prayer-capsule label, .prayer-card label { display: grid; gap: 4px; font-weight: 700; }
+.prayer-capsule textarea, .prayer-card textarea, .prayer-mural textarea, .prayer-capsule select { padding: 8px 12px; font: inherit; border-radius: 12px; border: 1px solid var(--line, rgba(128, 128, 128, 0.45)); background: transparent; color: inherit; }
+.prayer-due { display: grid; gap: 12px; }
+.prayer-card { border-color: var(--accent, #c2410c); }
+.prayer-card blockquote, .prayer-list blockquote { margin: 0; padding-left: 12px; border-left: 3px solid var(--accent, #c2410c); font-style: italic; }
+.prayer-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.prayer-list > li { display: grid; gap: 8px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line, rgba(128, 128, 128, 0.3)); }
+.prayer-testimony { margin: 0; font-weight: 700; }

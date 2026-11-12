@@ -3,6 +3,7 @@ import { ConsistencySection } from './ConsistencySection'
 import { Heading } from './UI'
 import { JourneyRewards } from './JourneyRewards'
 import { JourneyLastOpening } from './JourneyLastOpening'
+import { PrayerMural } from './PrayerMural'
 import { ReaderLibrary } from './ReaderLibrary'
 
 export function JourneyPage() {
@@ -15,6 +16,7 @@ export function JourneyPage() {
     <JourneyLastOpening key={session.user.id} userId={session.user.id} />
     <ConsistencySection userId={session.user.id} showHistory />
     <JourneyRewards userId={session.user.id} />
+    <PrayerMural />
     <ReaderLibrary page="minhas-leituras" embedded />
     <div className="actions journey-links"><a className="text-link" href="#historico">Escolher um devocional →</a></div>
   </>
