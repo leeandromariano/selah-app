@@ -68,6 +68,6 @@ export function GuidedDevotional({ item, alreadyCompleted = false, onCompleted, 
     </section>
     <p className="guided-swipe-hint">Deslize para o lado para mudar de etapa.</p>
     {error && <p role="alert" className="info">{error}</p>}
-    <div className="guided-navigation"><button type="button" className="button secondary" disabled={step === 0 || finishing} onClick={() => void navigate(step - 1)}>Voltar</button>{step === lastStep && <a className="button primary" href="#inicio">Voltar ao início</a>}{step < lastStep && <button type="button" className="button primary" disabled={finishing} onClick={() => void navigate(step + 1)}>{step === prayerStep && !done ? (finishing ? 'Concluindo…' : 'Continuar e concluir') : 'Continuar →'}</button>}</div>
+    <div className="guided-navigation"><button type="button" className="button secondary" disabled={step === 0 || finishing} onClick={() => void navigate(step - 1)}>Voltar</button>{step === lastStep && <a className="button primary" href="#inicio">Ir para a tela inicial do Coram</a>}{step < lastStep && <button type="button" className="button primary" disabled={finishing} onClick={() => void navigate(step + 1)}>{step === prayerStep && !done ? (finishing ? 'Concluindo…' : 'Continuar e concluir') : 'Continuar →'}</button>}</div>
   </div>
 }

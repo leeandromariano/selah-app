@@ -47,15 +47,15 @@ describe('devocional em etapas', () => {
     expect(onCompleted).toHaveBeenCalledOnce()
     expect(screen.getByRole('status')).toHaveTextContent('Devocional concluído.')
     expect(screen.queryByRole('button', { name: /Continuar/ })).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Voltar ao início' })).toHaveAttribute('href', '#inicio')
+    expect(screen.getByRole('link', { name: 'Ir para a tela inicial do Coram' })).toHaveAttribute('href', '#inicio')
   })
-  it('o botão "Voltar ao início" só existe na última etapa', async () => {
+  it('o botão "Ir para a tela inicial do Coram" só existe na última etapa', async () => {
     render(<GuidedDevotional item={item} alreadyCompleted onCompleted={vi.fn()} complete={vi.fn()} />)
-    expect(screen.queryByRole('link', { name: 'Voltar ao início' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Ir para a tela inicial do Coram' })).not.toBeInTheDocument()
     click(/05Para lembrar/)
-    expect(await screen.findByRole('link', { name: 'Voltar ao início' })).toBeVisible()
+    expect(await screen.findByRole('link', { name: 'Ir para a tela inicial do Coram' })).toBeVisible()
     click('Voltar')
-    expect(screen.queryByRole('link', { name: 'Voltar ao início' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Ir para a tela inicial do Coram' })).not.toBeInTheDocument()
   })
   it('"Para lembrar" traz a frase central e o compartilhar; as outras etapas ficam limpas', async () => {
     render(<GuidedDevotional item={item} onCompleted={vi.fn()} complete={vi.fn().mockResolvedValue(done)} />)
