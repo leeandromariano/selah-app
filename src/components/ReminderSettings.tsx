@@ -39,7 +39,8 @@ function Settings({ user }: { user: string }) {
     try { await work() } catch (error) { setError(error instanceof Error ? error.message : 'Não foi possível atualizar seus lembretes.') }
     finally { setBusy(false) }
   }
-  async function save(subscription?: object, simulated = snapshot?.device?.mode !== 'webpush') {
+  // O modo vem do servidor: com o banco em webpush, um navegador sem aparelho nunca cadastra um aparelho fictício.
+  async function save(subscription?: object, simulated = snapshot?.mode === 'simulation') {
     const key = deviceKey(user, true)!
     const data = await repository.save(key, { enabled, time, timezone,
       permission: simulated && subscription ? 'granted' : simulated ? snapshot?.device?.permission ?? permission : permission,

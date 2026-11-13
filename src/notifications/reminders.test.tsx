@@ -60,6 +60,16 @@ describe('preferências e privacidade de lembretes', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Salvar preferências' }))
     await waitFor(() => expect(supabase.rpc).toHaveBeenCalledWith('save_my_reminders', expect.objectContaining({ p_time: '09:17', p_enabled: false })))
   })
+  it('com o servidor em webpush, salvar num navegador sem aparelho nunca cadastra um aparelho fictício', async () => {
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'fiction-hosted-save' } } }, error: null } as never)
+    const hosted = { ...snapshot, mode: 'webpush', vapid_public_key: 'B'.repeat(87) }
+    vi.mocked(supabase.rpc).mockImplementation(name => name === 'devotional_open_counts' ? Promise.resolve({ error: { code: '42501' } }) as never : name === 'get_my_publisher_access' ? Promise.resolve({ data: false, error: null }) as never : { abortSignal: async () => ({ data: hosted, error: null }) } as never)
+    location.hash = 'configuracoes'; render(<App />)
+    await screen.findByRole('checkbox')
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar preferências' }))
+    await waitFor(() => expect(supabase.rpc).toHaveBeenCalledWith('save_my_reminders', expect.objectContaining({ p_simulated: false })))
+    expect(supabase.rpc).not.toHaveBeenCalledWith('save_my_reminders', expect.objectContaining({ p_simulated: true }))
+  })
   it.each(['denied', 'default'])('permissão %s só muda por ação voluntária e negação bloqueia inscrição', async permission => {
     const request = vi.fn().mockResolvedValue('granted')
     vi.stubGlobal('Notification', { permission, requestPermission: request })
