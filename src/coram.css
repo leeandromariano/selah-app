@@ -12,7 +12,7 @@
 }
 
 .guided-devotional { margin-top: 2rem; }
-.guided-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; margin-bottom: 1.5rem; }
+.guided-steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .5rem; margin-bottom: 1.5rem; }
 .guided-steps button { text-align: left; padding: .85rem; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text-muted); font-size: .8rem; line-height: 1.4; }
 .guided-steps button::before { content: ''; display: block; height: 4px; margin-bottom: .7rem; border-radius: 999px; background: var(--border); }
 .guided-steps button[aria-current=step]::before, .guided-steps button[data-complete=true]::before { background: var(--brand-ember); }
@@ -67,7 +67,7 @@
 .card-preview-bottom { display: flex; flex-direction: column; border-top: 4px solid var(--card-accent); padding-top: .8rem; font: 800 1rem 'Plus Jakarta Sans', sans-serif; }
 .card-preview-bottom em { font: italic 1.1rem 'Instrument Serif', Georgia, serif; }
 .card-preview-bottom small { margin-top: .6rem; font: 500 .55rem 'JetBrains Mono', monospace; letter-spacing: .02em; overflow-wrap: anywhere; }
-@media (max-width: 650px) { .guided-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } .guided-steps button { min-height: 4.2rem; } }
+@media (max-width: 650px) { .guided-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } .guided-steps button { min-height: 4.2rem; } .guided-steps button:last-child:nth-child(odd) { grid-column: 1 / -1; } }
 .brand > img { width: 46px; height: 46px; flex: none; }
 .brand small { font-family: 'JetBrains Mono', monospace; letter-spacing: .025em; font-weight: 500; font-size: 6.6px; line-height: 1.5; }
 .footer-logo { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; letter-spacing: -.055em; }

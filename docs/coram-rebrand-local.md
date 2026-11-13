@@ -33,3 +33,11 @@ Nenhuma chave, publicação ou banco remoto faz parte desta etapa. A versão no 
 
 - A aba do navegador usa `coram-favicon-32/64.png` (C creme) em abas escuras e `coram-favicon-light-32/64.png` (C escuro) em abas claras, escolhidos por `media="(prefers-color-scheme: ...)"` no `index.html`. Gerados do mesmo logo, com a mesma máscara por forma do logo do app.
 - `coram-icon-*.png` (apple-touch e manifest) continuam com fundo escuro de propósito: o iOS preenche transparência com preto e os ícones instalados precisam de fundo.
+
+## Devocional em etapas, versão de 13/11/2026
+
+- **Cinco etapas:** A Palavra, A Real, Coram Deo na Prática, Oração e **Para lembrar**. Só aparece em etapas o devocional com Coram Deo na Prática e Oração preenchidos (e a chave `VITE_STAGING_GUIDED_DEVOTIONAL_ENABLED=true` no build); os demais continuam diretos.
+- **Sem regra dos 60 segundos no devocional em etapas.** O devocional é concluído ao ir para "Para lembrar", pelo botão **Continuar e concluir** da Oração (ou pela etapa 05). A conclusão usa `public.complete_devotional_now` (migração `20261118000400`): só o próprio leitor, só devocional publicado, uma por devocional, data e hora do servidor. O deslize não passa da Oração para "Para lembrar". O devocional direto continua com a contagem de 60 s (`private.reading_operation`, não alterada).
+- **Oração:** texto sugerido, cápsula de oração e o bloco **Deixe seu comentário** (curtir e comentar, opcional, com moderação). A resposta pessoal privada foi retirada da tela; o histórico antigo continua em Minhas leituras.
+- **Para lembrar:** a frase central em destaque e o compartilhar (Instagram, Copiar link, WhatsApp). Nas outras etapas não aparecem.
+- No devocional direto, o bloco de comentários também passou a se chamar "Deixe seu comentário".

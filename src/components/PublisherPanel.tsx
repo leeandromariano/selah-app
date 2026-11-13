@@ -84,7 +84,7 @@ function PublisherWorkspace({ userId }: { userId: string }) {
     ...(!bibleEditorialEnabled ? [{ key: 'bible_reference', label: 'Referência bíblica' }, { key: 'bible_text', label: 'Texto bíblico' }] as const : []),
     { key: 'content', label: 'Reflexão' },
     { key: 'reflection_question', label: 'Para refletir' },
-    ...(guidedDevotionalsEnabled ? [{ key: 'practical_challenge', label: 'Prática Coram Deo' }, { key: 'prayer_prompt', label: 'Oração e resposta' }] as const : []),
+    ...(guidedDevotionalsEnabled ? [{ key: 'practical_challenge', label: 'Coram Deo na Prática' }, { key: 'prayer_prompt', label: 'Oração' }] as const : []),
   ] as const
   const stateLabel = (item: PublisherDevotional) => item.status === 'published' ? 'Publicado'
     : item.status === 'scheduled' ? 'Agendado'

@@ -16,7 +16,7 @@ function openAdmin() {
   return render(<App />)
 }
 async function fill(user: ReturnType<typeof userEvent.setup>) {
-  for (const [label, value] of [['Autor (crédito público)', 'Autor Convidado'], ['Título', 'Novo Texto Fictício'], ['Frase central para compartilhar', 'Uma pausa também é um passo.'], ['Reflexão', 'Reflexão fictícia'], ['Para refletir', 'Pergunta fictícia?'], ['Prática Coram Deo', 'Faça uma pausa.'], ['Oração e resposta', 'Ore por paz.']]) await user.type(screen.getByLabelText(label), value)
+  for (const [label, value] of [['Autor (crédito público)', 'Autor Convidado'], ['Título', 'Novo Texto Fictício'], ['Frase central para compartilhar', 'Uma pausa também é um passo.'], ['Reflexão', 'Reflexão fictícia'], ['Para refletir', 'Pergunta fictícia?'], ['Coram Deo na Prática', 'Faça uma pausa.'], ['Oração', 'Ore por paz.']]) await user.type(screen.getByLabelText(label), value)
   await user.click(screen.getByRole('button', { name: 'Selecionar passagem' }))
   await user.click(screen.getByRole('button', { name: 'Usar passagem fictícia' }))
 }

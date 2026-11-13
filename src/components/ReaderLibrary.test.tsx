@@ -21,7 +21,7 @@ describe('acervo persistente do leitor', () => {
     const question=article.querySelector<HTMLElement>('.reflection')!
     const progress=screen.getByRole('region',{name:'Progresso de leitura'})
     const share=screen.getByRole('region',{name:'Compartilhar devocional'})
-    const discussion=screen.getByRole('region',{name:'Compartilhe sua reflexão'})
+    const discussion=screen.getByRole('region',{name:'Deixe seu comentário'})
     for(const element of [article,question,progress,share,discussion])expect(column).toContainElement(element)
     expect(question.compareDocumentPosition(progress)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(article.compareDocumentPosition(share)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
@@ -41,7 +41,7 @@ describe('acervo persistente do leitor', () => {
     expect(article.querySelector('.reflection')).toBeNull()
     expect(screen.getByRole('region',{name:'Progresso de leitura'})).toBeVisible()
     expect(screen.getByRole('region',{name:'Compartilhar devocional'})).toBeVisible()
-    expect(screen.getByRole('region',{name:'Compartilhe sua reflexão'})).toBeVisible()
+    expect(screen.getByRole('region',{name:'Deixe seu comentário'})).toBeVisible()
   })
   it.each(olderPublications)('compartilhar aparece ao final de $title antes da conclusão, sem creditar leitura', async publication => {
     libraryBoundary(olderPublications)

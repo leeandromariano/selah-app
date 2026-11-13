@@ -47,7 +47,7 @@ export function DiscussionSection({ devotionalId }: { devotionalId: string }) {
     finally { if (alive.current) setBusy(false) }
   }
   return <section className="discussion reflection" aria-labelledby={`discussion-${devotionalId}`} aria-busy={loading || busy}>
-    <h2 id={`discussion-${devotionalId}`}>Compartilhe sua reflexão</h2>
+    <h2 id={`discussion-${devotionalId}`}>Deixe seu comentário</h2>
     <p>Comente aqui o que você aprendeu e refletiu com essa devocional.</p>
     {error && <p role="alert">{error}</p>}
     {notice && <p role="status">{notice}</p>}
