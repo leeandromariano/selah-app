@@ -61,6 +61,7 @@
 .card-preview-kicker { border-top: 4px solid var(--card-accent); padding-top: .7rem; font: 700 .7rem 'JetBrains Mono', monospace; letter-spacing: .1em; }
 .card-preview-reference { align-self: flex-start; max-width: 100%; padding: .35rem .55rem; border: 1px solid var(--card-accent); border-radius: 4px; font: 600 .62rem 'JetBrains Mono', monospace; text-transform: uppercase; overflow-wrap: anywhere; }
 .devotional-share-card-preview strong { display: block; margin: auto 0; font: 800 clamp(1.5rem, 6vw, 2.2rem)/1.08 'Plus Jakarta Sans', sans-serif; letter-spacing: -.05em; overflow-wrap: anywhere; }
+.card-preview-author { margin-top: -.7rem; font: 600 .6rem 'Plus Jakarta Sans', sans-serif; opacity: .78; overflow-wrap: anywhere; }
 .card-preview-title { font: 600 .65rem 'JetBrains Mono', monospace; opacity: .78; overflow-wrap: anywhere; }
 .card-preview-bottom { display: flex; flex-direction: column; border-top: 4px solid var(--card-accent); padding-top: .8rem; font: 800 1rem 'Plus Jakarta Sans', sans-serif; }
 .card-preview-bottom em { font: italic 1.1rem 'Instrument Serif', Georgia, serif; }

@@ -5,7 +5,7 @@ import { parseReference } from '../bible/catalog'
 
 const themeLabels: Record<CardTheme, string> = { obsidian: 'Obsidian', paper: 'Papel Cru', ember: 'Brasa' }
 
-export function DevotionalShareCard({ id, title, phrase, reference, link }: { id: string; title: string; phrase?: string | null; reference: string; link: string }) {
+export function DevotionalShareCard({ id, title, phrase, author, reference, link }: { id: string; title: string; phrase?: string | null; author?: string | null; reference: string; link: string }) {
   const [open, setOpen] = useState(false)
   const [theme, setTheme] = useState<CardTheme>('obsidian')
   const [busy, setBusy] = useState(false)
@@ -18,7 +18,7 @@ export function DevotionalShareCard({ id, title, phrase, reference, link }: { id
     canvas.width = dimensions.width; canvas.height = dimensions.height
     const context = canvas.getContext('2d')
     if (!context) throw Error('Canvas unavailable')
-    drawDevotionalCard(context, { title, phrase, reference, url: link, format: 'story', theme })
+    drawDevotionalCard(context, { title, phrase, author, reference, url: link, format: 'story', theme })
     return canvas
   }
 
@@ -68,7 +68,7 @@ export function DevotionalShareCard({ id, title, phrase, reference, link }: { id
     <button type="button" className="button primary" disabled={busy} onClick={() => void shareImage()}>{busy ? 'Preparando imagem…' : 'Compartilhar'}</button>
     <button type="button" className="button secondary" aria-expanded={open} onClick={() => setOpen(value => !value)}>{open ? 'Fechar prévia' : 'Prévia e download'}</button>
     {open && <div className="devotional-share-card-editor"><p>Imagem vertical de 1080 × 1920 com frase central, referência e link visível. O link também acompanha a imagem no texto do compartilhamento. Devocionais antigos usam o título até que recebam uma frase central.{['127.0.0.1', 'localhost'].includes(location.hostname) && ' O link local só funciona neste computador.'}</p><div className="devotional-share-card-controls"><label>Tema<select value={theme} onChange={event => setTheme(event.target.value as CardTheme)}>{(Object.keys(themeLabels) as CardTheme[]).map(value => <option key={value} value={value}>{themeLabels[value]}</option>)}</select></label></div>
-      <div className={`devotional-share-card-preview ${theme} story`} role="img" aria-label={`Prévia do card ${themeLabels[theme]} para story`}><span className="card-preview-kicker">CORAM / FRASE DO DEVOCIONAL</span><span className="card-preview-reference">{reference}</span><strong>{phrase?.trim() || title}</strong>{phrase?.trim() && phrase.trim() !== title.trim() && <span className="card-preview-title">{title}</span>}<span className="card-preview-bottom">MENOS ROTINA.<em>mais presença.</em><small>CORAM · {link}</small></span></div>
+      <div className={`devotional-share-card-preview ${theme} story`} role="img" aria-label={`Prévia do card ${themeLabels[theme]} para story`}><span className="card-preview-kicker">CORAM / FRASE DO DEVOCIONAL</span><span className="card-preview-reference">{reference}</span><strong>{phrase?.trim() || title}</strong>{author?.trim() && <span className="card-preview-author">{author.trim()}</span>}{phrase?.trim() && phrase.trim() !== title.trim() && <span className="card-preview-title">{title}</span>}<span className="card-preview-bottom">MENOS ROTINA.<em>mais presença.</em><small>CORAM · {link}</small></span></div>
       <button type="button" className="button secondary" disabled={busy} onClick={() => void download()}>{busy ? 'Preparando imagem…' : 'Baixar PNG'}</button>
     </div>}{message && <p role="status">{message}</p>}
   </div>

@@ -30,7 +30,7 @@ function lines(ctx: CanvasRenderingContext2D, text: string, width: number): stri
   return output
 }
 
-export function drawDevotionalCard(ctx: CanvasRenderingContext2D, options: { title: string; phrase?: string | null; reference: string; url: string; format: CardFormat; theme: CardTheme }) {
+export function drawDevotionalCard(ctx: CanvasRenderingContext2D, options: { title: string; phrase?: string | null; author?: string | null; reference: string; url: string; format: CardFormat; theme: CardTheme }) {
   const { width, height } = cardDimensions[options.format]
   const palette = themes[options.theme]
   ctx.fillStyle = palette.background
@@ -62,30 +62,50 @@ export function drawDevotionalCard(ctx: CanvasRenderingContext2D, options: { tit
   if (phraseLines.length > 7 || phraseLines.some(line => ctx.measureText(line).width > availableWidth)) throw Error('Frase longa demais para o card')
   const lineHeight = size * 1.12
   const phraseBlock = phraseLines.length * lineHeight
-  const top = Math.max(470, Math.min((height - phraseBlock) / 2, height - phraseBlock - 395))
+  // Rodapé em pilha, sempre alinhado à esquerda: nada fica lado a lado, então nada se sobrepõe.
+  const stackTop = height - 335
+  const showTitle = Boolean(options.phrase?.trim() && options.phrase.trim() !== options.title.trim())
+  ctx.font = '600 26px "JetBrains Mono", monospace'
+  const titleLines = showTitle ? lines(ctx, options.title.trim(), availableWidth).slice(0, 2) : []
+  const authorName = options.author?.trim().slice(0, 120) ?? ''
+  ctx.font = '600 30px "Plus Jakarta Sans", sans-serif'
+  const authorLines = authorName ? lines(ctx, authorName, availableWidth) : []
+  const authorText = authorLines.length > 1 ? authorLines[0] + '…' : authorLines[0] ?? ''
+  const authorGap = authorText ? Math.round(size * 0.3) + 44 : 0
+  const titleSpace = titleLines.length ? titleLines.length * 34 + 20 : 0
+  const limit = stackTop - 40 - titleSpace - 20
+  const top = Math.max(470, Math.min((height - phraseBlock - authorGap) / 2, limit - authorGap - (phraseLines.length - 1) * lineHeight))
+  ctx.fillStyle = palette.text
+  ctx.font = `800 ${size}px "Plus Jakarta Sans", sans-serif`
   phraseLines.forEach((line, index) => ctx.fillText(line, 84, top + index * lineHeight))
 
-  if (options.phrase?.trim() && options.phrase.trim() !== options.title.trim()) {
+  if (authorText) {
+    // Nome do autor, pequeno, logo abaixo da frase central.
+    ctx.fillStyle = palette.subtle
+    ctx.font = '600 30px "Plus Jakarta Sans", sans-serif'
+    ctx.fillText(authorText, 84, top + (phraseLines.length - 1) * lineHeight + authorGap, availableWidth)
+  }
+  if (titleLines.length) {
     ctx.fillStyle = palette.subtle
     ctx.font = '600 26px "JetBrains Mono", monospace'
-    const titleLines = lines(ctx, options.title.trim(), availableWidth).slice(0, 2)
-    titleLines.forEach((line, index) => ctx.fillText(line, 84, height - 327 + index * 34))
+    titleLines.forEach((line, index) => ctx.fillText(line, 84, stackTop - 40 - (titleLines.length - 1) * 34 + index * 34))
   }
 
   ctx.fillStyle = palette.accent
-  ctx.fillRect(84, height - 270, 110, 8)
+  ctx.fillRect(84, stackTop, 110, 8)
   ctx.fillStyle = palette.text
   ctx.font = '800 52px "Plus Jakarta Sans", sans-serif'
-  ctx.fillText('MENOS ROTINA.', 84, height - 190)
+  ctx.fillText('MENOS ROTINA.', 84, height - 262)
   ctx.font = 'italic 52px "Instrument Serif", Georgia, serif'
-  ctx.fillText('mais presença.', 84, height - 125)
+  ctx.fillText('mais presença.', 84, height - 197)
   ctx.fillStyle = palette.subtle
   ctx.font = '800 25px "Plus Jakarta Sans", sans-serif'
-  ctx.fillText('CORAM', 84, height - 69)
+  ctx.fillText('CORAM', 84, height - 140)
+  // O link tem a própria linha na base, com a largura toda; não divide altura com a frase de marca.
   const url = options.url.trim()
   ctx.font = '500 19px "JetBrains Mono", monospace'
-  const urlLines = lines(ctx, url, width - 434)
-  const urlTop = height - 70 - (urlLines.length - 1) * 25
-  ctx.fillText('ACESSE O APP:', 350, urlTop - 30)
-  urlLines.forEach((line, index) => ctx.fillText(line, 350, urlTop + index * 25, width - 434))
+  const urlLines = lines(ctx, url, width - 168)
+  const urlTop = height - 50 - (urlLines.length - 1) * 25
+  ctx.fillText('ACESSE O APP:', 84, urlTop - 30)
+  urlLines.forEach((line, index) => ctx.fillText(line, 84, urlTop + index * 25, width - 168))
 }
