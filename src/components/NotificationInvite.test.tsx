@@ -10,7 +10,7 @@ vi.mock('../notifications/device', () => ({ deviceKey: () => null, notificationP
 const confirmedUser = { id: 'fiction-user', email_confirmed_at: '2026-11-01T00:00:00Z', is_anonymous: false }
 const snapshot = (over: object = {}) => ({ enabled: false, mode: 'webpush', vapid_public_key: 'k', device: null, last: null, ...over })
 const device = (state: string) => ({ id: 'd', binding: 'b', mode: 'webpush', state, permission: 'granted', time: '08:00', timezone: 'America/Sao_Paulo', expires_at: null })
-const repo = (data: unknown) => ({ get: vi.fn().mockResolvedValue(data), save: vi.fn(), confirm: vi.fn(), revoke: vi.fn() }) as never
+const repo = (data: unknown) => ({ get: vi.fn().mockResolvedValue(data), save: vi.fn(), confirm: vi.fn(), revoke: vi.fn(), markInviteSeen: vi.fn().mockResolvedValue(undefined) }) as never
 
 beforeEach(() => { auth = { session: { user: confirmedUser }, recovery: false }; permission = 'default'; localStorage.clear() })
 afterEach(() => { vi.useRealTimers() })
@@ -58,18 +58,49 @@ describe('convite para ativar notificações', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Ativar lembrete' }))
     expect(await screen.findByText(/Não foi possível ativar agora/)).toBeVisible()
   })
-  it('"Agora não" e Escape adiam o convite e ele não volta na próxima visita', async () => {
-    const first = render(<NotificationInvite page="inicio" repository={repo(snapshot())} />)
-    fireEvent.click(await screen.findByRole('button', { name: 'Agora não' }))
+  it('aparece uma única vez por pessoa: ao aparecer grava a marca na conta e não volta no próximo login', async () => {
+    const first = repo(snapshot())
+    const view = render(<NotificationInvite page="inicio" repository={first} />)
+    expect(await screen.findByRole('dialog')).toBeVisible()
+    await waitFor(() => expect((first as unknown as { markInviteSeen: ReturnType<typeof vi.fn> }).markInviteSeen).toHaveBeenCalledOnce())
+    expect(localStorage.getItem('coram.notify-invite-seen.fiction-user')).toBe('1')
+    view.unmount()
+    // próximo login, mesmo sem ter tocado em nada e com o aparelho revogado: não aparece de novo
+    const second = repo(snapshot())
+    render(<NotificationInvite page="inicio" repository={second} />)
+    await waitFor(() => expect((second as unknown as { get: ReturnType<typeof vi.fn> }).get).toHaveBeenCalled())
+    await act(async () => { await Promise.resolve() })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    first.unmount()
-    const repository = repo(snapshot())
+  })
+  it('a marca vinda da conta esconde o convite em outro navegador, e não grava de novo', async () => {
+    const repository = repo(snapshot({ invite_seen: true }))
     render(<NotificationInvite page="inicio" repository={repository} />)
     await waitFor(() => expect((repository as unknown as { get: ReturnType<typeof vi.fn> }).get).toHaveBeenCalled())
     await act(async () => { await Promise.resolve() })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    const stored = JSON.parse(localStorage.getItem('coram.notify-invite.fiction-user')!)
-    expect(stored.count).toBe(1); expect(stored.until).toBeGreaterThan(Date.now() + 6 * 86_400_000)
+    expect((repository as unknown as { markInviteSeen: ReturnType<typeof vi.fn> }).markInviteSeen).not.toHaveBeenCalled()
+  })
+  it('se o banco falhar ao gravar a marca, a marca local evita repetir neste navegador', async () => {
+    const repository = repo(snapshot())
+    ;(repository as unknown as { markInviteSeen: ReturnType<typeof vi.fn> }).markInviteSeen.mockRejectedValue(Error('x'))
+    const view = render(<NotificationInvite page="inicio" repository={repository} />)
+    expect(await screen.findByRole('dialog')).toBeVisible()
+    await act(async () => { await Promise.resolve() })
+    view.unmount()
+    render(<NotificationInvite page="inicio" repository={repo(snapshot())} />)
+    await act(async () => { await Promise.resolve(); await Promise.resolve() })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+  it('"Agora não" e Escape só fecham', async () => {
+    const view = render(<NotificationInvite page="inicio" repository={repo(snapshot())} />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Agora não' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    view.unmount()
+    localStorage.clear()
+    render(<NotificationInvite page="inicio" repository={repo(snapshot())} />)
+    await screen.findByRole('dialog')
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
   it('aparelho pendente é confirmado sozinho, sem mostrar o convite', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })

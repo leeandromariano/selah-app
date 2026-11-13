@@ -6,17 +6,9 @@ import { createReminderRepository } from '../notifications/repository'
 import { activateReminders, confirmPendingDevice } from '../notifications/activate'
 
 const defaultRepository = createReminderRepository(supabase)
-const storageKey = (user: string) => 'coram.notify-invite.' + user
-const DAY = 86_400_000
-function snoozed(user: string) {
-  try { return Number(JSON.parse(localStorage.getItem(storageKey(user)) || '{}').until || 0) > Date.now() } catch { return false }
-}
-function snooze(user: string) {
-  try {
-    const count = Number(JSON.parse(localStorage.getItem(storageKey(user)) || '{}').count || 0)
-    localStorage.setItem(storageKey(user), JSON.stringify({ count: count + 1, until: Date.now() + (count === 0 ? 7 : 30) * DAY }))
-  } catch { /* sem armazenamento: o convite pode voltar na próxima visita */ }
-}
+const storageKey = (user: string) => 'coram.notify-invite-seen.' + user
+function seenLocally(user: string) { try { return localStorage.getItem(storageKey(user)) === '1' } catch { return false } }
+function markSeenLocally(user: string) { try { localStorage.setItem(storageKey(user), '1') } catch { /* a marca da conta, no banco, continua valendo */ } }
 
 type Stage = 'hidden' | 'open' | 'working' | 'done' | 'denied' | 'unavailable' | 'error'
 // Convite para ativar as notificações, mostrado na Home. A permissão do navegador só é pedida ao tocar em "Ativar".
@@ -48,16 +40,22 @@ export function NotificationInvite({ page, repository = defaultRepository, activ
       const state = snapshot.device?.mode === 'webpush' ? snapshot.device.state : null
       if (state === 'active') return
       if (state === 'pending') { watchConfirmation(user); return }
-      if (notificationPermission() === 'denied' || snoozed(user)) return
+      // Uma vez por pessoa: a marca vem da conta (qualquer navegador) e, de reserva, deste navegador.
+      if (notificationPermission() === 'denied' || snapshot.invite_seen === true || seenLocally(user)) return
       setStage('open')
     })().catch(() => { /* sem convite se a consulta falhar */ })
     return () => { live = false; stopPolling() }
   }, [user, repository, watchConfirmation, stopPolling])
   const visible = stage !== 'hidden' && page === 'inicio'
-  const close = useCallback(() => {
-    if (user && stage === 'open') snooze(user)
-    setStage('hidden')
-  }, [user, stage])
+  const close = useCallback(() => setStage('hidden'), [])
+  const marked = useRef(false)
+  useEffect(() => {
+    // Assim que o convite aparece, grava que a pessoa já o viu: não volta no próximo login, nem em outro aparelho.
+    if (!user || !visible || stage !== 'open' || marked.current) return
+    marked.current = true
+    markSeenLocally(user)
+    void repository.markInviteSeen().catch(() => { /* a marca local evita repetir neste navegador */ })
+  }, [user, visible, stage, repository])
   useEffect(() => {
     if (!visible) return
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null

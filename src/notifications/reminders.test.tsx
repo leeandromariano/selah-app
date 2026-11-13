@@ -110,6 +110,10 @@ describe('protocolo real do service worker', () => {
     const message = protocol().notification({ v: 1, kind, binding, day: '2026-10-28', devotional: id, title: 'injection' }, binding)
     expect(message.title).not.toContain('injection'); expect(message.path).toBe('/#leitura/' + id + (kind === 'share' ? '/compartilhar' : ''))
   })
+  it('marca o convite de notificações como visto pela função da conta, sem argumentos do navegador', async () => {
+    rpc(); await createReminderRepository(supabase).markInviteSeen()
+    expect(supabase.rpc).toHaveBeenCalledWith('mark_reminder_invite_seen', {})
+  })
   it('lembrete da cápsula de oração tem texto fixo, não leva nada do pedido e abre a Home', () => {
     const p = protocol()
     const message = p.notification({ v: 1, kind: 'prayer', binding, day: '2026-10-28', request: 'texto secreto', title: 'injection' }, binding)
