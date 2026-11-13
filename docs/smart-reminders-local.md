@@ -409,6 +409,6 @@ Nenhum desses comandos foi executado pelo agente.
 ## Aviso de devocional nova (13/11/2026)
 
 - Migração `20261116000100_new_devotional_push.sql`: tabela `private.publish_notices` (única por dispositivo e devocional) e as funções `claim_publish_notices`, `prepare_publish_notice` e `finish_publish_notice`; `cleanup_reminders` também apaga avisos com mais de 31 dias.
-- Vale para dispositivos ativos de quem tem os lembretes ligados (mesma opção, sem nova permissão), registrados **antes** da publicação, e para devoções publicadas na última hora. É uma mensagem a mais, além do lembrete diário (não entra na regra de uma por dia). Enviado no instante em que o worker (a cada 5 minutos) percebe a publicação, a qualquer hora.
+- Vale para dispositivos ativos de quem tem os lembretes ligados (mesma opção, sem nova permissão), ativos no momento do envio (inclusive os confirmados minutos depois da publicação), e para devoções publicadas na última hora. A migração `20261117000200` removeu a regra "aparelho mais antigo que a publicação", que usava `updated_at` e excluía quem confirmava o aparelho depois de publicar. É uma mensagem a mais, além do lembrete diário (não entra na regra de uma por dia). Enviado no instante em que o worker (a cada 5 minutos) percebe a publicação, a qualquer hora.
 - Payload: `{v, kind: 'new', binding, day, devotional}`. O service worker mostra texto fixo e abre `/#leitura/<id>`; usa tag própria para não substituir o lembrete do dia.
 - Worker: o ciclo processa os lembretes e depois os avisos (`repository.notices`).
