@@ -95,7 +95,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError('')
     try {
       if (session) await disconnectReminderDevice(session.user.id)
-      const { error } = await supabase.auth.signOut()
+      // Escopo local: sair neste aparelho não pode derrubar as sessões da conta em outros aparelhos (o padrão é global).
+      const { error } = await supabase.auth.signOut({ scope: 'local' })
       if (error) throw error
       setSession(null); setAdminAuthorization(null); setOwnerAuthorization(null); setPublisherAuthorization(null); setGoogleOnboarding(null); setRecovery(false); location.hash = 'login'
     } catch (error) { setError(authMessage(error)) }
