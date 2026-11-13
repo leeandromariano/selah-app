@@ -28,3 +28,8 @@ Nenhuma chave, publicação ou banco remoto faz parte desta etapa. A versão no 
 
 - `public/coram-logo.png` (C creme + chama, fundo transparente, 256 px) e `public/coram-logo-light.png` (mesmo logo com o C escuro, para o tema claro). Componente `BrandLogo` troca a versão por CSS (`html[data-theme]`). Usado no cabeçalho, no menu, no cadastro/login e no card de instalar o app.
 - Gerados a partir de `coram-logo-original.png` (preservado, 1024 px, com fundo escuro) por máscara de forma: C creme e chama laranja viram o logo; fundo, granulado e brilho ficam transparentes. Os ícones de aba, tela inicial (iOS/Android) e manifesto (`coram-icon-*.png`) continuam com fundo escuro de propósito: iOS preenche transparência com preto e o C creme não apareceria em abas claras.
+
+## Favicon transparente (13/11/2026)
+
+- A aba do navegador usa `coram-favicon-32/64.png` (C creme) em abas escuras e `coram-favicon-light-32/64.png` (C escuro) em abas claras, escolhidos por `media="(prefers-color-scheme: ...)"` no `index.html`. Gerados do mesmo logo, com a mesma máscara por forma do logo do app.
+- `coram-icon-*.png` (apple-touch e manifest) continuam com fundo escuro de propósito: o iOS preenche transparência com preto e os ícones instalados precisam de fundo.
