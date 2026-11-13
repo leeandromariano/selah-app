@@ -412,3 +412,11 @@ Nenhum desses comandos foi executado pelo agente.
 - Vale para dispositivos ativos de quem tem os lembretes ligados (mesma opção, sem nova permissão), ativos no momento do envio (inclusive os confirmados minutos depois da publicação), e para devoções publicadas na última hora. A migração `20261117000200` removeu a regra "aparelho mais antigo que a publicação", que usava `updated_at` e excluía quem confirmava o aparelho depois de publicar. É uma mensagem a mais, além do lembrete diário (não entra na regra de uma por dia). Enviado no instante em que o worker (a cada 5 minutos) percebe a publicação, a qualquer hora.
 - Payload: `{v, kind: 'new', binding, day, devotional}`. O service worker mostra texto fixo e abre `/#leitura/<id>`; usa tag própria para não substituir o lembrete do dia.
 - Worker: o ciclo processa os lembretes e depois os avisos (`repository.notices`).
+
+## Reativação automática do aparelho (13/11/2026)
+
+- Ao abrir o app, `rearmReminders` (em `src/notifications/activate.ts`) restaura **só o que a pessoa já escolheu**, sem pedir permissão: exige lembretes ligados na conta, permissão do navegador já concedida e a chave local do aparelho (`selah.reminder.device.<user>`).
+- Aparelho `active` ou `pending` é reatado à sessão atual com um `save` sem assinatura (o servidor só envia para aparelho de sessão válida). Aparelho `revoked` (o **Sair** revoga de propósito), `expired` ou apagado é assinado de novo com o horário de antes (ou 08:00). Aparelho fictício, servidor em simulação ou lembretes desligados: nada acontece.
+- **Cancelar a assinatura** em Configurações apaga a chave local (`forgetDeviceKey`); sem a chave, nada é reativado. Quem cancelou de propósito só volta a receber se ativar de novo.
+- Quem é reativado não vê o convite de notificações; a confirmação do aparelho novo continua automática (verificação do agendador + app aberto).
+- Causa do problema que motivou isto: o **Sair** global apagava as sessões dos outros aparelhos e deixava o aparelho de push preso a uma sessão inexistente (agora o Sair é local, `scope: 'local'`).

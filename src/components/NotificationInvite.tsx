@@ -3,7 +3,7 @@ import { useAuth } from '../auth/auth'
 import { supabase } from '../lib/supabase'
 import { deviceKey, notificationPermission } from '../notifications/device'
 import { createReminderRepository } from '../notifications/repository'
-import { activateReminders, confirmPendingDevice } from '../notifications/activate'
+import { activateReminders, confirmPendingDevice, rearmReminders } from '../notifications/activate'
 
 const defaultRepository = createReminderRepository(supabase)
 const storageKey = (user: string) => 'coram.notify-invite-seen.' + user
@@ -12,8 +12,8 @@ function markSeenLocally(user: string) { try { localStorage.setItem(storageKey(u
 
 type Stage = 'hidden' | 'open' | 'working' | 'done' | 'denied' | 'unavailable' | 'error'
 // Convite para ativar as notificações, mostrado na Home. A permissão do navegador só é pedida ao tocar em "Ativar".
-export function NotificationInvite({ page, repository = defaultRepository, activate = activateReminders, confirm = confirmPendingDevice }: {
-  page: string; repository?: typeof defaultRepository; activate?: typeof activateReminders; confirm?: typeof confirmPendingDevice
+export function NotificationInvite({ page, repository = defaultRepository, activate = activateReminders, confirm = confirmPendingDevice, rearm = rearmReminders }: {
+  page: string; repository?: typeof defaultRepository; activate?: typeof activateReminders; confirm?: typeof confirmPendingDevice; rearm?: typeof rearmReminders
 }) {
   const { session, recovery } = useAuth()
   const user = !recovery && session?.user.email_confirmed_at && !session.user.is_anonymous ? session.user.id : null
@@ -35,6 +35,10 @@ export function NotificationInvite({ page, repository = defaultRepository, activ
     let live = true
     void (async () => {
       if (notificationPermission() === 'unavailable') return
+      // Quem já ligou os lembretes e deu permissão não vê convite: o aparelho volta sozinho (ver rearmReminders).
+      const rearmed = await rearm(user, repository)
+      if (!live) return
+      if (rearmed !== 'skipped') { watchConfirmation(user); return }
       const snapshot = await repository.get(deviceKey(user))
       if (!live || snapshot.mode !== 'webpush') return
       const state = snapshot.device?.mode === 'webpush' ? snapshot.device.state : null
@@ -45,7 +49,7 @@ export function NotificationInvite({ page, repository = defaultRepository, activ
       setStage('open')
     })().catch(() => { /* sem convite se a consulta falhar */ })
     return () => { live = false; stopPolling() }
-  }, [user, repository, watchConfirmation, stopPolling])
+  }, [user, repository, rearm, watchConfirmation, stopPolling])
   const visible = stage !== 'hidden' && page === 'inicio'
   const close = useCallback(() => setStage('hidden'), [])
   const marked = useRef(false)

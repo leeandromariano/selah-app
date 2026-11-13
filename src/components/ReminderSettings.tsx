@@ -3,7 +3,7 @@ import { useAuth } from '../auth/auth'
 import { supabase } from '../lib/supabase'
 import { createReminderRepository } from '../notifications/repository'
 import type { ReminderSnapshot } from '../notifications/repository'
-import { deviceKey, notificationPermission, reminderWorker, workerMessage } from '../notifications/device'
+import { deviceKey, forgetDeviceKey, notificationPermission, reminderWorker, workerMessage } from '../notifications/device'
 import { Heading } from './UI'
 import { bindReminderDevice } from '../notifications/session'
 
@@ -80,6 +80,7 @@ function Settings({ user }: { user: string }) {
             })}>Assinar neste dispositivo</button>}
           {snapshot.device && <button className="button secondary" disabled={busy} onClick={() => void action(async () => {
             await repository.revoke(deviceKey(user)!)
+            forgetDeviceKey(user) // cancelamento de propósito: o app não reativa este aparelho sozinho
             await Promise.allSettled([workerMessage('clear'), (async () => {
               const registration = await reminderWorker()
               await (await registration?.pushManager.getSubscription())?.unsubscribe()

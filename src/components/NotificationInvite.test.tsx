@@ -102,6 +102,23 @@ describe('convite para ativar notificações', () => {
     fireEvent.keyDown(document, { key: 'Escape' })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
+  it('quem já ligou os lembretes é reativado sozinho e não vê o convite', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const rearm = vi.fn().mockResolvedValue('resubscribed'), confirm = vi.fn().mockResolvedValue(true)
+    const repository = repo(snapshot())
+    render(<NotificationInvite page="inicio" repository={repository} rearm={rearm} confirm={confirm} />)
+    await act(async () => { await vi.advanceTimersByTimeAsync(15500) })
+    expect(rearm).toHaveBeenCalledWith('fiction-user', repository)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(confirm).toHaveBeenCalled()
+    expect((repository as unknown as { markInviteSeen: ReturnType<typeof vi.fn> }).markInviteSeen).not.toHaveBeenCalled()
+  })
+  it('sem reativação possível o convite aparece normalmente', async () => {
+    const rearm = vi.fn().mockResolvedValue('skipped')
+    render(<NotificationInvite page="inicio" repository={repo(snapshot())} rearm={rearm} />)
+    expect(await screen.findByRole('dialog')).toBeVisible()
+    expect(rearm).toHaveBeenCalledOnce()
+  })
   it('aparelho pendente é confirmado sozinho, sem mostrar o convite', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     const confirm = vi.fn().mockResolvedValue(true)
