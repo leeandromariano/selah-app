@@ -400,7 +400,9 @@ Nenhum desses comandos foi executado pelo agente.
 - Payload: só `{v, kind: 'prayer', binding, day}`. O service worker (`push-protocol.js`) mostra texto fixo ("Chegou a hora de rever um pedido de oração. Como Deus agiu?") e abre `/#inicio`. Nada do pedido trafega.
 - **Produção:** o envio real depende do que este documento já exige e que não existe hospedado: worker agendado (não há), VAPID de produção (não há), `private.push_configuration` em modo `webpush` e leitores que ativem lembretes e a permissão do navegador. Hoje o hospedado está em simulação e com zero dispositivos.
 
-## Agendador em produção (GitHub Actions)
+## Agendador em produção (GitHub Actions) — APOSENTADO (13/11/2026)
+
+> Substituído pela Edge Function `send-reminders` (seção "Agendador no Supabase", abaixo). O workflow `reminders.yml`, o worker hospedado em Node (`hosted-reminder-worker.mjs`) e a dependência `pg` foram removidos; os segredos `SELAH_DATABASE_URL`, `SELAH_DATABASE_CA` e `SELAH_VAPID_*` do GitHub não são mais usados e devem ser apagados (a URL do banco guarda a senha do banco). Para forçar um envio, chamar a função pelo banco, como em `supabase/scheduler/self-test.sql` (sem `selfTest`). O texto abaixo é histórico.
 
 - `.github/workflows/reminders.yml` roda a cada 5 minutos (e manualmente) `scripts/hosted-reminder-worker.mjs`, que reaproveita `reminder-worker-core.mjs` e o transporte web-push. Sem o segredo `SELAH_DATABASE_URL` o workflow não faz nada.
 - O script só envia se `private.push_configuration.mode = 'webpush'` e a chave pública for a mesma de `SELAH_VAPID_PUBLIC_KEY`; em simulação ele registra "skipped" e não reivindica lembretes. A verificação TLS do banco fica sempre ligada (`SELAH_DATABASE_CA` opcional, em PEM).
@@ -431,4 +433,4 @@ O agendamento do GitHub Actions é best-effort: em 15 horas rodou 2 vezes, e o l
 - **Segredos da função:** `SELAH_VAPID_PUBLIC_KEY`, `SELAH_VAPID_PRIVATE_KEY`, `SELAH_VAPID_SUBJECT` (`npx supabase secrets set`). A chave pública precisa ser a gravada em `private.push_configuration`, senão o ciclo recusa.
 - **Agendar:** `supabase/scheduler/schedule-reminders.sql` (não é migração: tem o endereço do projeto). Idempotente.
 - **Conferir:** `select * from cron.job_run_details order by start_time desc limit 5;` e `select status_code, created from net._http_response order by created desc limit 5;`.
-- **GitHub:** `.github/workflows/reminders.yml` ficou só com disparo manual (`workflow_dispatch`) como saída de emergência.
+- **GitHub:** o workflow `reminders.yml` foi removido (não há mais agendador nem segredos no GitHub).
