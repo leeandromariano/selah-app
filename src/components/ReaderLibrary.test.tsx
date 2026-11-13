@@ -43,6 +43,12 @@ describe('acervo persistente do leitor', () => {
     expect(screen.getByRole('region',{name:'Compartilhar devocional'})).toBeVisible()
     expect(screen.getByRole('region',{name:'Deixe seu comentário'})).toBeVisible()
   })
+  it('a leitura do devocional não tem ajuste de tamanho da fonte (ele existe só na Bíblia)', async () => {
+    const publication={...olderPublications[0]}
+    libraryBoundary([publication]);open(`leitura/${publication.id}`)
+    await screen.findByRole('article')
+    expect(screen.queryByRole('slider',{name:'Tamanho da fonte'})).not.toBeInTheDocument()
+  })
   it.each(olderPublications)('compartilhar aparece ao final de $title antes da conclusão, sem creditar leitura', async publication => {
     libraryBoundary(olderPublications)
     const fallback = vi.mocked(supabase.rpc).getMockImplementation()!

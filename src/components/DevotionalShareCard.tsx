@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { cardDimensions, drawDevotionalCard } from '../devotionals/shareCard'
 import { parseReference } from '../bible/catalog'
 
@@ -8,18 +8,41 @@ export function DevotionalShareCard({ id, title, phrase, author, reference, link
 }) {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
+  const [previewReady, setPreviewReady] = useState(false)
+  const preview = useRef<HTMLCanvasElement>(null)
   const validReference = parseReference(reference)
   const fileName = `coram-devocional-${id}-story.png`
 
-  function renderCard() {
-    const canvas = document.createElement('canvas')
+  // Desenha o card de Story (1080 × 1920) no canvas dado; o mesmo desenho serve à prévia e à imagem compartilhada.
+  function draw(canvas: HTMLCanvasElement) {
     const dimensions = cardDimensions.story
     canvas.width = dimensions.width; canvas.height = dimensions.height
     const context = canvas.getContext('2d')
-    if (!context) throw Error('Canvas unavailable')
+    if (!context) return false
     drawDevotionalCard(context, { title, phrase, author, reference, url: link, format: 'story', theme: 'obsidian' })
+    return true
+  }
+
+  function renderCard() {
+    const canvas = document.createElement('canvas')
+    if (!draw(canvas)) throw Error('Canvas unavailable')
     return canvas
   }
+
+  // Prévia: a própria imagem que vai ser compartilhada, visível antes de tocar no botão. Só aparece depois de desenhada.
+  useEffect(() => {
+    if (!validReference) return
+    let live = true
+    void (async () => {
+      try {
+        await document.fonts?.ready
+        const canvas = preview.current
+        if (live && canvas) setPreviewReady(draw(canvas))
+      } catch { if (live) setPreviewReady(false) }
+    })()
+    return () => { live = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, phrase, author, reference, link, validReference])
 
   async function saveCanvas(canvas: HTMLCanvasElement) {
     const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'))
@@ -58,6 +81,7 @@ export function DevotionalShareCard({ id, title, phrase, author, reference, link
 
   if (!validReference) return null
   return <div className="devotional-share-card">
+    <figure className="devotional-share-preview" hidden={!previewReady}><canvas ref={preview} role="img" aria-label="Prévia da imagem que será compartilhada" /><figcaption className="muted">Esta é a imagem que será compartilhada.</figcaption></figure>
     <button type="button" className="button primary" disabled={busy} onClick={() => void shareImage()}>{busy ? 'Preparando imagem…' : 'Compartilhar no Instagram'}</button>
     <p className="muted">Escolha Instagram e depois Stories no menu do celular.</p>
     {message && <p role="status">{message}</p>}

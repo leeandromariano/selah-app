@@ -14,7 +14,7 @@
 .reading-font-control input { width:clamp(120px,30vw,220px); accent-color:var(--accent); }
 .reading-font-control .reading-font-large { font-size:1.35rem; }
 .reading-font-control output { min-width:3ch; font-variant-numeric:tabular-nums; }
-.bible-chapter .bible-verse, .reading-column .reading>p:not(.muted), .reading-column .reading blockquote { font-size:var(--reading-font-size,18px); }
+.bible-chapter .bible-verse { font-size:var(--reading-font-size,18px); }
 .bible-multi-tools { box-shadow:none; border:1px solid var(--border); }
 .bible-controls { display: grid; grid-template-columns: 1fr 1fr 120px; gap: 1rem; margin: 1.5rem 0; }
 .bible-controls label { display: grid; gap: .4rem; font-weight: 600; min-width: 0; }

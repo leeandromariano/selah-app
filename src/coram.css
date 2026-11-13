@@ -35,7 +35,7 @@
 .devotional-chapter-content { border-top: 1px solid var(--border); padding: 1rem; }
 .devotional-chapter-content h3 { margin: 0 0 1rem; font-size: 1.1rem; }
 .devotional-chapter-verses { max-height: min(60dvh, 36rem); overflow-y: auto; }
-.devotional-chapter-verses p { margin: 0; padding: .4rem .55rem; border-radius: .35rem; font-size: var(--reading-font-size, 18px); line-height: 1.7; }
+.devotional-chapter-verses p { margin: 0; padding: .4rem .55rem; border-radius: .35rem; line-height: 1.7; }
 .devotional-chapter-verses p.selected { background: var(--accent-bg); }
 .devotional-chapter-content .bible-attribution { margin: 1rem 0 0; }
 .guided-panel .reflection { margin-top: 1.5rem; }
@@ -440,3 +440,20 @@ html:not([data-theme='light']) .logo-on-light { display: none; }
 .guided-phrase { margin: 0 0 1.25rem; padding: 1rem 1.2rem; border-left: 4px solid var(--accent); background: var(--accent-bg); border-radius: 0 12px 12px 0; }
 .guided-phrase figcaption { margin-bottom: .4rem; }
 .guided-phrase blockquote { margin: 0; font: italic 1.35rem/1.35 'Instrument Serif', Georgia, serif; color: var(--text); }
+
+.devotional-share-preview { flex: 1 0 100%; display: grid; justify-items: center; gap: .5rem; margin: 0; }
+.devotional-share-preview canvas { width: min(100%, 220px); height: auto; aspect-ratio: 9 / 16; border-radius: 14px; border: 1px solid var(--border); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); }
+.devotional-share-preview figcaption { margin: 0; font-size: .8rem; }
+
+/* Leitura do devocional: tipografia de texto corrido (Literata, desenhada para ler em tela), tamanho fixo e confortável.
+   O ajuste de tamanho da fonte existe só na Bíblia. */
+:root { --font-reading: 'Literata', Georgia, 'Times New Roman', serif; --reading-text: 18px; }
+@media (min-width: 700px) { :root { --reading-text: 19px; } }
+.guided-panel p { font-size: 15px; line-height: 1.6; }
+.reading-column .reading > p:not(.muted), .guided-panel > p, .reading-column .reading blockquote, .devotional-chapter-verses p {
+  font-family: var(--font-reading); font-size: var(--reading-text); line-height: 1.75; font-weight: 400; letter-spacing: 0; font-style: normal;
+}
+.reading-column .reading blockquote cite, .reading-column .reading blockquote small { font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-size: 13px; line-height: 1.5; }
+.guided-panel .reflection h3, .reading-column .reading .reflection h3 { font-family: var(--font-reading); font-size: 21px; line-height: 1.45; font-weight: 500; letter-spacing: 0; }
+.guided-phrase blockquote { font-family: var(--font-reading); font-style: italic; font-size: 20px; line-height: 1.5; letter-spacing: 0; }
+.reading h1 { letter-spacing: -.025em; }
