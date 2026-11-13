@@ -19,6 +19,27 @@ describe('passagem do devocional', () => {
     expect(location.hash).toBe('#biblia/ntlh/esdras/1/9-10')
   })
 
+  it('mostra uma passagem com vários versículos, com os números, e até o capítulo inteiro', async () => {
+    const verses = [1, 2, 3, 4].map(number => ({ number, text: 'Versículo fictício ' + number }))
+    vi.mocked(fetchApiChapter).mockResolvedValueOnce({ verses, copyright: 'Atribuição fictícia', fumsToken: 'ficticio' })
+    const { container, unmount } = render(<DevotionalPassage reference="Esdras 1:2-3" selection={{ translation: 'ntlh', book: 'esdras', chapter: 1, verse: 2, endVerse: 3 }} />)
+    await screen.findByRole('link', { name: 'Abrir na Bíblia' })
+    const quote = container.querySelector('blockquote')!
+    expect(quote).toHaveTextContent('2 Versículo fictício 2')
+    expect(quote).toHaveTextContent('3 Versículo fictício 3')
+    expect(quote).not.toHaveTextContent('Versículo fictício 1')
+    expect(quote).not.toHaveTextContent('Versículo fictício 4')
+    unmount()
+    vi.mocked(fetchApiChapter).mockResolvedValueOnce({ verses, copyright: 'Atribuição fictícia', fumsToken: 'ficticio' })
+    const whole = render(<DevotionalPassage reference="Esdras 1" selection={{ translation: 'ntlh', book: 'esdras', chapter: 1, verse: 1, endVerse: 4 }} />)
+    await screen.findByRole('link', { name: 'Abrir na Bíblia' })
+    expect(whole.container.querySelector('blockquote')).toHaveTextContent('4 Versículo fictício 4')
+  })
+  it('avisa quando a faixa escolhida não existe no capítulo carregado', async () => {
+    vi.mocked(fetchApiChapter).mockResolvedValueOnce({ verses: [1, 2].map(number => ({ number, text: 'Versículo ' + number })), copyright: 'x', fumsToken: 'f' })
+    render(<DevotionalPassage reference="Esdras 1:1-9" selection={{ translation: 'ntlh', book: 'esdras', chapter: 1, verse: 1, endVerse: 9 }} />)
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível carregar a passagem bíblica')
+  })
   it('permite ler o capítulo inteiro na etapa sem navegar nem fazer uma segunda chamada à API', async () => {
     vi.mocked(fetchApiChapter).mockResolvedValueOnce({
       verses: [

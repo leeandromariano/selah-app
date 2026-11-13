@@ -430,3 +430,7 @@ a.quiz-mode { text-decoration: none; }
 html[data-theme='light'] .logo-on-dark { display: none; }
 html:not([data-theme='light']) .logo-on-light { display: none; }
 .install-app > img { border-radius: 0; }
+
+.bible-picker-preview { max-height: 14rem; overflow-y: auto; padding: .6rem .8rem; border: 1px solid var(--border); border-radius: 8px; }
+.bible-picker-preview p { margin: 0 0 .5rem; }
+.devotional-verse sup { margin-right: .15rem; font-size: .7em; font-weight: 700; color: var(--accent); }
