@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { cardDimensions, drawDevotionalCard } from './shareCard'
+import { buildShareCaption, cardDimensions, drawDevotionalCard } from './shareCard'
 
 function fakeCanvas() {
   const fillText = vi.fn()
@@ -42,6 +42,24 @@ describe('card PNG do devocional', () => {
     drawDevotionalCard(long.ctx, { title: 'Paz', phrase: 'Frase curta.', author: 'Nome Muito Longo '.repeat(8), reference: 'João 1:1', url: 'https://coram.example', format: 'story', theme: 'ember' })
     const drawn = long.fillText.mock.calls.filter(call => String(call[0]).endsWith('…'))
     expect(drawn).toHaveLength(1)
+  })
+  it('no Feed (4:5) a frase, o autor e o título cabem acima do rodapé, sem sobreposição', () => {
+    const { ctx, fillText } = fakeCanvas()
+    drawDevotionalCard(ctx, { title: 'Off com o Pai: quando bate a vontade de desistir', phrase: 'Você não continua com Deus porque é constante, mas porque Ele é Pai e você é filho.', author: 'Leandro Exemplo', reference: 'Romanos 8:1-17', url: 'https://appcoram.com.br/#leitura/76e9e97e-1d36-4c3b-b9f9-d6d39b8f2ff6', format: 'post', theme: 'obsidian' })
+    const at = (text: string) => fillText.mock.calls.find(call => call[0] === text)!
+    expect(ctx.fillRect).toHaveBeenCalledWith(0, 0, 1080, 1350)
+    const y = fillText.mock.calls.map(call => call[2] as number)
+    expect(Math.max(...y)).toBeLessThan(1350)
+    // o autor termina antes do título (acima do rodapé) e o título antes de MENOS ROTINA.
+    expect(at('Leandro Exemplo')[2]).toBeLessThan(at('MENOS ROTINA.')[2] - 100)
+    expect(at('MENOS ROTINA.')[2]).toBeLessThan(at('mais presença.')[2])
+    expect(at('ACESSE O APP:')[2] - at('mais presença.')[2]).toBeGreaterThan(60)
+    const phraseLast = Math.max(...fillText.mock.calls.filter(call => call[1] === 84 && 'Você não continua com Deus porque é constante, mas porque Ele é Pai e você é filho.'.includes(String(call[0])) && String(call[0]).length > 3).map(call => call[2] as number))
+    expect(at('Leandro Exemplo')[2]).toBeGreaterThan(phraseLast)
+  })
+  it('legenda do Instagram reúne frase, autor, referência e link', () => {
+    expect(buildShareCaption({ title: 'Paz', phrase: ' Hoje posso descansar. ', author: ' Ana ', reference: 'João 14:27', link: 'https://coram.example' })).toBe('Hoje posso descansar.\n\nAna · João 14:27\n\nLeia no Coram: https://coram.example')
+    expect(buildShareCaption({ title: 'Paz', reference: 'João 14:27', link: 'https://coram.example' })).toBe('Paz\n\nJoão 14:27\n\nLeia no Coram: https://coram.example')
   })
   it('wraps long titles and references inside the canvas width', () => {
     const { ctx, fillText } = fakeCanvas()

@@ -52,6 +52,9 @@
 .devotional-share-card-editor, .devotional-share-card > [role="status"] { flex: 1 0 100%; }
 .devotional-share-card-editor { display: grid; gap: 1rem; margin-top: 1rem; }
 .devotional-share-card-editor > p { font-size: .85rem; color: var(--text-muted); }
+.devotional-share-card-format { display: flex; gap: .4rem; flex: 1 0 100%; }
+.devotional-share-card-format button[aria-pressed="true"] { border-color: var(--brand-ember, #FF5500); color: var(--accent); font-weight: 700; }
+.devotional-share-card > .muted { flex: 1 0 100%; margin: 0; font-size: .85rem; }
 .devotional-share-card-controls { display: flex; flex-wrap: wrap; gap: 1rem; }
 .devotional-share-card-controls label { flex: 1 1 11rem; }
 .devotional-share-card-preview { --card-bg: #0D0E11; --card-text: #F4F1EA; --card-accent: #FF5500; display: flex; flex-direction: column; gap: 1.2rem; width: min(100%, 320px); aspect-ratio: 4 / 5; overflow: hidden; padding: 1.3rem; border-radius: 10px; background: var(--card-bg); color: var(--card-text); border: 1px solid var(--border); }

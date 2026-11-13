@@ -40,30 +40,21 @@ export function drawDevotionalCard(ctx: CanvasRenderingContext2D, options: { tit
   ctx.font = '600 26px "JetBrains Mono", monospace'
   ctx.fillText('CORAM  /  FRASE DO DEVOCIONAL', 84, 145)
 
+  const feed = options.format === 'post'
+  const referenceY = feed ? 200 : 260
+  const minTop = feed ? 395 : 470
   const reference = options.reference.trim().slice(0, 200)
   ctx.font = '600 30px "JetBrains Mono", monospace'
   const referenceLines = lines(ctx, reference.toLocaleUpperCase('pt-BR'), width - 220).slice(0, 3)
   ctx.strokeStyle = palette.accent
   ctx.lineWidth = 2
-  ctx.strokeRect(84, 260, width - 168, 72 + (referenceLines.length - 1) * 43)
-  referenceLines.forEach((line, index) => ctx.fillText(line, 108, 308 + index * 43))
+  ctx.strokeRect(84, referenceY, width - 168, 72 + (referenceLines.length - 1) * 43)
+  referenceLines.forEach((line, index) => ctx.fillText(line, 108, referenceY + 48 + index * 43))
 
   ctx.fillStyle = palette.text
   const availableWidth = width - 168
-  let size = options.format === 'story' ? 112 : 100
-  let phraseLines: string[] = []
-  const phrase = options.phrase?.trim() || options.title.trim()
-  do {
-    ctx.font = `800 ${size}px "Plus Jakarta Sans", sans-serif`
-    phraseLines = lines(ctx, phrase, availableWidth)
-    if (phraseLines.length <= 7 && phraseLines.every(line => ctx.measureText(line).width <= availableWidth)) break
-    size -= 4
-  } while (size >= 44)
-  if (phraseLines.length > 7 || phraseLines.some(line => ctx.measureText(line).width > availableWidth)) throw Error('Frase longa demais para o card')
-  const lineHeight = size * 1.12
-  const phraseBlock = phraseLines.length * lineHeight
-  // Rodapé em pilha, sempre alinhado à esquerda: nada fica lado a lado, então nada se sobrepõe.
   const stackTop = height - 335
+  const phrase = options.phrase?.trim() || options.title.trim()
   const showTitle = Boolean(options.phrase?.trim() && options.phrase.trim() !== options.title.trim())
   ctx.font = '600 26px "JetBrains Mono", monospace'
   const titleLines = showTitle ? lines(ctx, options.title.trim(), availableWidth).slice(0, 2) : []
@@ -71,10 +62,26 @@ export function drawDevotionalCard(ctx: CanvasRenderingContext2D, options: { tit
   ctx.font = '600 30px "Plus Jakarta Sans", sans-serif'
   const authorLines = authorName ? lines(ctx, authorName, availableWidth) : []
   const authorText = authorLines.length > 1 ? authorLines[0] + '…' : authorLines[0] ?? ''
-  const authorGap = authorText ? Math.round(size * 0.3) + 44 : 0
   const titleSpace = titleLines.length ? titleLines.length * 34 + 20 : 0
   const limit = stackTop - 40 - titleSpace - 20
-  const top = Math.max(470, Math.min((height - phraseBlock - authorGap) / 2, limit - authorGap - (phraseLines.length - 1) * lineHeight))
+  let size = feed ? 100 : 112
+  let phraseLines: string[] = []
+  let authorGap = 0
+  const fits = () => {
+    authorGap = authorText ? Math.round(size * 0.3) + 44 : 0
+    return phraseLines.length <= 7 && phraseLines.every(line => ctx.measureText(line).width <= availableWidth)
+      && minTop + (phraseLines.length - 1) * size * 1.12 + authorGap <= limit
+  }
+  do {
+    ctx.font = `800 ${size}px "Plus Jakarta Sans", sans-serif`
+    phraseLines = lines(ctx, phrase, availableWidth)
+    if (fits()) break
+    size -= 4
+  } while (size >= 44)
+  if (!fits()) throw Error('Frase longa demais para o card')
+  const lineHeight = size * 1.12
+  const phraseBlock = phraseLines.length * lineHeight
+  const top = Math.max(minTop, Math.min((height - phraseBlock - authorGap) / 2, limit - authorGap - (phraseLines.length - 1) * lineHeight))
   ctx.fillStyle = palette.text
   ctx.font = `800 ${size}px "Plus Jakarta Sans", sans-serif`
   phraseLines.forEach((line, index) => ctx.fillText(line, 84, top + index * lineHeight))
@@ -108,4 +115,11 @@ export function drawDevotionalCard(ctx: CanvasRenderingContext2D, options: { tit
   const urlTop = height - 50 - (urlLines.length - 1) * 25
   ctx.fillText('ACESSE O APP:', 84, urlTop - 30)
   urlLines.forEach((line, index) => ctx.fillText(line, 84, urlTop + index * 25, width - 168))
+}
+
+// Legenda pronta para colar no Instagram (o texto do menu de compartilhamento é descartado pelo app).
+export function buildShareCaption(options: { title: string; phrase?: string | null; author?: string | null; reference: string; link: string }) {
+  const phrase = options.phrase?.trim() || options.title.trim()
+  const author = options.author?.trim()
+  return `${phrase}\n\n${author ? `${author} · ` : ''}${options.reference.trim()}\n\nLeia no Coram: ${options.link}`
 }
