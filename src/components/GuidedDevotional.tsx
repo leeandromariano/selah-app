@@ -7,6 +7,7 @@ import { DevotionalPassage } from './DevotionalPassage'
 import { LegacyDevotionalPassage } from './LegacyDevotionalPassage'
 import { PrayerCapsuleForm } from './PrayerCapsuleForm'
 import { ReadingProgress } from './ReadingProgress'
+import { ShareDevotional } from './ShareDevotional'
 
 const responses = createPrivateResponseRepository(supabase)
 const steps = ['A Palavra', 'A Real', 'Prática Coram Deo', 'Oração e resposta'] as const
@@ -76,5 +77,6 @@ export function GuidedDevotional({ item, userId, onCompleted, onCompletedNow }: 
     <p className="guided-swipe-hint">Deslize para o lado para mudar de etapa.</p>
     <div className="guided-navigation"><button type="button" className="button secondary" disabled={step === 0} onClick={() => navigate(step - 1)}>Voltar</button>{step < 3 && <button type="button" className="button primary" onClick={() => navigate(step + 1)}>Continuar →</button>}</div>
     <div hidden={step !== 3}><ReadingProgress devotionalId={item.id} revision={item.reading_revision} onCompleted={onCompleted} onCompletedNow={onCompletedNow} /></div>
+    {step === 3 && <div className="guided-closing">{item.share_phrase?.trim() && <figure className="guided-phrase"><figcaption className="eyebrow">A FRASE DO DEVOCIONAL</figcaption><blockquote>{item.share_phrase.trim()}</blockquote></figure>}<ShareDevotional id={item.id} title={item.title} phrase={item.share_phrase} author={item.author_name} reference={item.bible_reference} /></div>}
   </div>
 }

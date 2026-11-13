@@ -36,6 +36,29 @@ describe('devocional guiado', () => {
     expect(screen.getByRole('region', { name: 'Oração e resposta' })).toBeVisible()
   })
 
+  it('a frase central e o compartilhar ficam só no fim da última tela, deixando as outras etapas limpas', () => {
+    const phrased = { ...item, share_phrase: '  A frase central fictícia do devocional.  ', author_name: 'Autora Fictícia' } as Publication
+    render(<GuidedDevotional item={phrased} userId='reader' onCompleted={vi.fn()} />)
+    const closing = () => ({ frase: screen.queryByText('A frase central fictícia do devocional.'), compartilhar: screen.queryByRole('region', { name: 'Compartilhar devocional' }) })
+    for (const etapa of ['A Palavra', 'A Real', 'Prática Coram Deo']) {
+      expect(screen.getByRole('region', { name: etapa })).toBeVisible()
+      expect(closing().frase, etapa).not.toBeInTheDocument(); expect(closing().compartilhar, etapa).not.toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: /Continuar/ }))
+    }
+    expect(screen.getByRole('region', { name: 'Oração e resposta' })).toBeVisible()
+    expect(closing().frase).toBeVisible()
+    expect(screen.getByText('A FRASE DO DEVOCIONAL')).toBeVisible()
+    expect(closing().compartilhar).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Compartilhar no Instagram' })).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Voltar' }))
+    expect(closing().frase).not.toBeInTheDocument(); expect(closing().compartilhar).not.toBeInTheDocument()
+  })
+  it('sem frase central, a última tela mostra só o compartilhar', () => {
+    render(<GuidedDevotional item={{ ...item, share_phrase: null } as Publication} userId='reader' onCompleted={vi.fn()} />)
+    for (let i = 0; i < 3; i++) fireEvent.click(screen.getByRole('button', { name: /Continuar/ }))
+    expect(screen.queryByText('A FRASE DO DEVOCIONAL')).not.toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Compartilhar devocional' })).toBeVisible()
+  })
   it('mostra as quatro etapas autorais e salva a resposta privada na conta', async () => {
     const user = userEvent.setup()
     const row = { source_devotional_id: item.id, devotional_id: item.id, body: 'Vou fazer uma pausa.', updated_at: '2026-11-08T14:00:00Z' }

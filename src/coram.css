@@ -435,3 +435,8 @@ html:not([data-theme='light']) .logo-on-light { display: none; }
 .bible-picker-preview { max-height: 14rem; overflow-y: auto; padding: .6rem .8rem; border: 1px solid var(--border); border-radius: 8px; }
 .bible-picker-preview p { margin: 0 0 .5rem; }
 .devotional-verse sup { margin-right: .15rem; font-size: .7em; font-weight: 700; color: var(--accent); }
+
+.guided-closing { margin-top: 1.5rem; }
+.guided-phrase { margin: 0 0 1.25rem; padding: 1rem 1.2rem; border-left: 4px solid var(--accent); background: var(--accent-bg); border-radius: 0 12px 12px 0; }
+.guided-phrase figcaption { margin-bottom: .4rem; }
+.guided-phrase blockquote { margin: 0; font: italic 1.35rem/1.35 'Instrument Serif', Georgia, serif; color: var(--text); }
