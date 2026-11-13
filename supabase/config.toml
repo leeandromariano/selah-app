@@ -390,6 +390,10 @@ deno_version = 2
 [functions.password-login]
 verify_jwt = false
 
+# Agendador de lembretes: chamado pelo próprio banco (pg_cron + pg_net) com segredo do Vault; ver docs/smart-reminders-local.md.
+[functions.send-reminders]
+verify_jwt = false
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 

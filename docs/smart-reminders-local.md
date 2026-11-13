@@ -420,3 +420,15 @@ Nenhum desses comandos foi executado pelo agente.
 - **Cancelar a assinatura** em Configurações apaga a chave local (`forgetDeviceKey`); sem a chave, nada é reativado. Quem cancelou de propósito só volta a receber se ativar de novo.
 - Quem é reativado não vê o convite de notificações; a confirmação do aparelho novo continua automática (verificação do agendador + app aberto).
 - Causa do problema que motivou isto: o **Sair** global apagava as sessões dos outros aparelhos e deixava o aparelho de push preso a uma sessão inexistente (agora o Sair é local, `scope: 'local'`).
+
+## Agendador no Supabase (13/11/2026)
+
+O agendamento do GitHub Actions é best-effort: em 15 horas rodou 2 vezes, e o lembrete diário só sai se o agendador rodar até 15 minutos depois da hora escolhida. O envio automático passou para dentro do Supabase.
+
+- **Quem dispara:** `pg_cron` roda a cada minuto um `net.http_post` (pg_net) para a Edge Function `send-reminders`, com o segredo `selah_scheduler_secret` guardado no Vault. A função confere o segredo no banco (`public.scheduler_check_secret`); nada vai para variável de ambiente.
+- **Função (`supabase/functions/send-reminders`):** só roda em projeto hospedado. Usa a chave de serviço do runtime e chama **somente** `public.scheduler_*` (migração `20261118000200`; executáveis apenas por `service_role`). Núcleo testável em `_shared/reminder-scheduler.ts`: provas de verificação, lembretes, avisos de devocional nova e limpeza, num ciclo; sem nova tentativa; resposta e logs só com contagens.
+- **Envio:** `web-push` (3.6.7) só criptografa (RFC 8291) e assina (VAPID); o `fetch` do runtime envia, com tempo limite e sem redirecionamento. `POST {"selfTest": true}` prova a criptografia e a assinatura no runtime real, sem rede.
+- **Segredos da função:** `SELAH_VAPID_PUBLIC_KEY`, `SELAH_VAPID_PRIVATE_KEY`, `SELAH_VAPID_SUBJECT` (`npx supabase secrets set`). A chave pública precisa ser a gravada em `private.push_configuration`, senão o ciclo recusa.
+- **Agendar:** `supabase/scheduler/schedule-reminders.sql` (não é migração: tem o endereço do projeto). Idempotente.
+- **Conferir:** `select * from cron.job_run_details order by start_time desc limit 5;` e `select status_code, created from net._http_response order by created desc limit 5;`.
+- **GitHub:** `.github/workflows/reminders.yml` ficou só com disparo manual (`workflow_dispatch`) como saída de emergência.

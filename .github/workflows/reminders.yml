@@ -1,8 +1,8 @@
 name: Lembretes por push
 
+# O envio automático agora é feito pela Edge Function send-reminders (pg_cron no Supabase a cada minuto).
+# Este workflow ficou só como disparo manual de emergência: o agendamento do GitHub é best-effort e quase não rodava.
 on:
-  schedule:
-    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 concurrency:
