@@ -37,3 +37,10 @@ export async function passwordLogin(client: Pick<SupabaseClient, 'auth' | 'funct
   const result = await client.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token })
   if (result.error || !result.data.session) throw { code: 'login_unavailable' }
 }
+
+// Hospedado: e-mail entra direto pelo Auth oficial (não depende da função); só o username passa pela função de login.
+export async function identifierLogin(client: Pick<SupabaseClient, 'auth' | 'functions'>, identifier: string, password: string) {
+  const value = normalizeLoginIdentifier(identifier)
+  if (value.includes('@')) return emailPasswordLogin(client, value, password)
+  return passwordLogin(client, value, password)
+}

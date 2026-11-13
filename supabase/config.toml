@@ -386,7 +386,7 @@ deno_version = 2
 
 # Pre-login endpoint: public project keys do not authenticate a user.
 # Handler validates passwords via Auth and enforces persistent server budgets.
-# Entrypoint rejects every non-local backend; no hosted deployment enabled.
+# Entrypoint aceita só o runtime local ou um projeto Supabase hospedado (https://<ref>.supabase.co); ver docs/username-login-hosted.md.
 [functions.password-login]
 verify_jwt = false
 

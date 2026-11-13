@@ -6,9 +6,9 @@ import { environmentName, loginMethod, supabase } from '../lib/supabase'
 import { authMessage, signupMessage } from '../auth/auth'
 import { normalizeUsername } from '../profiles/username'
 import { normalizeWhatsApp } from '../profiles/whatsapp'
-import { emailPasswordLogin, normalizeEmailLogin, normalizeLoginIdentifier, passwordLogin } from '../auth/passwordLogin'
+import { emailPasswordLogin, identifierLogin, normalizeEmailLogin, normalizeLoginIdentifier, passwordLogin } from '../auth/passwordLogin'
 
-export function AuthForm({ register, method = loginMethod, googleEnabled = environmentName === 'STAGING' }: { register: boolean; method?: 'local' | 'email'; googleEnabled?: boolean }) {
+export function AuthForm({ register, method = loginMethod, googleEnabled = environmentName === 'STAGING' }: { register: boolean; method?: 'local' | 'hosted' | 'email'; googleEnabled?: boolean }) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [success, setSuccess] = useState('')
   const [pending, setPending] = useState(false)
@@ -46,6 +46,7 @@ export function AuthForm({ register, method = loginMethod, googleEnabled = envir
         if (result.error) throw result.error
         setSuccess(result.data.session ? 'Cadastro concluído. Você já está conectado.' : 'Se o cadastro puder ser realizado, verifique seu e-mail e confirme o endereço antes de entrar, caso a confirmação seja solicitada.')
       } else if (method === 'email') await emailPasswordLogin(supabase, get('identifier'), get('password'))
+      else if (method === 'hosted') await identifierLogin(supabase, get('identifier'), get('password'))
       else await passwordLogin(supabase, get('identifier'), get('password'))
       if (!register) setSuccess('Entrada realizada com sucesso.')
       form.reset(); setCountry('BR'); setDialCode('+55')
