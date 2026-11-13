@@ -18,7 +18,7 @@ afterEach(() => { vi.useRealTimers() })
 describe('convite para ativar notificações', () => {
   it('aparece na Home para leitor confirmado sem aparelho ativo', async () => {
     render(<NotificationInvite page="inicio" repository={repo(snapshot())} />)
-    expect(await screen.findByRole('dialog', { name: 'Quer receber avisos do Coram?' })).toBeVisible()
+    expect(await screen.findByRole('dialog', { name: 'Ative o lembrete e não perca sua constância!' })).toBeVisible()
     expect(screen.getByLabelText('Horário do lembrete diário')).toHaveValue('08:00')
   })
   it('não aparece em outras páginas, sem sessão confirmada, bloqueado, indisponível, ativo ou em modo de simulação', async () => {
@@ -44,18 +44,18 @@ describe('convite para ativar notificações', () => {
     const activate = vi.fn().mockResolvedValue('activated'), repository = repo(snapshot())
     render(<NotificationInvite page="inicio" repository={repository} activate={activate} confirm={vi.fn().mockResolvedValue(false)} />)
     fireEvent.change(await screen.findByLabelText('Horário do lembrete diário'), { target: { value: '07:30' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Ativar notificações' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ativar lembrete' }))
     expect(await screen.findByText(/Tudo certo!/)).toBeVisible()
     expect(activate).toHaveBeenCalledWith('fiction-user', repository, '07:30')
   })
   it.each([['denied', /não liberou/], ['unavailable', /Tela de Início/]])('resultado %s explica o que fazer', async (result, text) => {
     render(<NotificationInvite page="inicio" repository={repo(snapshot())} activate={vi.fn().mockResolvedValue(result)} />)
-    fireEvent.click(await screen.findByRole('button', { name: 'Ativar notificações' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Ativar lembrete' }))
     expect(await screen.findByText(text)).toBeVisible()
   })
   it('falha inesperada mostra aviso sem quebrar', async () => {
     render(<NotificationInvite page="inicio" repository={repo(snapshot())} activate={vi.fn().mockRejectedValue(Error('x'))} />)
-    fireEvent.click(await screen.findByRole('button', { name: 'Ativar notificações' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Ativar lembrete' }))
     expect(await screen.findByText(/Não foi possível ativar agora/)).toBeVisible()
   })
   it('"Agora não" e Escape adiam o convite e ele não volta na próxima visita', async () => {

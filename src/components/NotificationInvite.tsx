@@ -83,14 +83,14 @@ export function NotificationInvite({ page, repository = defaultRepository, activ
   }
   return <div className="share-dialog-backdrop" onClick={event => { if (event.target === event.currentTarget && stage !== 'working') close() }}>
     <div className="share-dialog" role="dialog" aria-modal="true" aria-labelledby="notify-invite-title">
-      <div className="eyebrow">NOTIFICAÇÕES</div>
-      <h2 id="notify-invite-title">{stage === 'open' || stage === 'working' ? 'Quer receber avisos do Coram?' : 'Notificações'}</h2>
+      <div className="eyebrow">NÃO PERCA O RITMO</div>
+      <h2 id="notify-invite-title">{stage === 'open' || stage === 'working' ? 'Ative o lembrete e não perca sua constância!' : 'Notificações'}</h2>
       {(stage === 'open' || stage === 'working') ? <>
-        <p className="muted">Ative para ser lembrado da sua pausa diária, saber na hora quando sair uma devocional nova e rever seus pedidos de oração. Os avisos têm texto fixo e nunca mostram o conteúdo dos seus pedidos.</p>
+        <p className="muted">Um aviso no horário certo mantém a sua pausa diária com Deus em dia, chama você assim que sai uma devocional nova e lembra de rever os seus pedidos de oração. Os avisos têm texto fixo e nunca mostram o conteúdo dos seus pedidos.</p>
         <p><label>Horário do lembrete diário <input type="time" value={time} required disabled={stage === 'working'} onChange={e => setTime(e.target.value)} /></label></p>
         <div className="actions">
           <button type="button" className="button secondary" disabled={stage === 'working'} onClick={close}>Agora não</button>
-          <button ref={primary} type="button" className="button" disabled={stage === 'working' || !/^\d{2}:\d{2}$/.test(time)} onClick={() => void enable()}>{stage === 'working' ? 'Ativando…' : 'Ativar notificações'}</button>
+          <button ref={primary} type="button" className="button" disabled={stage === 'working' || !/^\d{2}:\d{2}$/.test(time)} onClick={() => void enable()}>{stage === 'working' ? 'Ativando…' : 'Ativar lembrete'}</button>
         </div>
       </> : <>
         <p role="status">{text[stage]}</p>
