@@ -57,7 +57,7 @@ function Settings({ user }: { user: string }) {
       {!snapshot && !error && <p role="status">Carregando lembretes…</p>}
       {snapshot && <>
         <label><input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} disabled={busy} /> Ativar lembretes da minha conta</label>
-        <p className="muted">Inclui o aviso de que chegou a hora de rever um pedido da sua cápsula de oração.</p>
+        <p className="muted">Inclui o aviso de que chegou a hora de rever um pedido da sua cápsula de oração e o aviso, na hora, quando uma devocional nova é publicada.</p>
         <p><label>Horário neste dispositivo <input type="time" value={time} required onChange={e => setTime(e.target.value)} disabled={busy} /></label></p>
         <p>Fuso configurado: <strong>{timezone}</strong>. Fuso detectado: {Intl.DateTimeFormat().resolvedOptions().timeZone}.</p>
         <button className="text-link" disabled={busy} onClick={() => setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC')}>Usar fuso atual do dispositivo</button>

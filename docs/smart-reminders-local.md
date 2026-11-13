@@ -405,3 +405,10 @@ Nenhum desses comandos foi executado pelo agente.
 - `.github/workflows/reminders.yml` roda a cada 5 minutos (e manualmente) `scripts/hosted-reminder-worker.mjs`, que reaproveita `reminder-worker-core.mjs` e o transporte web-push. Sem o segredo `SELAH_DATABASE_URL` o workflow não faz nada.
 - O script só envia se `private.push_configuration.mode = 'webpush'` e a chave pública for a mesma de `SELAH_VAPID_PUBLIC_KEY`; em simulação ele registra "skipped" e não reivindica lembretes. A verificação TLS do banco fica sempre ligada (`SELAH_DATABASE_CA` opcional, em PEM).
 - Segredos do repositório: `SELAH_DATABASE_URL`, `SELAH_DATABASE_CA` (se preciso), `SELAH_VAPID_PUBLIC_KEY`, `SELAH_VAPID_PRIVATE_KEY`, `SELAH_VAPID_SUBJECT` (`mailto:`). Etapa do operador: gerar as chaves, cadastrar os segredos e mudar o banco para `webpush`.
+
+## Aviso de devocional nova (13/11/2026)
+
+- Migração `20261116000100_new_devotional_push.sql`: tabela `private.publish_notices` (única por dispositivo e devocional) e as funções `claim_publish_notices`, `prepare_publish_notice` e `finish_publish_notice`; `cleanup_reminders` também apaga avisos com mais de 31 dias.
+- Vale para dispositivos ativos de quem tem os lembretes ligados (mesma opção, sem nova permissão), registrados **antes** da publicação, e para devoções publicadas na última hora. É uma mensagem a mais, além do lembrete diário (não entra na regra de uma por dia). Enviado no instante em que o worker (a cada 5 minutos) percebe a publicação, a qualquer hora.
+- Payload: `{v, kind: 'new', binding, day, devotional}`. O service worker mostra texto fixo e abre `/#leitura/<id>`; usa tag própria para não substituir o lembrete do dia.
+- Worker: o ciclo processa os lembretes e depois os avisos (`repository.notices`).

@@ -13,6 +13,16 @@ export function createHostedRepository(db) {
       return (await rows('select private.prepare_reminder($1::uuid, $2::timestamptz) as job', [id, now]))[0]?.job ?? null
     },
     async finish(id, outcome) { await db.query('select private.finish_reminder($1::uuid, $2)', [id, outcome]) },
+    // Avisos de devocional nova: mesmo ciclo, outras funções do banco.
+    notices: {
+      async claim(now) {
+        return (await rows('select id from private.claim_publish_notices($1::timestamptz, 100, $2) id', [now, 'webpush'])).map(r => r.id)
+      },
+      async prepare(id, now) {
+        return (await rows('select private.prepare_publish_notice($1::uuid, $2::timestamptz) as job', [id, now]))[0]?.job ?? null
+      },
+      async finish(id, outcome) { await db.query('select private.finish_publish_notice($1::uuid, $2)', [id, outcome]) },
+    },
     async proofs() { return (await rows('select p from private.claim_push_proofs() p')).map(r => r.p) },
     async cleanup() { await db.query('select private.cleanup_reminders()') },
   }
@@ -27,6 +37,7 @@ export async function runHostedCycle({ repository, transport, publicKey, runBatc
     try { await transport.send(proof) } catch { /* sem nova tentativa: a prova expira em 10 minutos */ }
   }
   const results = await runBatch({ repository, transport })
+  const notices = repository.notices ? await runBatch({ repository: repository.notices, transport }) : []
   await repository.cleanup()
-  return { attempts: results.length, accepted: results.filter(r => r.outcome === 'accepted').length }
+  return { attempts: results.length, accepted: results.filter(r => r.outcome === 'accepted').length, notices: notices.length, noticesAccepted: notices.filter(r => r.outcome === 'accepted').length }
 }

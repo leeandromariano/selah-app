@@ -11,6 +11,11 @@ globalThis.SelahPush = (() => {
       if (new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(now)) !== payload.day) return null
       return { title: 'Cápsula de oração', body: 'Chegou a hora de rever um pedido de oração. Como Deus agiu?', path: '/#inicio' }
     }
+    // Devocional nova publicada: texto fixo; leva só o id da devocional e abre a leitura.
+    if (payload.kind === 'new' && uuid.test(payload.devotional || '') && /^\d{4}-\d{2}-\d{2}$/.test(payload.day || '')) {
+      if (new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(now)) !== payload.day) return null
+      return { title: 'Devocional nova no Coram', body: 'Uma nova devocional acabou de ser publicada. Que tal ler agora?', path: '/#leitura/' + payload.devotional }
+    }
     if (!['reading', 'share'].includes(payload.kind) || !uuid.test(payload.devotional || '') || !/^\d{4}-\d{2}-\d{2}$/.test(payload.day || '')) return null
     // Drop late delivery across BRT midnight. This is a stale-message guard,
     // never a browser decision about valid reading completion.

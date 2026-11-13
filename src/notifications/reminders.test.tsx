@@ -121,6 +121,17 @@ describe('protocolo real do service worker', () => {
     expect(p.notification({ v: 1, kind: 'prayer', binding, day: '2026-10-28', devotional: id }, binding)).toBeNull()
     expect(p.notification({ v: 1, kind: 'prayer', binding, day: '2026-10-28' }, id)).toBeNull()
   })
+  it('aviso de devocional nova tem texto fixo e abre a leitura dela', () => {
+    const p = protocol()
+    const message = p.notification({ v: 1, kind: 'new', binding, day: '2026-10-28', devotional: id, title: 'injection' }, binding)
+    expect(message.title).toBe('Devocional nova no Coram')
+    expect(JSON.stringify(message)).not.toMatch(/injection/)
+    expect(message.path).toBe('/#leitura/' + id)
+    expect(p.safePath(message.path)).toBe(true)
+    expect(p.notification({ v: 1, kind: 'new', binding, day: '2026-10-27', devotional: id }, binding)).toBeNull()
+    expect(p.notification({ v: 1, kind: 'new', binding, day: '2026-10-28', devotional: 'x' }, binding)).toBeNull()
+    expect(p.notification({ v: 1, kind: 'new', binding, day: '2026-10-28', devotional: id }, id)).toBeNull()
+  })
   it('outro binding ou rota maliciosa não gera notificação', () => {
     const p = protocol()
     expect(p.notification({ v: 1, kind: 'reading', binding, day: '2026-10-28', devotional: id }, id)).toBeNull()
