@@ -19,7 +19,7 @@ describe('acervo persistente do leitor', () => {
     const column=article.closest('.reading-column')
     expect(column).not.toBeNull()
     const question=article.querySelector<HTMLElement>('.reflection')!
-    const progress=screen.getByRole('region',{name:'Progresso de leitura'})
+    const progress=screen.getByRole('region',{name:'Conclusão do devocional'})
     const share=screen.getByRole('region',{name:'Compartilhar devocional'})
     const discussion=screen.getByRole('region',{name:'Deixe seu comentário'})
     for(const element of [article,question,progress,share,discussion])expect(column).toContainElement(element)
@@ -39,7 +39,7 @@ describe('acervo persistente do leitor', () => {
     libraryBoundary([publication]);open(`leitura/${publication.id}`)
     const article=await screen.findByRole('article')
     expect(article.querySelector('.reflection')).toBeNull()
-    expect(screen.getByRole('region',{name:'Progresso de leitura'})).toBeVisible()
+    expect(screen.getByRole('region',{name:'Conclusão do devocional'})).toBeVisible()
     expect(screen.getByRole('region',{name:'Compartilhar devocional'})).toBeVisible()
     expect(screen.getByRole('region',{name:'Deixe seu comentário'})).toBeVisible()
   })
@@ -49,49 +49,37 @@ describe('acervo persistente do leitor', () => {
     await screen.findByRole('article')
     expect(screen.queryByRole('slider',{name:'Tamanho da fonte'})).not.toBeInTheDocument()
   })
-  it.each(olderPublications)('compartilhar aparece ao final de $title antes da conclusão, sem creditar leitura', async publication => {
+  it.each(olderPublications)('compartilhar aparece ao final de $title antes da conclusão, sem concluir sozinho', async publication => {
     libraryBoundary(olderPublications)
-    const fallback = vi.mocked(supabase.rpc).getMockImplementation()!
-    vi.mocked(supabase.rpc).mockImplementation((name, args) => name === 'get_my_reading_state'
-      ? { abortSignal: async () => ({ data: { status: 'paused', devotional_id: publication.id, revision: 1, credited_ms: 0, revision_changed: false }, error: null }) } as never
-      : fallback(name, args))
     const copy = vi.fn().mockResolvedValue(undefined)
     vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText: copy } })
     open(`leitura/${publication.id}`)
     const share = await screen.findByRole('region', { name: 'Compartilhar devocional' })
     expect(screen.getByRole('article').compareDocumentPosition(share) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(within(share).getByRole('button', { name: 'Compartilhar no Instagram' })).toBeVisible()
-    expect(screen.getByRole('button', { name: 'Concluir devocional' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Concluir devocional' })).toBeEnabled()
     fireEvent.click(within(share).getByRole('button', { name: 'Copiar link' }))
     await screen.findByText('Link copiado.')
     expect(copy).toHaveBeenCalledWith(location.origin + '/#leitura/' + publication.id)
-    expect(supabase.rpc).not.toHaveBeenCalledWith('complete_devotional', expect.anything())
+    expect(supabase.rpc).not.toHaveBeenCalledWith('complete_devotional_now', expect.anything())
     const whatsapp = new URL(within(share).getByRole('link', { name: 'Compartilhar link pelo WhatsApp' }).getAttribute('href')!)
     expect(whatsapp.origin).toBe('https://wa.me')
     expect(whatsapp.searchParams.get('text')).toContain(location.origin + '/#leitura/' + publication.id)
     expect(within(share).queryByText(/exige autenticação/)).not.toBeInTheDocument()
     expect(within(share).queryByText(/não é um link público/)).not.toBeInTheDocument()
   })
-  it('compartilhar permanece disponível antes e depois da conclusão voluntária de 60000 ms', async () => {
+  it('conclui sem tempo mínimo: o botão vale desde o início e, ao concluir, abre o pop-up de compartilhar', async () => {
     const publication = olderPublications[0]
     libraryBoundary([publication])
     const fallback = vi.mocked(supabase.rpc).getMockImplementation()!
-    let completed = false
-    vi.mocked(supabase.rpc).mockImplementation((name, args) => {
-      if (name === 'complete_devotional') completed = true
-      if (['get_my_reading_state', 'start_reading', 'complete_devotional'].includes(name)) return { abortSignal: async () => ({ data: {
-        status: completed ? 'completed' : 'ready', devotional_id: publication.id, revision: 1, credited_ms: 60000,
-        revision_changed: false, ...(completed ? { completed_at: '2026-10-28T15:00:00Z', completed_day: '2026-10-28' } : {}),
-      }, error: null }) } as never
-      return fallback(name, args)
-    })
+    vi.mocked(supabase.rpc).mockImplementation((name, args) => name === 'complete_devotional_now'
+      ? Promise.resolve({ data: { status: 'completed', devotional_id: publication.id, revision: 1, completed_at: '2026-10-28T15:00:00Z', completed_day: '2026-10-28' }, error: null }) as never
+      : fallback(name, args))
     open(`leitura/${publication.id}`)
     expect(await screen.findByRole('button', { name: 'Compartilhar no Instagram' })).toBeVisible()
-    const conclude = await screen.findByRole('button', { name: 'Concluir devocional' })
-    await waitFor(() => expect(conclude).toBeEnabled())
-    fireEvent.click(conclude)
+    fireEvent.click(await screen.findByRole('button', { name: 'Concluir devocional' }))
     await screen.findByText(/Devocional concluído em/)
-    expect(completed).toBe(true)
+    expect(supabase.rpc).toHaveBeenCalledWith('complete_devotional_now', { p_devotional_id: publication.id })
     // ao concluir, abre o pop-up central de compartilhamento
     const dialog = await screen.findByRole('dialog', { name: 'Que a Palavra continue com você' })
     expect(within(dialog).getByRole('button', { name: 'Compartilhar no Instagram' })).toBeVisible()
@@ -102,20 +90,19 @@ describe('acervo persistente do leitor', () => {
   })
   it('não abre o pop-up de compartilhar ao reabrir um devocional já concluído', async () => {
     const publication = olderPublications[0]
-    libraryBoundary([publication])
-    const fallback = vi.mocked(supabase.rpc).getMockImplementation()!
-    let completed = true
-    vi.mocked(supabase.rpc).mockImplementation((name, args) => {
-      if (name === 'complete_devotional') completed = true
-      if (['get_my_reading_state', 'start_reading', 'complete_devotional'].includes(name)) return { abortSignal: async () => ({ data: {
-        status: completed ? 'completed' : 'ready', devotional_id: publication.id, revision: 1, credited_ms: 60000,
-        revision_changed: false, ...(completed ? { completed_at: '2026-10-28T15:00:00Z', completed_day: '2026-10-28' } : {}),
-      }, error: null }) } as never
-      return fallback(name, args)
-    })
+    const { completionsQuery } = libraryBoundary([publication])
+    completionsQuery.range.mockResolvedValue({ data: [{ source_devotional_id: publication.id, devotional_id: publication.id, completed_at: '2026-10-28T15:00:00Z', completed_day: '2026-10-28' }], error: null })
     open(`leitura/${publication.id}`)
     await screen.findByText(/Devocional concluído em/)
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Concluir devocional' })).not.toBeInTheDocument()
+  })
+  it('não há barra de progresso nem chamadas de contagem de tempo de leitura', async () => {
+    libraryBoundary(olderPublications)
+    open(`leitura/${olderPublications[0].id}`)
+    await screen.findByRole('article')
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+    for (const name of ['get_my_reading_state', 'start_reading', 'take_over_reading', 'checkpoint_reading', 'pause_reading', 'complete_devotional']) expect(supabase.rpc).not.toHaveBeenCalledWith(name, expect.anything())
   })
   it('destino da notificação e link copiado abrem a mesma publicação sem duplicar compartilhamento', async () => {
     libraryBoundary(olderPublications)

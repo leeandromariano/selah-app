@@ -41,3 +41,10 @@ Nenhuma chave, publicação ou banco remoto faz parte desta etapa. A versão no 
 - **Oração:** texto sugerido, cápsula de oração e o bloco **Deixe seu comentário** (curtir e comentar, opcional, com moderação). A resposta pessoal privada foi retirada da tela; o histórico antigo continua em Minhas leituras.
 - **Para lembrar:** a frase central em destaque e o compartilhar (Instagram, Copiar link, WhatsApp). Nas outras etapas não aparecem.
 - No devocional direto, o bloco de comentários também passou a se chamar "Deixe seu comentário".
+
+## Fim da regra dos 60 segundos (13/11/2026)
+
+- **Nenhum devocional exige mais tempo mínimo.** O devocional em etapas conclui em "Continuar e concluir"; o devocional direto tem o botão **Concluir devocional** (componente `DevotionalCompletion`), liberado desde o início. Os dois usam `public.complete_devotional_now`, que registra uma conclusão por devocional com data e hora do servidor.
+- Removidos do app: o componente `ReadingProgress`, o controlador de tempo (`src/reading/controller.ts`) e os métodos de contagem do repositório de leitura (restou só a lista de conclusões).
+- **Resíduos no banco, sem uso pelo app:** as funções `get_my_reading_state`, `start_reading`, `take_over_reading`, `checkpoint_reading`, `pause_reading` e `complete_devotional`, e as tabelas `reading_progress` e `private.reading_leases`. Ainda existem para não mexer em migrações antigas; uma migração de limpeza pode removê-los depois.
+- Consequência de produto: concluir leva segundos e alimenta a ofensiva e os totais de conclusões.
