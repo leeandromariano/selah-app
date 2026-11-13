@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { buildShareCaption, cardDimensions, drawDevotionalCard } from './shareCard'
+import { cardDimensions, drawDevotionalCard } from './shareCard'
 
 function fakeCanvas() {
   const fillText = vi.fn()
@@ -56,10 +56,6 @@ describe('card PNG do devocional', () => {
     expect(at('ACESSE O APP:')[2] - at('mais presença.')[2]).toBeGreaterThan(60)
     const phraseLast = Math.max(...fillText.mock.calls.filter(call => call[1] === 84 && 'Você não continua com Deus porque é constante, mas porque Ele é Pai e você é filho.'.includes(String(call[0])) && String(call[0]).length > 3).map(call => call[2] as number))
     expect(at('Leandro Exemplo')[2]).toBeGreaterThan(phraseLast)
-  })
-  it('legenda do Instagram reúne frase, autor, referência e link', () => {
-    expect(buildShareCaption({ title: 'Paz', phrase: ' Hoje posso descansar. ', author: ' Ana ', reference: 'João 14:27', link: 'https://coram.example' })).toBe('Hoje posso descansar.\n\nAna · João 14:27\n\nLeia no Coram: https://coram.example')
-    expect(buildShareCaption({ title: 'Paz', reference: 'João 14:27', link: 'https://coram.example' })).toBe('Paz\n\nJoão 14:27\n\nLeia no Coram: https://coram.example')
   })
   it('wraps long titles and references inside the canvas width', () => {
     const { ctx, fillText } = fakeCanvas()

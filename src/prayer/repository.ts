@@ -5,7 +5,7 @@ export type PrayerItem = { id: string; request: string; created_on: string; revi
 export type PrayerList = { status: PrayerStatus; total: number; page: number; size: number; items: PrayerItem[] }
 
 export const prayerReviewOptions: { days: number; label: string }[] = [
-  { days: 7, label: 'Daqui a 7 dias' }, { days: 14, label: 'Daqui a 14 dias' }, { days: 30, label: 'Daqui a 30 dias' },
+  { days: 3, label: 'Daqui a 3 dias' }, { days: 7, label: 'Daqui a 7 dias' }, { days: 14, label: 'Daqui a 14 dias' }, { days: 30, label: 'Daqui a 30 dias' },
   { days: 60, label: 'Daqui a 2 meses' }, { days: 90, label: 'Daqui a 3 meses' }, { days: 180, label: 'Daqui a 6 meses' },
 ]
 export const defaultReviewDays = 30

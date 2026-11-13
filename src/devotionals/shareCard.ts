@@ -117,9 +117,3 @@ export function drawDevotionalCard(ctx: CanvasRenderingContext2D, options: { tit
   urlLines.forEach((line, index) => ctx.fillText(line, 84, urlTop + index * 25, width - 168))
 }
 
-// Legenda pronta para colar no Instagram (o texto do menu de compartilhamento é descartado pelo app).
-export function buildShareCaption(options: { title: string; phrase?: string | null; author?: string | null; reference: string; link: string }) {
-  const phrase = options.phrase?.trim() || options.title.trim()
-  const author = options.author?.trim()
-  return `${phrase}\n\n${author ? `${author} · ` : ''}${options.reference.trim()}\n\nLeia no Coram: ${options.link}`
-}

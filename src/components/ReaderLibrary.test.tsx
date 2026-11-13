@@ -89,7 +89,7 @@ describe('acervo persistente do leitor', () => {
     // ao concluir, abre o pop-up central de compartilhamento
     const dialog = await screen.findByRole('dialog', { name: 'Que a Palavra continue com você' })
     expect(within(dialog).getByRole('button', { name: 'Compartilhar no Instagram' })).toBeVisible()
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Agora não' }))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Fechar' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Compartilhar no Instagram' })).toBeVisible()
     expect(screen.getAllByRole('region', { name: 'Compartilhar devocional' })).toHaveLength(1)

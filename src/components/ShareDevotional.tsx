@@ -3,7 +3,7 @@ import { devotionalShareLink } from '../notifications/sharing'
 import { DevotionalShareCard } from './DevotionalShareCard'
 import { parseReference } from '../bible/catalog'
 // Rendered only for a publication returned by the existing authorized repository.
-export function ShareDevotional({ id, title, phrase, author, reference }: { id: string; title?: string; phrase?: string | null; author?: string | null; reference?: string }) {
+export function ShareDevotional({ id, title, phrase, author, reference, onShared }: { id: string; title?: string; phrase?: string | null; author?: string | null; reference?: string; onShared?: () => void }) {
   const [message, setMessage] = useState('')
   const link = devotionalShareLink(id, location.origin)
   if (!link) return null
@@ -14,7 +14,7 @@ export function ShareDevotional({ id, title, phrase, author, reference }: { id: 
     catch { setMessage('Selecione e copie o endereço abaixo.') }
   }
   return <section className="reflection" aria-label="Compartilhar devocional"><h2>Compartilhar este devocional</h2>
-    {hasCard && <DevotionalShareCard id={id} title={title!} phrase={phrase} author={author} reference={reference!} link={link} />}
+    {hasCard && <DevotionalShareCard id={id} title={title!} phrase={phrase} author={author} reference={reference!} link={link} onShared={onShared} />}
     <div className="actions">
       {!hasCard && <button className="button" onClick={async () => {
         if (typeof navigator.share !== 'function') { await copy(); return }
