@@ -2,7 +2,7 @@ import { webcrypto } from 'node:crypto'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 // @ts-expect-error Biblioteca de servidor, sem declaração de tipos.
 import webpush from 'web-push'
-import { createFetchTransport, outcomeOf, runBatch, runSchedulerCycle, transportSelfTest } from '../../supabase/functions/_shared/reminder-scheduler'
+import { createFetchTransport, outcomeOf, runBatch, runSchedulerCycle, statusOf, transportSelfTest, vapidPairMatches } from '../../supabase/functions/_shared/reminder-scheduler'
 import type { PushJob, Rpc } from '../../supabase/functions/_shared/reminder-scheduler'
 
 // O jsdom não tem crypto.subtle (a Edge Function usa o do runtime): aqui usamos o do Node.
@@ -42,8 +42,21 @@ describe('núcleo do agendador de lembretes', () => {
     await expect(rejected.send(job())).rejects.toMatchObject({ statusCode: 410 })
   })
   it('autoteste prova criptografia e assinatura VAPID com a biblioteca real, sem rede', async () => {
-    expect(await transportSelfTest(webpush as never, config)).toEqual({ selfTest: 'ok' })
-    expect(await transportSelfTest(webpush as never, { ...config, privateKey: 'invalida' })).toEqual({ selfTest: 'falhou' })
+    expect(await transportSelfTest(webpush as never, config)).toEqual({ selfTest: 'ok', vapidPair: 'ok' })
+    expect(await transportSelfTest(webpush as never, { ...config, privateKey: 'invalida' })).toMatchObject({ selfTest: 'falhou' })
+  })
+  it('confere se a chave privada VAPID é do mesmo par da pública (pega a mistura de pares)', async () => {
+    const other = webpush.generateVAPIDKeys()
+    expect(await vapidPairMatches(keys.publicKey, keys.privateKey)).toBe(true)
+    expect(await vapidPairMatches(keys.publicKey, other.privateKey)).toBe(false)
+    expect(await vapidPairMatches(other.publicKey, keys.privateKey)).toBe(false)
+    expect(await vapidPairMatches('curta', keys.privateKey)).toBe(false)
+    expect(await vapidPairMatches(keys.publicKey, undefined)).toBe(false)
+    expect(await transportSelfTest(webpush as never, { ...config, privateKey: other.privateKey })).toEqual({ selfTest: 'ok', vapidPair: 'diferente' })
+  })
+  it('código de resposta do envio: número do provedor ou rede, nunca texto do erro', () => {
+    expect(statusOf({ statusCode: 403, message: 'segredo' })).toBe('403')
+    expect(statusOf(new Error('segredo'))).toBe('rede')
   })
   it('a biblioteca real gera um pedido de envio válido para uma assinatura real, com o envio por fetch simulado', async () => {
     const pair = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits'])
@@ -87,7 +100,7 @@ describe('núcleo do agendador de lembretes', () => {
     const { rpc, calls } = fakeRpc({ mode: 'webpush', publicKey: keys.publicKey, reminderIds: ['r1', 'r2'], noticeIds: ['n1'], proofs: [proof] })
     const send = vi.fn().mockResolvedValueOnce(undefined).mockResolvedValueOnce(undefined).mockRejectedValueOnce({ statusCode: 410 }).mockResolvedValueOnce(undefined)
     const result = await runSchedulerCycle({ rpc, transport: { send }, publicKey: keys.publicKey, now: () => new Date('2026-11-13T18:00:00Z') })
-    expect(result).toEqual({ proofs: 1, attempts: 2, accepted: 1, notices: 1, noticesAccepted: 1 })
+    expect(result).toEqual({ proofs: 1, proofsAccepted: 1, attempts: 2, accepted: 1, notices: 1, noticesAccepted: 1, erros: { '410': 1 } })
     expect(calls).toEqual(['scheduler_config', 'scheduler_claim_proofs', 'scheduler_claim_reminders', 'scheduler_prepare_reminder', 'scheduler_finish_reminder', 'scheduler_prepare_reminder', 'scheduler_finish_reminder',
       'scheduler_claim_notices', 'scheduler_prepare_notice', 'scheduler_finish_notice', 'scheduler_cleanup'])
     expect(vi.mocked(rpc).mock.calls.find(call => call[0] === 'scheduler_claim_reminders')![1]).toEqual({ p_now: '2026-11-13T18:00:00.000Z' })
@@ -96,6 +109,6 @@ describe('núcleo do agendador de lembretes', () => {
   it('falha em uma prova não derruba o ciclo', async () => {
     const { rpc } = fakeRpc({ mode: 'webpush', publicKey: keys.publicKey, proofs: [job('', { job: undefined })] })
     const send = vi.fn().mockRejectedValue(Error('x'))
-    await expect(runSchedulerCycle({ rpc, transport: { send }, publicKey: keys.publicKey })).resolves.toMatchObject({ proofs: 1, attempts: 0 })
+    await expect(runSchedulerCycle({ rpc, transport: { send }, publicKey: keys.publicKey })).resolves.toMatchObject({ proofs: 1, proofsAccepted: 0, attempts: 0, erros: { rede: 1 } })
   })
 })
