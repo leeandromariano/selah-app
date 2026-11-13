@@ -399,3 +399,9 @@ Nenhum desses comandos foi executado pelo agente.
 - Migração `20261115000100_prayer_push.sql`: `prayer_capsules.notified_on` e `kind = 'prayer'` em `reminder_attempts`. `private.prepare_reminder` passa a escolher, no lembrete do dia de um dispositivo ativo, o tipo `prayer` quando há pedido aberto cuja data de revisão chegou e que ainda não gerou aviso. Cada pedido gera no máximo um aviso por data de revisão (`prayer_snooze` zera `notified_on`). Continua valendo o limite de uma mensagem por dispositivo por dia: nesse dia o lembrete de oração substitui o de leitura.
 - Payload: só `{v, kind: 'prayer', binding, day}`. O service worker (`push-protocol.js`) mostra texto fixo ("Chegou a hora de rever um pedido de oração. Como Deus agiu?") e abre `/#inicio`. Nada do pedido trafega.
 - **Produção:** o envio real depende do que este documento já exige e que não existe hospedado: worker agendado (não há), VAPID de produção (não há), `private.push_configuration` em modo `webpush` e leitores que ativem lembretes e a permissão do navegador. Hoje o hospedado está em simulação e com zero dispositivos.
+
+## Agendador em produção (GitHub Actions)
+
+- `.github/workflows/reminders.yml` roda a cada 5 minutos (e manualmente) `scripts/hosted-reminder-worker.mjs`, que reaproveita `reminder-worker-core.mjs` e o transporte web-push. Sem o segredo `SELAH_DATABASE_URL` o workflow não faz nada.
+- O script só envia se `private.push_configuration.mode = 'webpush'` e a chave pública for a mesma de `SELAH_VAPID_PUBLIC_KEY`; em simulação ele registra "skipped" e não reivindica lembretes. A verificação TLS do banco fica sempre ligada (`SELAH_DATABASE_CA` opcional, em PEM).
+- Segredos do repositório: `SELAH_DATABASE_URL`, `SELAH_DATABASE_CA` (se preciso), `SELAH_VAPID_PUBLIC_KEY`, `SELAH_VAPID_PRIVATE_KEY`, `SELAH_VAPID_SUBJECT` (`mailto:`). Etapa do operador: gerar as chaves, cadastrar os segredos e mudar o banco para `webpush`.

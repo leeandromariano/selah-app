@@ -1,0 +1,40 @@
+name: Lembretes por push
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: reminders
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    # Sem o segredo SELAH_DATABASE_URL todos os passos são pulados; com o banco em modo simulação ele só registra "skipped".
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    env:
+      CONFIGURED: ${{ secrets.SELAH_DATABASE_URL != '' }}
+    steps:
+      - if: env.CONFIGURED == 'true'
+        uses: actions/checkout@v4
+      - if: env.CONFIGURED == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - if: env.CONFIGURED == 'true'
+        run: npm ci --ignore-scripts
+      - if: env.CONFIGURED == 'true'
+        name: Enviar lembretes vencidos
+        env:
+          SELAH_DATABASE_URL: ${{ secrets.SELAH_DATABASE_URL }}
+          SELAH_DATABASE_CA: ${{ secrets.SELAH_DATABASE_CA }}
+          SELAH_VAPID_PUBLIC_KEY: ${{ secrets.SELAH_VAPID_PUBLIC_KEY }}
+          SELAH_VAPID_PRIVATE_KEY: ${{ secrets.SELAH_VAPID_PRIVATE_KEY }}
+          SELAH_VAPID_SUBJECT: ${{ secrets.SELAH_VAPID_SUBJECT }}
+        run: node scripts/hosted-reminder-worker.mjs
