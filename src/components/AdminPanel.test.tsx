@@ -5,6 +5,10 @@ import App from '../App'
 import { supabase } from '../lib/supabase'
 import { adminBoundary, editorialFixture } from '../test/adminBoundary'
 import { dateTimeInput } from '../admin/repository'
+import { openMenu } from '../test/menu'
+
+vi.mock('./BiblePassagePicker', () => ({ BiblePassagePicker: ({ onSelect }: { onSelect: (value: unknown) => void }) => <button type="button" onClick={() => onSelect({ translation: 'nvt', book: 'genesis', chapter: 1, verse: 1, endVerse: 1, reference: 'Gênesis 1:1' })}>Usar passagem fictícia</button> }))
+vi.mock('../bible/editorialFeature', () => ({ bibleEditorialEnabled: true }))
 
 function openAdmin() {
   location.hash = 'admin'
@@ -12,7 +16,9 @@ function openAdmin() {
   return render(<App />)
 }
 async function fill(user: ReturnType<typeof userEvent.setup>) {
-  for (const [label, value] of [['Autor (crédito público)', 'Autor Convidado'], ['Título', 'Novo Texto Fictício'], ['Referência bíblica', 'Ref fictícia'], ['Texto bíblico', 'Texto fictício'], ['Reflexão', 'Reflexão fictícia'], ['Para refletir', 'Pergunta fictícia?']]) await user.type(screen.getByLabelText(label), value)
+  for (const [label, value] of [['Autor (crédito público)', 'Autor Convidado'], ['Título', 'Novo Texto Fictício'], ['Frase central para compartilhar', 'Uma pausa também é um passo.'], ['Reflexão', 'Reflexão fictícia'], ['Para refletir', 'Pergunta fictícia?'], ['Coram Deo na Prática', 'Faça uma pausa.'], ['Oração', 'Ore por paz.']]) await user.type(screen.getByLabelText(label), value)
+  await user.click(screen.getByRole('button', { name: 'Selecionar passagem' }))
+  await user.click(screen.getByRole('button', { name: 'Usar passagem fictícia' }))
 }
 describe('painel administrativo real', () => {
   it('preserva comunidade após foco e renovação de sessão e remontagem', async () => {
@@ -43,6 +49,7 @@ describe('painel administrativo real', () => {
     openAdmin()
     await screen.findByText(editorialFixture.title)
     expect(screen.queryByRole('button', { name: 'Comunidade e ofensivas' })).not.toBeInTheDocument()
+    await openMenu()
     expect(screen.queryByRole('link', { name: 'Painel OWNER' })).not.toBeInTheDocument()
   })
   it('exibe verificação de acesso durante autorização pendente, sem falso acesso negado', async () => {
@@ -55,11 +62,13 @@ describe('painel administrativo real', () => {
     expect(supabase.from).not.toHaveBeenCalled()
     await act(async () => { finish({ data: [], error: null }) })
     expect(await screen.findByText(editorialFixture.title)).toBeVisible()
+    await openMenu()
     expect(screen.getByRole('link', { name: 'Painel administrativo' })).toBeVisible()
   })
   it('nega leitor antes de consultar conteúdo administrativo', async () => {
     openAdmin()
     expect(await screen.findByRole('alert')).toHaveTextContent('Acesso restrito')
+    await openMenu()
     expect(screen.queryByRole('link', { name: 'Painel administrativo' })).not.toBeInTheDocument()
     expect(supabase.from).not.toHaveBeenCalled()
   })
@@ -94,7 +103,7 @@ describe('painel administrativo real', () => {
     await fill(user)
     await user.click(screen.getByRole('button', { name: 'Salvar devocional' }))
     expect(await screen.findByRole('status')).toHaveTextContent('Rascunho salvo')
-    expect(table.insert).toHaveBeenCalledWith({ author_name: 'Autor Convidado', title: 'Novo Texto Fictício', bible_reference: 'Ref fictícia', bible_text: 'Texto fictício', content: 'Reflexão fictícia', reflection_question: 'Pergunta fictícia?', status: 'draft', publish_at: null, author_id: editorialFixture.author_id })
+    expect(table.insert).toHaveBeenCalledWith({ author_name: 'Autor Convidado', title: 'Novo Texto Fictício', share_phrase: 'Uma pausa também é um passo.', bible_reference: 'Gênesis 1:1', bible_text: null, bible_selection: { translation: 'nvt', book: 'genesis', chapter: 1, verse: 1, endVerse: 1 }, content: 'Reflexão fictícia', reflection_question: 'Pergunta fictícia?', practical_challenge: 'Faça uma pausa.', prayer_prompt: 'Ore por paz.', status: 'draft', publish_at: null, author_id: editorialFixture.author_id })
   })
   it('agenda data futura e informa que ainda exige publicação explícita', async () => {
     const table = adminBoundary()
@@ -128,7 +137,8 @@ describe('painel administrativo real', () => {
     const user = userEvent.setup()
     openAdmin()
     await user.click(await screen.findByRole('button', { name: 'Editar' }))
-    expect(screen.getAllByRole('textbox')).toHaveLength(6)
+    expect(screen.getByText(/Passagem: Referência fictícia/)).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Selecionar passagem' })).toBeVisible()
     await user.click(screen.getByRole('button', { name: 'Publicar agora' }))
     expect(await screen.findByRole('status')).toHaveTextContent('publicado e salvo')
     const payload = table.update.mock.calls[0][0]

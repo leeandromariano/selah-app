@@ -1,0 +1,50 @@
+# Coram — rebranding local
+
+Esta etapa aplica a identidade Coram à interface existente. O nome, o ícone, o título do navegador, as mensagens visíveis, a paleta e a tipografia foram atualizados. Novos leitores entram em modo escuro; preferências `Claro` e `Sistema` já salvas continuam válidas. As chaves locais com prefixo `selah` e os nomes internos de ambiente permanecem para preservar preferências, posição de leitura, lembretes e contratos instalados.
+
+O ícone do item 6 usa a imagem oficial fornecida pelo responsável: `coram-logo-original.png` preserva o arquivo de 1024 px sem alteração. As versões de 32, 180, 192 e 512 px são recortes centrais proporcionais dessa mesma arte, para que o C claro e a chama laranja permaneçam legíveis em tamanhos pequenos. O favicon, a interface, o ícone iOS e `site.webmanifest` usam essas versões. A prévia de 32 e 180 px foi conferida visualmente. O pacote não adiciona modo offline nem notificações.
+
+A home usa o devocional publicado e a RPC pessoal `get_my_consistency`. A sequência exibida não é calculada pelo navegador. A faixa semanal usa as datas civis do servidor em `America/Sao_Paulo`, de segunda a domingo. Se a semana começa no mês anterior, consulta o mesmo RPC para esse mês; dias que não puderem ser consultados ficam como dados indisponíveis, sem receber uma conclusão fictícia. Meses anteriores ao primeiro mês com conclusões informado pelo servidor exibem zero. A chama só acende após uma conclusão registrada para o dia atual.
+
+A pergunta opcional “Como seu coração chega hoje?” oferece quatro respostas e mantém a escolha apenas no estado da sessão React da conta. Ela não abre o devocional, não envia a resposta ao servidor, não alimenta métricas e não bloqueia a leitura. A seleção desaparece ao atualizar a página.
+
+Os destaques pessoais da Bíblia continuam amarelo, azul claro e rosa. Essa escolha anterior do produto não foi substituída pelas cores de exemplo dos materiais de marca. O laranja da identidade identifica ações e constância. O modo escuro usa texto secundário mais claro que o valor sugerido no material para manter o contraste legível.
+
+A Bíblia ganhou uma grade de livros por grupo e um campo para ir diretamente a referências completas, inclusive no formato “João 3 16”. O mesmo campo agora busca palavras na tradução selecionada usando o gateway protegido da API.Bible. A lista mostra apenas referências; tocar numa delas abre o capítulo no leitor, onde o texto é carregado com atribuição e registro de visualização. A API.Bible faz correspondência de palavras, não busca semântica de temas: “ansiedade” pode não encontrar versículos que usem apenas sinônimos.
+
+O fluxo guiado de quatro etapas está implementado na branch local para devocionais novos que tenham os campos editoriais “Prática Coram Deo” e “Oração e resposta”. O autor publica os dois textos; a reflexão e a pergunta permanecem na segunda etapa. Quatro traços marcam a etapa atual. A quarta etapa permite ao leitor salvar uma resposta pessoal de até 500 caracteres na própria conta, consultável em “Minhas aberturas”. O progresso de leitura continua sujeito à confirmação de tempo pelo servidor e à conclusão voluntária. Quando o leitor conclui, dispositivos com suporte recebem uma vibração curta; reabrir uma conclusão existente não vibra. Os devocionais antigos sem os dois campos mantêm a leitura anterior.
+
+Na primeira etapa de um devocional guiado com passagem selecionada da API.Bible, “Ler capítulo completo aqui” expande o capítulo no próprio card, com todos os versículos, indicação da passagem-base e atribuição da tradução. O texto usa o capítulo já carregado para a passagem, sem uma segunda chamada ou saída da tela. O link “Abrir na Bíblia” continua disponível para quem quiser as ferramentas do leitor bíblico. Devocionais sem seleção bíblica estruturada mantêm o comportamento legado.
+
+Nos quatro cards guiados, um deslize horizontal troca de etapa: para a esquerda avança e para a direita volta. O gesto exige deslocamento suficiente e predominância horizontal; rolagem vertical, toque curto, controles interativos, leitura do capítulo expandido e edição da resposta não mudam de etapa. Os botões e a navegação direta continuam disponíveis. A transição curta respeita a preferência de movimento reduzido.
+
+A migração `20261109023238_coram_guided_devotional.sql` cria os campos e a tabela de respostas pessoais com RLS por usuário, preservando a resposta quando um devocional é removido. Foi aplicada apenas no Supabase local; a verificação retornou dois campos, RLS ativa e quatro políticas. A experiência está ativa em DEV. Em STAGING requer `VITE_STAGING_GUIDED_DEVOTIONAL_ENABLED=true` no build, somente após aplicar a migração no banco correspondente. A migração não foi aplicada remotamente.
+
+O botão principal “Compartilhar” gera diretamente um card vertical de 1080 × 1920 px e abre o menu nativo com o PNG. O link completo acompanha a imagem na legenda de texto e aparece no rodapé da própria imagem; o aplicativo de destino pode tratar a legenda conforme suas regras. Em navegadores sem compartilhamento de arquivos, o botão baixa o PNG e orienta a copiar o link para a legenda. “Prévia e download” oferece os temas Obsidian, Papel Cru e Brasa e um download separado. OWNER, ADMIN e PUBLICADOR podem escrever uma frase central original de até 180 caracteres no editor. Publicações anteriores sem frase usam o título. O card não contém texto de traduções licenciadas, resposta pessoal ou anotações. Um link de ambiente local não funciona fora do computador. A migração `20261109122110_devotional_share_phrase.sql` adiciona o campo opcional; deve ser aplicada no banco do ambiente antes de publicar o front-end correspondente.
+
+Nenhuma chave, publicação ou banco remoto faz parte desta etapa. A versão no site principal continua independente da branch local até uma aprovação específica de deploy.
+
+## Logo com fundo transparente (13/11/2026)
+
+- `public/coram-logo.png` (C creme + chama, fundo transparente, 256 px) e `public/coram-logo-light.png` (mesmo logo com o C escuro, para o tema claro). Componente `BrandLogo` troca a versão por CSS (`html[data-theme]`). Usado no cabeçalho, no menu, no cadastro/login e no card de instalar o app.
+- Gerados a partir de `coram-logo-original.png` (preservado, 1024 px, com fundo escuro) por máscara de forma: C creme e chama laranja viram o logo; fundo, granulado e brilho ficam transparentes. Os ícones de aba, tela inicial (iOS/Android) e manifesto (`coram-icon-*.png`) continuam com fundo escuro de propósito: iOS preenche transparência com preto e o C creme não apareceria em abas claras.
+
+## Favicon transparente (13/11/2026)
+
+- A aba do navegador usa `coram-favicon-32/64.png` (C creme) em abas escuras e `coram-favicon-light-32/64.png` (C escuro) em abas claras, escolhidos por `media="(prefers-color-scheme: ...)"` no `index.html`. Gerados do mesmo logo, com a mesma máscara por forma do logo do app.
+- `coram-icon-*.png` (apple-touch e manifest) continuam com fundo escuro de propósito: o iOS preenche transparência com preto e os ícones instalados precisam de fundo.
+
+## Devocional em etapas, versão de 13/11/2026
+
+- **Cinco etapas:** A Palavra, A Real, Coram Deo na Prática, Oração e **Para lembrar**. Só aparece em etapas o devocional com Coram Deo na Prática e Oração preenchidos (e a chave `VITE_STAGING_GUIDED_DEVOTIONAL_ENABLED=true` no build); os demais continuam diretos.
+- **Sem regra dos 60 segundos no devocional em etapas.** O devocional é concluído ao ir para "Para lembrar", pelo botão **Continuar e concluir** da Oração (ou pela etapa 05). A conclusão usa `public.complete_devotional_now` (migração `20261118000400`): só o próprio leitor, só devocional publicado, uma por devocional, data e hora do servidor. O deslize não passa da Oração para "Para lembrar". O devocional direto continua com a contagem de 60 s (`private.reading_operation`, não alterada).
+- **Oração:** texto sugerido, cápsula de oração e o bloco **Deixe seu comentário** (curtir e comentar, opcional, com moderação). A resposta pessoal privada foi retirada da tela; o histórico antigo continua em Minhas leituras.
+- **Para lembrar:** a frase central em destaque e o compartilhar (Instagram, Copiar link, WhatsApp). Nas outras etapas não aparecem.
+- No devocional direto, o bloco de comentários também passou a se chamar "Deixe seu comentário".
+
+## Fim da regra dos 60 segundos (13/11/2026)
+
+- **Nenhum devocional exige mais tempo mínimo.** O devocional em etapas conclui em "Continuar e concluir"; o devocional direto tem o botão **Concluir devocional** (componente `DevotionalCompletion`), liberado desde o início. Os dois usam `public.complete_devotional_now`, que registra uma conclusão por devocional com data e hora do servidor.
+- Removidos do app: o componente `ReadingProgress`, o controlador de tempo (`src/reading/controller.ts`) e os métodos de contagem do repositório de leitura (restou só a lista de conclusões).
+- **Resíduos no banco, sem uso pelo app:** as funções `get_my_reading_state`, `start_reading`, `take_over_reading`, `checkpoint_reading`, `pause_reading` e `complete_devotional`, e as tabelas `reading_progress` e `private.reading_leases`. Ainda existem para não mexer em migrações antigas; uma migração de limpeza pode removê-los depois.
+- Consequência de produto: concluir leva segundos e alimenta a ofensiva e os totais de conclusões.

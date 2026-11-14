@@ -1,20 +1,47 @@
-import { useEffect, useMemo, useState } from 'react'
-import { adjacent, bibleHash, bookById, books, parseBibleRoute } from '../bible/catalog'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { adjacent, bibleHash, bookById, books, parseBibleRoute, parseReference } from '../bible/catalog'
 import type { Location } from '../bible/catalog'
 import { bibleProvider } from '../bible/provider'
 import type { BibleProvider, Verse } from '../bible/provider'
+import { reportBibleView } from '../bible/fums'
+import { bibleAnnotationsEnabled } from '../bible/annotationsFeature'
+import { bibleFavoritesEnabled } from '../bible/favoritesFeature'
+import { bibleAvailable } from '../bible/availability'
+import { displayAttribution } from '../bible/attribution'
+import type { AnnotationStore } from '../bible/annotations'
+import { BibleVerseList } from './BibleVerseList'
+import { BibleFavorites } from './BibleFavorites'
 import { Heading } from './UI'
+import { ReadingFontControl } from './ReadingFontControl'
 import './bible.css'
+import { searchBible } from '../bible/search'
+import type { BibleSearchResult } from '../bible/search'
 
-const defaultLocation: Location = { translation: 'demonstracao', book: 'genesis', chapter: 1 }
+const defaultLocation: Location = { translation: bibleAvailable ? 'nvt' : 'demonstracao', book: 'genesis', chapter: 1 }
 const storageKey = 'selah.bible.location'
+const bookGroups = [
+  { name: 'Pentateuco', start: 0, end: 5 },
+  { name: 'Históricos', start: 5, end: 17 },
+  { name: 'Poéticos e sabedoria', start: 17, end: 22 },
+  { name: 'Profetas', start: 22, end: 39 },
+  { name: 'Evangelhos e Atos', start: 39, end: 44 },
+  { name: 'Cartas', start: 44, end: 65 },
+  { name: 'Apocalipse', start: 65, end: 66 },
+] as const
 function initialLocation() {
-  try { return parseBibleRoute(sessionStorage.getItem(storageKey) ?? '') ?? defaultLocation } catch { return defaultLocation }
+  try { const saved = parseBibleRoute(sessionStorage.getItem(storageKey) ?? ''); return !saved || (bibleAvailable && saved.translation === 'demonstracao') ? defaultLocation : saved } catch { return defaultLocation }
 }
-export function BibleReader({ page, source = bibleProvider }: { page: string; source?: BibleProvider }) {
+export function BibleReader({ page, source = bibleProvider, userId, annotationStore }: { page: string; source?: BibleProvider; userId?: string; annotationStore?: AnnotationStore }) {
   const route = useMemo(() => page === 'biblia' ? initialLocation() : parseBibleRoute(page), [page])
-  const [result, setResult] = useState<{ key: string; source: BibleProvider; verses: Verse[] | null; error: string } | null>(null)
+  const [result, setResult] = useState<{ key: string; source: BibleProvider; verses: Verse[] | null; error: string; copyright?: string } | null>(null)
   const [attempt, setAttempt] = useState(0)
+  const [showFavorites, setShowFavorites] = useState(false)
+  const [reference, setReference] = useState('')
+  const [referenceError, setReferenceError] = useState('')
+  const [searchResults, setSearchResults] = useState<BibleSearchResult[] | null>(null)
+  const [searching, setSearching] = useState(false)
+  const [searchError, setSearchError] = useState('')
+  const searchTicket = useRef(0)
   const [expiredHighlight, setExpiredHighlight] = useState<typeof result>(null)
   const translation = source.translations.find(item => item.id === route?.translation)
   const book = route && bookById(route.book)
@@ -25,25 +52,48 @@ export function BibleReader({ page, source = bibleProvider }: { page: string; so
     if (!route || !translation?.available) return
     let active = true
     try { sessionStorage.setItem(storageKey, bibleHash(route).slice(1)) } catch { /* optional persistence */ }
-    source.chapter(route).then(verses => { if (active) setResult({ key, source, verses, error: '' }) }).catch(() => { if (active) setResult({ key, source, verses: null, error: 'Não foi possível carregar este capítulo. Tente novamente.' }) })
+    const load = async () => {
+      if (source.chapterDetails && ['nvt', 'ara', 'ntlh'].includes(route.translation)) {
+        const chapter = await source.chapterDetails(route)
+        if (!active) return
+        await reportBibleView(chapter.fumsToken)
+        if (active) setResult({ key, source, verses: chapter.verses, copyright: chapter.copyright, error: '' })
+      } else {
+        const verses = await source.chapter(route)
+        if (active) setResult({ key, source, verses, error: '' })
+      }
+    }
+    load().catch(() => { if (active) setResult({ key, source, verses: null, error: 'Não foi possível carregar este capítulo. Tente novamente.' }) })
     return () => { active = false }
   }, [key, route, source, translation?.available])
   useEffect(() => {
     if (!current?.verses || !route?.verse) return
-    const target = document.getElementById(`bible-verse-${route.verse}`)
+    const matching = current.verses.find(verse => route.verse! >= verse.number && route.verse! <= (verse.endNumber ?? verse.number))
+    const target = document.getElementById(`bible-verse-${matching?.number ?? route.verse}`)
     target?.scrollIntoView?.({ block: 'center' })
     const timer = window.setTimeout(() => setExpiredHighlight(current), 5000)
     return () => window.clearTimeout(timer)
   }, [current, route?.verse])
   if (!route || !book) return <div role="alert" className="info">Endereço bíblico inválido. <a href="#biblia">Abrir Bíblia</a></div>
-  if (!translation || !translation.available) return <div role="alert" className="info">Esta tradução está indisponível. <a href="#biblia/demonstracao/genesis/1">Abrir demonstração</a></div>
-  const go = (next: Partial<Location>) => { location.hash = bibleHash({ ...route, verse: undefined, endVerse: undefined, ...next }) }
+  if (!translation || !translation.available) return <div role="alert" className="info">Esta tradução está indisponível. <a href="#biblia">Abrir Bíblia</a></div>
+  const go = (next: Partial<Location>) => { searchTicket.current++; setSearchResults(null); setSearching(false); location.hash = bibleHash({ ...route, verse: undefined, endVerse: undefined, ...next }) }
   const previous = adjacent(book.id, route.chapter, -1), next = adjacent(book.id, route.chapter, 1)
-  const highlighted = (number: number) => current !== expiredHighlight && !!route.verse && number >= route.verse && number <= (route.endVerse ?? route.verse)
-  const missingVerse = verses && route.verse && (!verses.some(verse => verse.number === route.verse) || (route.endVerse && !verses.some(verse => verse.number === route.endVerse)))
+  const contains = (verse: Verse, number: number) => number >= verse.number && number <= (verse.endNumber ?? verse.number)
+  const highlighted = (verse: Verse) => current !== expiredHighlight && !!route.verse && verse.number <= (route.endVerse ?? route.verse) && (verse.endNumber ?? verse.number) >= route.verse
+  const missingVerse = verses && route.verse && (!verses.some(verse => contains(verse, route.verse!)) || (route.endVerse && !verses.some(verse => contains(verse, route.endVerse!))))
   return <section className="bible-reader" aria-label="Leitor bíblico">
     <Heading eyebrow="LEITURA" title="Bíblia" description="Escolha um livro e um capítulo para ler." />
-    <p className="info">{translation.attribution}</p>
+    {bibleFavoritesEnabled && userId && annotationStore && <button className="button secondary bible-favorites-toggle" aria-expanded={showFavorites} onClick={() => setShowFavorites(value => !value)}>{showFavorites ? '← Voltar à Bíblia' : '♡ Favoritados'}</button>}
+    <ReadingFontControl />
+    {showFavorites && userId && annotationStore ? <BibleFavorites key={userId} userId={userId} store={annotationStore} source={source} onOpen={() => setShowFavorites(false)} /> : <>
+    <form className="bible-jump" onSubmit={event => { event.preventDefault(); const target = parseReference(reference); if (target) { setReferenceError(''); go(target); return } if (!bibleAvailable || !['nvt', 'ara', 'ntlh'].includes(route.translation)) { setReferenceError('Digite uma referência completa, como João 3:16.'); return } const query = reference.trim(); if (query.length < 2 || query.length > 80) { setReferenceError('Digite de 2 a 80 caracteres para buscar.'); return } const ticket = ++searchTicket.current; setReferenceError(''); setSearching(true); setSearchError(''); searchBible(route.translation, query).then(results => { if (searchTicket.current === ticket) setSearchResults(results) }).catch(() => { if (searchTicket.current === ticket) setSearchError('Não foi possível buscar agora. Tente novamente.') }).finally(() => { if (searchTicket.current === ticket) setSearching(false) }) }}>
+      <label>Passagem ou palavra bíblica<input type="search" value={reference} onChange={event => { searchTicket.current++; setSearching(false); setReference(event.target.value); setReferenceError(''); setSearchResults(null); setSearchError('') }} placeholder="Ex.: João 3:16 ou ansiedade" /></label>
+      <button type="submit" className="button secondary" disabled={searching}>{searching ? 'Buscando…' : 'Buscar na Bíblia'}</button>
+      {referenceError && <p role="alert">{referenceError}</p>}
+    </form>
+    {searchError && <p role="alert" className="info">{searchError}</p>}
+    {searchResults && <section className="bible-search-results" aria-label="Resultados da busca"><h2>Resultados por palavra</h2><p>Busca por termos presentes no texto. Toque em uma referência para ler o capítulo.</p>{searchResults.length ? <ul>{searchResults.map((item, index) => <li key={`${item.book}:${item.chapter}:${item.verse}:${index}`}><a href={bibleHash({ translation: route.translation, book: item.book, chapter: item.chapter, verse: item.verse })} onClick={() => setSearchResults(null)}>{item.reference}</a></li>)}</ul> : <p>Nenhum versículo encontrado. Tente outra palavra.</p>}</section>}
+    <details className="bible-book-picker"><summary>Explorar livros por categoria</summary><div className="bible-book-groups">{bookGroups.map(group => <section key={group.name} aria-label={group.name}><h3>{group.name}</h3><div>{books.slice(group.start, group.end).map(item => <button type="button" key={item.id} aria-pressed={item.id === book.id} onClick={() => go({ book: item.id, chapter: 1 })}>{item.name}</button>)}</div></section>)}</div></details>
     <div className="bible-controls">
       <label>Tradução<select value={translation.id} onChange={event => go({ translation: event.target.value })}>{source.translations.map(item => <option key={item.id} value={item.id} disabled={!item.available}>{item.name}{!item.available ? ' — indisponível' : ''}</option>)}</select></label>
       <label>Livro<select value={book.id} onChange={event => go({ book: event.target.value, chapter: 1 })}>{(['Antigo Testamento', 'Novo Testamento'] as const).map(testament => <optgroup key={testament} label={testament}>{books.filter(item => item.testament === testament).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</optgroup>)}</select></label>
@@ -54,8 +104,12 @@ export function BibleReader({ page, source = bibleProvider }: { page: string; so
       {error && <div role="alert">{error} <button className="text-link" onClick={() => setAttempt(value => value + 1)}>Tentar novamente</button></div>}
       {verses && !verses.length && <p className="info">Nenhum conteúdo disponível para este capítulo.</p>}
       {missingVerse && <p className="info" role="status">O versículo solicitado não está disponível neste capítulo.</p>}
-      {verses?.map(verse => <p id={`bible-verse-${verse.number}`} className={highlighted(verse.number) ? 'bible-verse highlighted' : 'bible-verse'} key={verse.number}><span className="bible-number">{verse.number}</span> {verse.text}</p>)}
+      {verses && bibleAnnotationsEnabled && userId && annotationStore && current?.copyright && ['nvt', 'ara', 'ntlh'].includes(route.translation)
+        ? <BibleVerseList key={`${userId}:${route.translation}:${route.book}:${route.chapter}`} userId={userId} location={route} verses={verses} copyright={current.copyright} store={annotationStore} highlighted={highlighted} />
+        : verses?.map(verse => <p id={`bible-verse-${verse.number}`} className={highlighted(verse) ? 'bible-verse highlighted' : 'bible-verse'} key={verse.number}><span className="bible-number">{verse.number}{verse.endNumber ? `–${verse.endNumber}` : ''}</span> {verse.text}</p>)}
     </article>
+    <p className="bible-attribution">{displayAttribution(current?.copyright ?? translation.attribution)}</p>
     <nav className="actions bible-navigation" aria-label="Navegação de capítulos"><button className="button secondary" disabled={!previous} onClick={() => previous && go(previous)}>← Capítulo anterior</button><button className="button secondary" disabled={!next} onClick={() => next && go(next)}>Próximo capítulo →</button></nav>
+    </>}
   </section>
 }

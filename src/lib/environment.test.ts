@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createBuildEnvironment, createEnvironmentClient, requireEnabledEnvironment, resolveEnvironment, validatePublicKey } from './environment'
+import { createBuildEnvironment, createEnvironmentClient, prepareHostedEnvironment, requireEnabledEnvironment, resolveEnvironment, validateHostedOrigin, validatePublicKey } from './environment'
 
 const dev = { VITE_DEV_SUPABASE_URL: 'http://127.0.0.1:54321', VITE_DEV_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_fiction' }
 const legacy = { VITE_SUPABASE_URL: dev.VITE_DEV_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY: dev.VITE_DEV_SUPABASE_PUBLISHABLE_KEY }
@@ -68,6 +68,23 @@ describe('contrato DEV/STAGING/PROD sem serviços externos', () => {
       { ...staging, VITE_PROD_SUPABASE_URL: staging.VITE_STAGING_SUPABASE_URL },
       { ...staging, VITE_PROD_SUPABASE_PUBLISHABLE_KEY: staging.VITE_STAGING_SUPABASE_PUBLISHABLE_KEY },
     ]) expect(() => resolveEnvironment('staging', variables)).toThrow('distintos')
+  })
+  it('aceita apenas as duas origens HTTPS declaradas no build hospedado e mantém a prévia isolada', () => {
+    const primary = 'https://selah-staging.pages.dev'
+    const additional = 'https://appcoram.com.br'
+    const variables = { ...staging, VITE_STAGING_SITE_ORIGIN: primary, VITE_STAGING_ADDITIONAL_SITE_ORIGIN: additional }
+    const config = prepareHostedEnvironment('staging', variables)
+    expect(() => validateHostedOrigin(config, primary)).not.toThrow()
+    expect(() => validateHostedOrigin(config, additional)).not.toThrow()
+    expect(() => validateHostedOrigin(config, 'https://www.appcoram.com.br')).toThrow()
+    const build = createBuildEnvironment('staging', variables, true)
+    expect(build.variables.VITE_STAGING_ADDITIONAL_SITE_ORIGIN).toBe(additional)
+    const preview = createBuildEnvironment('staging', { ...variables, VITE_STAGING_PREVIEW_ORIGIN: 'https://preview.pages.dev' }, true, true)
+    expect(preview.variables.VITE_STAGING_SITE_ORIGIN).toBe('https://preview.pages.dev')
+    expect(preview.variables.VITE_STAGING_ADDITIONAL_SITE_ORIGIN).toBeUndefined()
+    for (const invalid of [primary, 'http://appcoram.com.br', 'https://appcoram.com.br/', 'https://appcoram.com.br:443', 'https://localhost']) {
+      expect(() => prepareHostedEnvironment('staging', { ...variables, VITE_STAGING_ADDITIONAL_SITE_ORIGIN: invalid })).toThrow()
+    }
   })
   it('só inclui configuração DEV selecionada no artefato; descarta outras variáveis', () => {
     const build = createBuildEnvironment('development', { ...dev, ...staging, VITE_UNUSED: 'fiction' })

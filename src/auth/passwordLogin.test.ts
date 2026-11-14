@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { supabase } from '../lib/supabase'
-import { emailPasswordLogin, normalizeLoginIdentifier, passwordLogin } from './passwordLogin'
+import { emailPasswordLogin, identifierLogin, normalizeLoginIdentifier, passwordLogin } from './passwordLogin'
 
 describe('login único e sessão oficial', () => {
   it.each(['pessoa_01', '@pessoa_01', ' PESSOA_01 ', ' @PESSOA_01 '])('normaliza username %s sem resolver e-mail no cliente', async input => {
@@ -51,5 +51,27 @@ describe('login hospedado por e-mail com fronteira simulada', () => {
   it('não revela se o e-mail existe mas ainda não foi confirmado', async () => {
     vi.mocked(supabase.auth.signInWithPassword).mockResolvedValueOnce({ data: { session: null }, error: { code: 'email_not_confirmed' } } as never)
     await expect(emailPasswordLogin(supabase, 'leitor@example.invalid', 'fiction')).rejects.toEqual({ code: 'invalid_credentials' })
+  })
+})
+
+describe('login hospedado por identificador', () => {
+  const client = () => ({ auth: { signInWithPassword: vi.fn().mockResolvedValue({ data: { session: { access_token: 'a' } }, error: null }), setSession: vi.fn().mockResolvedValue({ data: { session: {} }, error: null }) }, functions: { invoke: vi.fn().mockResolvedValue({ data: { access_token: 'a', refresh_token: 'r' }, error: null }) } })
+  it('e-mail entra direto pelo Auth, sem chamar a função', async () => {
+    const c = client()
+    await identifierLogin(c as never, '  Pessoa@Example.invalid ', 'senha-ficticia')
+    expect(c.auth.signInWithPassword).toHaveBeenCalledWith({ email: 'pessoa@example.invalid', password: 'senha-ficticia' })
+    expect(c.functions.invoke).not.toHaveBeenCalled()
+  })
+  it.each(['pessoa_01', '@Pessoa_01', '  PESSOA_01  '])('username %j passa pela função e nunca pelo Auth direto', async value => {
+    const c = client()
+    await identifierLogin(c as never, value, 'senha-ficticia')
+    expect(c.functions.invoke).toHaveBeenCalledWith('password-login', { body: { identifier: 'pessoa_01', password: 'senha-ficticia' } })
+    expect(c.auth.signInWithPassword).not.toHaveBeenCalled()
+    expect(c.auth.setSession).toHaveBeenCalledOnce()
+  })
+  it('identificador inválido não chama ninguém', async () => {
+    const c = client()
+    await expect(identifierLogin(c as never, 'a b', 'x')).rejects.toEqual({ code: 'invalid_identifier' })
+    expect(c.functions.invoke).not.toHaveBeenCalled(); expect(c.auth.signInWithPassword).not.toHaveBeenCalled()
   })
 })

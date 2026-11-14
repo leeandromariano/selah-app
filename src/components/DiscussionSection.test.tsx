@@ -79,7 +79,7 @@ describe('reflexões e reações do leitor',()=>{
       'Comentários aprovados serão visíveis a outros leitores autenticados com seu username e a data aproximada. Não são confidenciais. Novos textos e edições passam por moderação.',
       'Não publique telefone, e-mail, endereço, links de contato ou dados de terceiros. Assédio, ameaças, spam e exposição pessoal não são permitidos. Você pode denunciar um comentário aprovado.',
     ])expect(container.textContent).not.toContain(text)
-    expect(screen.getByRole('group',{name:'Sua reação privada'})).toBeVisible()
+    expect(screen.getByRole('group',{name:'Sua reação'})).toBeVisible()
   })
   it('edição aprovada volta à moderação e remoção exige confirmação',async()=>{
     boundary({own:{id:'fiction',body:'Texto aprovado',state:'approved',version:2}})

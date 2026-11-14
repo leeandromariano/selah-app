@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ConsistencySection } from './ConsistencySection'
 import { supabase } from '../lib/supabase'
 import { consistencyFixture } from '../test/consistencyBoundary'
+import { monthDays } from '../consistency/calendar'
 import type { Consistency } from '../consistency/repository'
 
 const pending = consistencyFixture({ status: 'pending_today', current_streak: 3, best_streak: 5, total_days: 8, total_devotionals: 10, last_completed_day: '2026-10-27', first_month: '2018-12-01' })
@@ -12,6 +13,25 @@ function respond(value: Consistency) {
 }
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks() })
 describe('seção pessoal de constância', () => {
+  it('na home busca a semana real do mês anterior sem inventar dias concluídos', async () => {
+    vi.mocked(supabase.rpc).mockImplementation((_name, args) => {
+      const month = (args as { p_month: string | null }).p_month ?? '2026-11-01'
+      const value = consistencyFixture({
+        month, current_month: '2026-11-01', first_month: '2026-10-01',
+        server_now: '2026-11-01T15:00:00Z', server_today: '2026-11-01',
+        status: 'completed_today', current_streak: 2, best_streak: 2,
+        total_days: 2, total_devotionals: 2, today_completed: true, last_completed_day: '2026-11-01',
+        days: monthDays(month).map(date => ({ date, completions: ['2026-10-31', '2026-11-01'].includes(date) ? 1 : 0 })),
+      })
+      return { abortSignal: async () => ({ data: value, error: null }) } as never
+    })
+    render(<ConsistencySection userId="week-fiction" compact />)
+    expect(await screen.findByRole('heading', { name: 'Dia 2 na Presença' })).toBeVisible()
+    expect(await screen.findByLabelText('31 de outubro de 2026: devocional concluído')).toHaveTextContent('✓')
+    expect(screen.getByLabelText('1 de novembro de 2026: devocional concluído')).toHaveClass('today')
+    expect(vi.mocked(supabase.rpc)).toHaveBeenCalledWith('get_my_consistency', { p_month: '2026-10-01' })
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+  })
   it('acumula eventos no mesmo render sem ultrapassar os limites do servidor', async () => {
     respond(pending)
     render(<ConsistencySection userId="batched-fiction" />)

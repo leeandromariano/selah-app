@@ -41,3 +41,8 @@ export async function workerMessage(type: 'clear' | 'bind' | 'proof', binding?: 
     registration.active!.postMessage({ type, binding }, [channel.port2])
   })
 }
+
+// Usada quando a pessoa cancela a assinatura DE PROPÓSITO: sem a chave local, o app não reativa o aparelho sozinho.
+export function forgetDeviceKey(user: string) {
+  try { localStorage.removeItem(prefix + user) } catch { /* sem armazenamento: nada a esquecer */ }
+}

@@ -21,6 +21,11 @@ describe('preparação hospedada sem habilitação', () => {
     expect(() => createBuildEnvironment('staging', { ...variables, VITE_ENABLE_REMOTE: 'true' })).toThrow('autorização')
     expect(createBuildEnvironment('staging', variables, true).variables).toMatchObject(variables)
   })
+  it('mantém Bíblia hospedada desligada até a habilitação explícita', () => {
+    expect(createBuildEnvironment('staging', variables, true).variables.VITE_STAGING_BIBLE_ENABLED).toBe('false')
+    expect(createBuildEnvironment('staging', { ...variables, VITE_STAGING_BIBLE_ENABLED: 'true' }, true).variables.VITE_STAGING_BIBLE_ENABLED).toBe('true')
+    expect(() => createBuildEnvironment('staging', { ...variables, VITE_STAGING_BIBLE_ENABLED: 'yes' }, true)).toThrow()
+  })
   it('recusa origem diferente antes da criação do cliente', () => {
     const factory = vi.fn()
     expect(() => createEnvironmentClient({ mode: 'staging', variables }, factory, 'https://other.example.invalid')).toThrow()

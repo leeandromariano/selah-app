@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createPasswordLogin, invalidLogin, limitedLogin, localLoginEnvironment, officialPasswordSession } from '../../supabase/functions/_shared/password-login'
+import { allowedOrigins, createPasswordLogin, hostedLoginEnvironment, invalidLogin, limitedLogin, localLoginEnvironment, officialPasswordSession } from '../../supabase/functions/_shared/password-login'
 
 function fixture() {
   const deps = { budget: vi.fn().mockResolvedValue(true), resolve: vi.fn().mockResolvedValue('private@example.invalid'), authenticate: vi.fn().mockResolvedValue({ access_token: 'fiction-access', refresh_token: 'fiction-refresh' }), dummyEmail: () => 'dummy@example.invalid', now: () => 100, pause: vi.fn().mockResolvedValue(undefined), jitter: () => 50 }
@@ -118,5 +118,32 @@ describe('destinos internos exclusivos do runtime local', () => {
   })
   it.each(['postgresql://postgres:fiction@evil.invalid:5432/postgres', 'postgresql://postgres:fiction@db:5432/other', db + '?host=evil.invalid', 'postgresql://service_role:fiction@db:5432/postgres'])('recusa PostgreSQL %s', value => {
     expect(() => localLoginEnvironment(api, value)).toThrow()
+  })
+})
+
+describe('servidor de senha no projeto hospedado', () => {
+  const ref = 'abcdefghij0123456789'
+  it('aceita só um projeto Supabase hospedado, sem caminho, credenciais ou parâmetros', () => {
+    expect(hostedLoginEnvironment(`https://${ref}.supabase.co`)).toEqual({ api: `https://${ref}.supabase.co` })
+    for (const bad of [undefined, '', 'http://' + ref + '.supabase.co', `https://${ref}.supabase.co/rest`, `https://user:x@${ref}.supabase.co`, `https://${ref}.supabase.co?a=1`, `https://${ref}.supabase.co:8443`, 'https://curto.supabase.co', `https://${ref}.evil.example`, `https://${ref}.supabase.co.evil.example`, 'http://kong:8000'])
+      expect(() => hostedLoginEnvironment(bad as never), String(bad)).toThrow()
+  })
+  it('origens: padrão é o domínio do Coram; configuração aceita só origens https exatas', () => {
+    expect([...allowedOrigins(undefined)]).toEqual(['https://appcoram.com.br', 'https://www.appcoram.com.br'])
+    expect([...allowedOrigins('https://a.example, https://b.example')]).toEqual(['https://a.example', 'https://b.example'])
+    expect([...allowedOrigins('http://a.example, https://c.example/caminho, nada, https://u:p@d.example')]).toEqual(['https://appcoram.com.br', 'https://www.appcoram.com.br'])
+  })
+  it('responde só às origens permitidas e recusa as demais, inclusive as locais', async () => {
+    const deps = { origins: allowedOrigins(undefined), budget: vi.fn().mockResolvedValue(true), resolve: vi.fn().mockResolvedValue('private@example.invalid'), authenticate: vi.fn().mockResolvedValue({ access_token: 'a', refresh_token: 'r' }), dummyEmail: () => 'x@example.invalid', pause: vi.fn().mockResolvedValue(undefined), jitter: () => 0 }
+    const handle = createPasswordLogin(deps)
+    const call = (origin: string) => handle(new Request('https://x.supabase.co/functions/v1/password-login', { method: 'POST', headers: { origin }, body: JSON.stringify({ identifier: 'pessoa_01', password: 'fiction-only' }) }))
+    const ok = await call('https://appcoram.com.br')
+    expect(ok.status).toBe(200)
+    expect(ok.headers.get('Access-Control-Allow-Origin')).toBe('https://appcoram.com.br')
+    for (const origin of ['https://evil.example', 'http://localhost:5173', 'https://appcoram.com.br.evil.example']) {
+      const denied = await call(origin)
+      expect(denied.status, origin).toBe(403)
+      expect(denied.headers.get('Access-Control-Allow-Origin')).toBeNull()
+    }
   })
 })

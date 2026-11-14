@@ -386,8 +386,12 @@ deno_version = 2
 
 # Pre-login endpoint: public project keys do not authenticate a user.
 # Handler validates passwords via Auth and enforces persistent server budgets.
-# Entrypoint rejects every non-local backend; no hosted deployment enabled.
+# Entrypoint aceita só o runtime local ou um projeto Supabase hospedado (https://<ref>.supabase.co); ver docs/username-login-hosted.md.
 [functions.password-login]
+verify_jwt = false
+
+# Agendador de lembretes: chamado pelo próprio banco (pg_cron + pg_net) com segredo do Vault; ver docs/smart-reminders-local.md.
+[functions.send-reminders]
 verify_jwt = false
 
 # [edge_runtime.secrets]

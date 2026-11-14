@@ -8,8 +8,8 @@
   try { media = window.matchMedia('(prefers-color-scheme: dark)') } catch { /* light fallback */ }
   function valid(value) { return value === 'light' || value === 'dark' || value === 'system' }
   function read() {
-    try { var value = window.localStorage.getItem(key); return valid(value) ? value : 'system' }
-    catch { return 'system' }
+    try { var value = window.localStorage.getItem(key); return valid(value) ? value : 'dark' }
+    catch { return 'dark' }
   }
   var preference = read()
   var persistent = true
@@ -27,7 +27,7 @@
   function storageChanged(event) {
     if (event.key !== key && event.key !== null) return
     try { if (event.storageArea && event.storageArea !== window.localStorage) return } catch { return }
-    preference = valid(event.newValue) ? event.newValue : 'system'
+    preference = valid(event.newValue) ? event.newValue : 'dark'
     persistent = true
     apply()
   }

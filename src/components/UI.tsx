@@ -1,7 +1,7 @@
 import type { Devotional } from '../data/devotionals'
 
 export function Icon({ name }: { name: string }) {
-  const paths: Record<string, string> = { flame: 'M12 3C13 7 18 8 18 14A6 6 0 0 1 6 14C6 11 8 9 9 8C9 11 11 12 12 12C14 9 10 7 12 3ZM12 15C10 17 10 19 12 20C14 19 14 17 12 15', home: 'M3 10 12 3 21 10V21H3ZM9 21V13H15V21', book: 'M12 5C8 2 4 3 2 4V20C6 18 9 19 12 21C15 19 18 18 22 20V4C18 2 15 3 12 5ZM12 5V21', grid: 'M3 3H10V10H3ZM14 3H21V10H14ZM3 14H10V21H3ZM14 14H21V21H14Z', clock: 'M12 3A9 9 0 1 0 12 21A9 9 0 1 0 12 3M12 7V12L16 14', chart: 'M3 3V21H22M7 17V12M12 17V7M17 17V10' }
+  const paths: Record<string, string> = { flame: 'M12 3C13 7 18 8 18 14A6 6 0 0 1 6 14C6 11 8 9 9 8C9 11 11 12 12 12C14 9 10 7 12 3ZM12 15C10 17 10 19 12 20C14 19 14 17 12 15', home: 'M3 10 12 3 21 10V21H3ZM9 21V13H15V21', book: 'M12 5C8 2 4 3 2 4V20C6 18 9 19 12 21C15 19 18 18 22 20V4C18 2 15 3 12 5ZM12 5V21', grid: 'M3 3H10V10H3ZM14 3H21V10H14ZM3 14H10V21H3ZM14 14H21V21H14Z', crown: 'M2 7 7 11 12 4 17 11 22 7 20 19H4L2 7ZM4 19H20', clock: 'M12 3A9 9 0 1 0 12 21A9 9 0 1 0 12 3M12 7V12L16 14', chart: 'M3 3V21H22M7 17V12M12 17V7M17 17V10', quiz: 'M12 3 14.6 8.6 21 9.3 16.2 13.6 17.6 20 12 16.8 6.4 20 7.8 13.6 3 9.3 9.4 8.6Z' }
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name] ?? paths.book} /></svg>
 }
 export function Heading({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) { return <div className="page-heading"><div className="eyebrow">{eyebrow}</div><h1>{title}</h1><p>{description}</p></div> }

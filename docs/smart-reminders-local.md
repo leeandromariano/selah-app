@@ -393,3 +393,44 @@ git add -- supabase/tests/smart-reminders.sql supabase/tests/reminder-concurrenc
 
 Mensagem recomendada: `feat: adiciona lembretes inteligentes e compartilhamento de devocionais`.
 Nenhum desses comandos foi executado pelo agente.
+
+## Lembrete da Cápsula de Oração (13/11/2026)
+
+- Migração `20261115000100_prayer_push.sql`: `prayer_capsules.notified_on` e `kind = 'prayer'` em `reminder_attempts`. `private.prepare_reminder` passa a escolher, no lembrete do dia de um dispositivo ativo, o tipo `prayer` quando há pedido aberto cuja data de revisão chegou e que ainda não gerou aviso. Cada pedido gera no máximo um aviso por data de revisão (`prayer_snooze` zera `notified_on`). Continua valendo o limite de uma mensagem por dispositivo por dia: nesse dia o lembrete de oração substitui o de leitura.
+- Payload: só `{v, kind: 'prayer', binding, day}`. O service worker (`push-protocol.js`) mostra texto fixo ("Chegou a hora de rever um pedido de oração. Como Deus agiu?") e abre `/#inicio`. Nada do pedido trafega.
+- **Produção:** o envio real depende do que este documento já exige e que não existe hospedado: worker agendado (não há), VAPID de produção (não há), `private.push_configuration` em modo `webpush` e leitores que ativem lembretes e a permissão do navegador. Hoje o hospedado está em simulação e com zero dispositivos.
+
+## Agendador em produção (GitHub Actions) — APOSENTADO (13/11/2026)
+
+> Substituído pela Edge Function `send-reminders` (seção "Agendador no Supabase", abaixo). O workflow `reminders.yml`, o worker hospedado em Node (`hosted-reminder-worker.mjs`) e a dependência `pg` foram removidos; os segredos `SELAH_DATABASE_URL`, `SELAH_DATABASE_CA` e `SELAH_VAPID_*` do GitHub não são mais usados e devem ser apagados (a URL do banco guarda a senha do banco). Para forçar um envio, chamar a função pelo banco, como em `supabase/scheduler/self-test.sql` (sem `selfTest`). O texto abaixo é histórico.
+
+- `.github/workflows/reminders.yml` roda a cada 5 minutos (e manualmente) `scripts/hosted-reminder-worker.mjs`, que reaproveita `reminder-worker-core.mjs` e o transporte web-push. Sem o segredo `SELAH_DATABASE_URL` o workflow não faz nada.
+- O script só envia se `private.push_configuration.mode = 'webpush'` e a chave pública for a mesma de `SELAH_VAPID_PUBLIC_KEY`; em simulação ele registra "skipped" e não reivindica lembretes. A verificação TLS do banco fica sempre ligada (`SELAH_DATABASE_CA` opcional, em PEM).
+- Segredos do repositório: `SELAH_DATABASE_URL`, `SELAH_DATABASE_CA` (se preciso), `SELAH_VAPID_PUBLIC_KEY`, `SELAH_VAPID_PRIVATE_KEY`, `SELAH_VAPID_SUBJECT` (`mailto:`). Etapa do operador: gerar as chaves, cadastrar os segredos e mudar o banco para `webpush`.
+
+## Aviso de devocional nova (13/11/2026)
+
+- Migração `20261116000100_new_devotional_push.sql`: tabela `private.publish_notices` (única por dispositivo e devocional) e as funções `claim_publish_notices`, `prepare_publish_notice` e `finish_publish_notice`; `cleanup_reminders` também apaga avisos com mais de 31 dias.
+- Vale para dispositivos ativos de quem tem os lembretes ligados (mesma opção, sem nova permissão), ativos no momento do envio (inclusive os confirmados minutos depois da publicação), e para devoções publicadas na última hora. A migração `20261117000200` removeu a regra "aparelho mais antigo que a publicação", que usava `updated_at` e excluía quem confirmava o aparelho depois de publicar. É uma mensagem a mais, além do lembrete diário (não entra na regra de uma por dia). Enviado no instante em que o worker (a cada 5 minutos) percebe a publicação, a qualquer hora.
+- Payload: `{v, kind: 'new', binding, day, devotional}`. O service worker mostra texto fixo e abre `/#leitura/<id>`; usa tag própria para não substituir o lembrete do dia.
+- Worker: o ciclo processa os lembretes e depois os avisos (`repository.notices`).
+
+## Reativação automática do aparelho (13/11/2026)
+
+- Ao abrir o app, `rearmReminders` (em `src/notifications/activate.ts`) restaura **só o que a pessoa já escolheu**, sem pedir permissão: exige lembretes ligados na conta, permissão do navegador já concedida e a chave local do aparelho (`selah.reminder.device.<user>`).
+- Aparelho `active` ou `pending` é reatado à sessão atual com um `save` sem assinatura (o servidor só envia para aparelho de sessão válida). Aparelho `revoked` (o **Sair** revoga de propósito), `expired` ou apagado é assinado de novo com o horário de antes (ou 08:00). Aparelho fictício, servidor em simulação ou lembretes desligados: nada acontece.
+- **Cancelar a assinatura** em Configurações apaga a chave local (`forgetDeviceKey`); sem a chave, nada é reativado. Quem cancelou de propósito só volta a receber se ativar de novo.
+- Quem é reativado não vê o convite de notificações; a confirmação do aparelho novo continua automática (verificação do agendador + app aberto).
+- Causa do problema que motivou isto: o **Sair** global apagava as sessões dos outros aparelhos e deixava o aparelho de push preso a uma sessão inexistente (agora o Sair é local, `scope: 'local'`).
+
+## Agendador no Supabase (13/11/2026)
+
+O agendamento do GitHub Actions é best-effort: em 15 horas rodou 2 vezes, e o lembrete diário só sai se o agendador rodar até 15 minutos depois da hora escolhida. O envio automático passou para dentro do Supabase.
+
+- **Quem dispara:** `pg_cron` roda a cada minuto um `net.http_post` (pg_net) para a Edge Function `send-reminders`, com o segredo `selah_scheduler_secret` guardado no Vault. A função confere o segredo no banco (`public.scheduler_check_secret`); nada vai para variável de ambiente.
+- **Função (`supabase/functions/send-reminders`):** só roda em projeto hospedado. Usa a chave de serviço do runtime e chama **somente** `public.scheduler_*` (migração `20261118000200`; executáveis apenas por `service_role`). Núcleo testável em `_shared/reminder-scheduler.ts`: provas de verificação, lembretes, avisos de devocional nova e limpeza, num ciclo; sem nova tentativa; resposta e logs só com contagens.
+- **Envio:** `web-push` (3.6.7) só criptografa (RFC 8291) e assina (VAPID); o `fetch` do runtime envia, com tempo limite e sem redirecionamento. `POST {"selfTest": true}` prova a criptografia e a assinatura no runtime real, sem rede.
+- **Segredos da função:** `SELAH_VAPID_PUBLIC_KEY`, `SELAH_VAPID_PRIVATE_KEY`, `SELAH_VAPID_SUBJECT` (`npx supabase secrets set`). A chave pública precisa ser a gravada em `private.push_configuration`, senão o ciclo recusa.
+- **Agendar:** `supabase/scheduler/schedule-reminders.sql` (não é migração: tem o endereço do projeto). Idempotente.
+- **Conferir:** `select * from cron.job_run_details order by start_time desc limit 5;` e `select status_code, created from net._http_response order by created desc limit 5;`.
+- **GitHub:** o workflow `reminders.yml` foi removido (não há mais agendador nem segredos no GitHub).

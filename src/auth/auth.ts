@@ -14,11 +14,14 @@ export function authMessage(error: unknown) {
 export function signupMessage(error: unknown) {
   const failure = error as { status?: number; code?: string }
   if (failure?.status === 500 || failure?.code === 'unexpected_failure' || failure?.code === 'database_error') return 'Cadastro não concluído. O username pode estar indisponível, o WhatsApp pode ser inválido ou houve uma falha temporária. Confira os dados ou tente novamente mais tarde.'
+  // Decisão do responsável: dizer claramente que o e-mail já existe (o Auth já devolve esse erro 422 de qualquer forma).
+  if (failure?.code === 'user_already_exists' || failure?.code === 'email_exists') return 'Este e-mail já está cadastrado. Entre com ele ou use "Esqueci minha senha" para recuperar o acesso.'
   return authMessage(error)
 }
 
 export const AuthContext = createContext<{
   session: Session | null; loading: boolean; recovery: boolean; admin: boolean; adminLoading: boolean; owner: boolean; ownerLoading: boolean; publisher: boolean; publisherLoading: boolean; error: string;
+  googleOnboardingLoading: boolean; googleOnboardingPending: boolean; googleOnboardingError: boolean; refreshGoogleOnboarding: () => Promise<void>;
   logout: () => Promise<void>; finishRecovery: () => void;
 } | null>(null)
 

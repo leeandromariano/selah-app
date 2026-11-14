@@ -7,7 +7,7 @@ describe('contrato editorial', () => {
     for (const patch of [{ author_name: '' }, { title: '' }, { title: 'x'.repeat(201) }, { bible_reference: '' }, { bible_reference: 'x'.repeat(201) }, { bible_text: '' }, { content: '' }, { reflection_question: '' }, { status: 'other' }, { publish_at: 'invalid' }, { status: 'scheduled', publish_at: null }, { status: 'scheduled', publish_at: '2000-01-01T00:00:00Z' }, { status: 'published', publish_at: '2099-01-01T00:00:00Z' }]) expect(() => editorialFields({ ...editorialFixture, ...patch } as never)).toThrow()
     const result = editorialFields({ ...editorialFixture, title: ' Título válido ' })
     expect(result.title).toBe('Título válido')
-    expect(Object.keys(result).sort()).toEqual(['author_name', 'title', 'bible_reference', 'bible_text', 'content', 'reflection_question', 'publish_at', 'status'].sort())
+    expect(Object.keys(result).sort()).toEqual(['author_name', 'title', 'bible_reference', 'bible_text', 'content', 'reflection_question', 'practical_challenge', 'prayer_prompt', 'publish_at', 'status'].sort())
   })
   it('mantém instante original e segundos quando o editor não altera a data', () => {
     const original = '2026-10-26T12:34:56.789Z'
@@ -16,6 +16,17 @@ describe('contrato editorial', () => {
     const changed = '2026-10-27T11:30'
     expect(dateTimeInput(publicationInstant(changed, original))).toBe(changed)
     expect(() => publicationInstant('invalid', null)).toThrow()
+  })
+  it('aceita frase original em uma linha e rejeita texto longo ou com quebra', () => {
+    expect(editorialFields({ ...editorialFixture, share_phrase: '  A esperança floresce hoje.  ' }).share_phrase).toBe('A esperança floresce hoje.')
+    expect(() => editorialFields({ ...editorialFixture, share_phrase: 'a'.repeat(181) })).toThrow('frase central')
+    expect(() => editorialFields({ ...editorialFixture, share_phrase: 'Uma frase\nOutra frase' })).toThrow('frase central')
+  })
+  it('guarda seleção estruturada sem copiar conteúdo bíblico e preserva o contrato legado', () => {
+    const selection = { translation: 'nvt', book: 'genesis', chapter: 1, verse: 1, endVerse: 1 }
+    expect(editorialFields({ ...editorialFixture, bible_reference: 'Gênesis 1:1', bible_text: null, bible_selection: selection })).toEqual(expect.objectContaining({ bible_reference: 'Gênesis 1:1', bible_text: null, bible_selection: selection }))
+    expect(() => editorialFields({ ...editorialFixture, bible_selection: selection })).toThrow()
+    expect(editorialFields(editorialFixture).bible_text).toBe('Texto fictício')
   })
   it('falha fechada antes da consulta se não houver autorização', async () => {
     const from = vi.fn()

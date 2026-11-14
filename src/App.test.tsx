@@ -5,6 +5,7 @@ import { supabase } from './lib/supabase'
 import App from './App'
 import { libraryBoundary, olderPublications } from './test/libraryBoundary'
 import { adminBoundary, editorialFixture } from './test/adminBoundary'
+import { openMenu, openMenuPanel } from './test/menu'
 
 describe('fluxos locais do Selah', () => {
   it('espera a sessão antes de mostrar navegação ou conteúdo privado', async () => {
@@ -24,8 +25,82 @@ describe('fluxos locais do Selah', () => {
     location.hash = 'inicio'
     render(<App />)
     expect(await screen.findByRole('heading', { name: greeting })).toBeVisible()
+    await openMenu()
     expect(screen.queryByRole('link', { name: 'Painel administrativo' })).not.toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Navegação principal' })).toBeVisible()
+  })
+  it('mostra o convite para instalar o app só no fim da página Início', async () => {
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'fictional-reader' } } }, error: null } as never)
+    libraryBoundary(olderPublications)
+    location.hash = 'inicio'
+    render(<App />)
+    const install = await screen.findByRole('button', { name: 'Instalar app' })
+    const main = screen.getByRole('main')
+    expect(main.lastElementChild).toContainElement(install)
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Abrir menu' }))
+    await userEvent.setup().click(screen.getByRole('link', { name: 'Minha Jornada' }))
+    expect(await screen.findByRole('heading', { name: /Minha Jornada/ })).toBeVisible()
+    expect(screen.queryByRole('button', { name: 'Instalar app' })).not.toBeInTheDocument()
+  })
+  it('Minhas aberturas fica dentro de Minha Jornada e não é mais item do menu', async () => {
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'fictional-reader' } } }, error: null } as never)
+    libraryBoundary(olderPublications)
+    location.hash = 'minha-jornada'
+    render(<App />)
+    expect(await screen.findByRole('heading', { name: 'Minha Jornada' })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: 'Minhas aberturas' })).toBeVisible()
+    const nav = await openMenu()
+    expect(within(nav).queryByRole('link', { name: 'Minhas aberturas' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Ver minhas aberturas e conclusões' })).not.toBeInTheDocument()
+  })
+  describe('menu hambúrguer', () => {
+    async function signedIn() {
+      vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'fictional-reader' } } }, error: null } as never)
+      libraryBoundary(olderPublications)
+      location.hash = 'inicio'
+      render(<App />)
+      await screen.findByRole('heading', { name: /Que bom ter|Bem-vindo/ })
+      return screen.getByRole('button', { name: 'Abrir menu' })
+    }
+    it('começa fechado e lista as páginas do leitor ao abrir', async () => {
+      const toggle = await signedIn()
+      expect(toggle).toHaveAttribute('aria-expanded', 'false')
+      expect(screen.queryByRole('navigation', { name: 'Navegação principal' })).not.toBeInTheDocument()
+      await userEvent.setup().click(toggle)
+      const nav = await screen.findByRole('navigation', { name: 'Navegação principal' })
+      expect(within(nav).getAllByRole('link').map(l => l.textContent)).toEqual(['Início', 'Devocionais', 'Bíblia', 'Bereia', 'Minha Jornada'])
+      expect(screen.getByRole('button', { name: 'Fechar menu' })).toHaveAttribute('aria-expanded', 'true')
+    })
+    it('fecha com Esc e ao escolher uma página', async () => {
+      const user = userEvent.setup()
+      await signedIn()
+      await openMenu()
+      await user.keyboard('{Escape}')
+      expect(screen.queryByRole('navigation', { name: 'Navegação principal' })).not.toBeInTheDocument()
+      await openMenu()
+      await user.click(screen.getByRole('link', { name: 'Bíblia' }))
+      expect(location.hash).toBe('#biblia')
+      expect(screen.queryByRole('navigation', { name: 'Navegação principal' })).not.toBeInTheDocument()
+    })
+    it('sem sessão a gaveta traz só marca, aparência e voltar, sem navegação nem avisos de ambiente', async () => {
+      vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: null }, error: null })
+      location.hash = 'login'
+      render(<App />)
+      await screen.findByRole('heading', { name: 'Que bom te ver de novo' })
+      await openMenuPanel()
+      expect(screen.getByRole('group', { name: 'Aparência' })).toBeVisible()
+      expect(screen.queryByRole('navigation', { name: 'Navegação principal' })).not.toBeInTheDocument()
+      expect(screen.queryByText(/homologação|STAGING|Ambiente local|informações fictícias|Conteúdo e administração no ambiente/i)).not.toBeInTheDocument()
+    })
+    it('o botão Voltar fecha a gaveta e a barra lateral fixa não existe mais', async () => {
+      const user = userEvent.setup()
+      await signedIn()
+      await openMenu()
+      expect(document.querySelector('aside.sidebar')).toBeNull()
+      await user.click(screen.getByRole('button', { name: 'Voltar' }))
+      expect(screen.queryByRole('navigation', { name: 'Navegação principal' })).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Abrir menu' })).toHaveAttribute('aria-expanded', 'false')
+    })
   })
   it('busca publicação anterior por referência sem diferenciar maiúsculas e recupera resultado vazio', async () => {
     vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'fictional-reader' } } }, error: null } as never)
@@ -57,7 +132,10 @@ describe('fluxos locais do Selah', () => {
     view.unmount()
     location.hash = 'minhas-leituras'
     render(<App />)
-    expect(await screen.findByText(olderPublications[0].title)).toBeVisible()
+    // link antigo cai em Minha Jornada, que agora traz o histórico de aberturas
+    expect(await screen.findByRole('heading', { name: 'Minha Jornada' })).toBeVisible()
+    expect(await screen.findByRole('heading', { name: 'Minhas aberturas' })).toBeVisible()
+    expect((await screen.findAllByText(olderPublications[0].title)).length).toBeGreaterThan(0)
     expect(screen.getByText(/Uma abertura não significa leitura concluída/)).toBeVisible()
   })
 

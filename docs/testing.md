@@ -1,5 +1,46 @@
 # Inventário e execução de testes
 
+## Rebranding Coram
+
+`appearance/contrast.test.ts` verifica a paleta de ambos os temas; `appearance/bootstrap.test.ts` cobre o novo padrão escuro e a preservação de preferências explícitas. `consistency/calendar.test.ts` cobre a semana civil com virada de mês e futuro; `ConsistencySection.test.tsx` verifica a busca da semana anterior pela RPC e a sequência recebida do servidor. `ReaderLibrary.test.tsx` verifica a escolha opcional de estado de espírito sem abertura ou gravação. A suíte não prova o layout em navegador real nem publicação hospedada. Ver [limites](coram-rebrand-local.md).
+
+`GuidedDevotional.test.tsx` cobre avanço e retorno por gesto horizontal, rejeição de rolagem vertical e toque curto, limites da primeira e última etapa e interação com a resposta pessoal.
+
+`bible/catalog.test.ts` cobre referências com separador `:` ou espaço; `BibleReader.test.tsx` verifica a navegação direta, a grade de livros e a mensagem para entradas sem referência. Não há promessa de busca por assunto nessa etapa.
+
+## Destaques e anotações bíblicas
+
+`hostedGateway.test.ts` exercita o candidato de rota hospedada com dependências
+fictícias: autenticação, isolamento do token, limite e falha fechada. Não prova
+deploy, D1, quota do fornecedor ou integração hospedada real.
+
+`BibleFavorites.test.tsx` cobre listagem, paginação, atribuição, referência com
+intervalo e tratamento de erro; `attribution.test.ts` verifica a preservação do
+aviso de direitos ao retirar a apresentação promocional conhecida da ARA.
+
+`annotations.test.ts` testa filtros por conta e resposta recusada;
+`BibleVerseList.test.tsx` cobre cor, anotação, cópia com atribuição, remoção e
+erros, além de favoritar e desfavoritar; `BibleAnnotationsIntegration.test.tsx` cobre troca de conta enquanto
+uma resposta está pendente. `supabase/tests/bible-personal-annotations.sql`
+exercita isolamento, alterações e exclusões da própria conta e bloqueio de
+acesso anônimo. `supabase/tests/bible-favorite-verses.sql` cobre a mesma fronteira
+para favoritos. Testes equivalentes foram executados com contas fictícias e
+ROLLBACK, incluindo a proteção para cadastro Google pendente. Nenhum texto real
+ou credencial é incluído nas fixtures.
+
+## Seleção bíblica nos devocionais locais
+
+`BiblePassagePicker.test.tsx` cobre escolha de tradução e passagem, intervalos
+agrupados e falhas sem persistir o texto da API. `DevotionalPassage.test.tsx`
+verifica duplo clique, referência exata e link acessível; o teste de passagem
+legada cobre referências reconhecidas e não reconhecidas. O mesmo teste cobre a
+leitura do capítulo na etapa guiada, a atribuição e uma única chamada à API. Os testes de ADMIN e
+PUBLICADOR usam fronteira simulada para salvar a seleção. O roteiro SQL
+`supabase/tests/devotional-bible-selection.sql` usa dados fictícios e rollback;
+as verificações equivalentes de ADMIN, PUBLICADOR, revisão e negação a leitor
+foram exercitadas em transações revertidas no banco local. Não substituem
+homologação hospedada ou verificação de licenças para monetização.
+
 ## Painel OWNER em STAGING
 
 `OwnerPanel.test.tsx` simula as RPCs na fronteira e cobre as três rotas OWNER,
@@ -2358,3 +2399,103 @@ A retomada local e testada com armazenamento simulado e Chromium com backend fic
 A fronteira de Preview valida origem exata, build autorizado e rejeicao de dominios semelhantes em hostedEnvironment.test.ts.
 
 O acervo testa busca por titulo e referencia sem acentos, ordenacao e resultado vazio com backend simulado.
+
+## Controles de leitura e seleção de versículos
+
+BibleVerseList.test.tsx cobre seleção de versículos avulsos no mesmo capítulo, aplicação de cor e favoritos, preservação de nota prévia e cópia com referência, atribuição e link do aplicativo. ReadingFontControl.test.tsx cobre ajuste e persistência local do tamanho da fonte. A responsividade dos botões de login é uma mudança de CSS e requer conferência visual em navegador estreito.
+
+## Devocional guiado Coram
+
+`GuidedDevotional.test.tsx` percorre as quatro etapas com conteúdo fictício, confere a barra de etapas e verifica a gravação da resposta pela fronteira simulada. `privateResponses.test.ts` cobre validação de texto, identidade da conta e vínculo com o devocional. `ReadingProgress.test.tsx` cobre vibração somente após conclusão explícita confirmada, sem vibração ao reabrir leitura concluída. Os testes existentes de editor, publicador e acervo cobrem a compatibilidade com publicações anteriores. A migração SQL não é executada na suíte automatizada. Foi aplicada separadamente no Supabase local; a verificação conferiu dois campos, RLS ativa e quatro políticas. Um teste transacional com duas contas e conteúdo fictícios mostrou a resposta visível ao dono (1) e invisível à outra conta (0), seguido de `ROLLBACK`. Ainda requer teste manual da interface com conteúdo fictício antes de ativar em ambiente hospedado.
+
+`apiGateway.test.ts`, `search.test.ts` e `BibleReader.test.tsx` cobrem busca por palavra, recusa de entradas inválidas, projeção de referências sem texto licenciado e abertura do capítulo pela rota interna. O gateway usa os controles de autenticação e cota já existentes.
+
+`shareCard.test.ts` verifica dimensões e composição do PNG com dados fictícios. `DevotionalShareCard.test.tsx` cobre o formato vertical fixo, temas, bloqueio de referência em texto livre, falha de Canvas e geração de um Blob PNG com download simulado. O navegador local abriu na tela de login sem sessão de teste; a prévia do card dentro de um devocional real ainda precisa de inspeção visual após autenticação local.
+
+`shareCard.test.ts` também verifica o uso da frase central original e rejeita texto que não cabe no card. `repository.test.ts`, `AdminPanel.test.tsx` e `PublisherPanel.test.tsx` verificam o limite editorial e o envio da frase ao salvar. A migração `20261109122110_devotional_share_phrase.sql` preserva publicações antigas com campo nulo e incrementa a revisão de leitura quando a frase é alterada.
+
+`DevotionalShareCard.test.tsx` verifica que o botão principal gera imediatamente o arquivo PNG de 1080 × 1920 px com o link no texto compartilhado, baixa o arquivo quando o navegador não aceita compartilhar arquivos e trata o cancelamento sem mensagem de sucesso.
+
+O logo oficial do Coram foi preservado em PNG original de 1024 px. Os recortes proporcionais de 32 e 180 px foram inspecionados visualmente. `site.webmanifest` referencia os PNGs de 192 e 512 px, e o HTML inclui favicon de 32 px e ícone de 180 px para iOS. A conferência final na tela inicial de cada sistema requer instalação manual no dispositivo.
+
+`App.test.tsx` cobre o menu hambúrguer: fechado por padrão, itens do leitor ao abrir, fechamento por Esc e ao escolher página, e ausência do botão sem sessão. Os testes de ADMIN, OWNER e PUBLICADOR abrem o menu (`test/menu.ts`) antes de verificar os links, inclusive nas asserções negativas. A suite não prova o layout da gaveta em navegador real.
+
+`InstallApp.test.tsx` cobre o convite para instalar o app: uso do `beforeinstallprompt` (capturado mesmo antes de a tela montar, consumido uma só vez), instruções para iPhone/Safari e Android/Chrome sem convite nativo, e ocultar após `appinstalled` ou em modo standalone. `App.test.tsx` verifica que o convite fica no fim da página Início e que nenhum texto de homologação, STAGING, ambiente local ou dados fictícios aparece na interface (`HostedAuth.test.tsx` e `PrivacyPolicy.test.tsx` repetem a verificação em login, rodapé e privacidade). A instalação real exige HTTPS e navegador de celular; a suite não a comprova.
+
+`AppearanceControl.test.tsx` cobre o seletor de aparência em três botões de ícone (Claro, Escuro, Sistema; `aria-pressed`, sem rótulo visível), uso por teclado e aviso de preferência não salva. `App.test.tsx` verifica que a antiga barra lateral fixa não existe, que a gaveta traz marca, aparência e navegação, e que o botão Voltar a fecha; sem sessão a gaveta não mostra navegação. O helper `test/menu.ts` reabre a gaveta quando o app remonta ao confirmar a sessão.
+
+As aberturas deixaram de ser uma página e item do menu: `App.test.tsx` e `JourneyPage.test.tsx` verificam que "Minhas aberturas" (histórico, conclusões e respostas privadas) aparece dentro de Minha Jornada, que o link antigo `#minhas-leituras` abre Minha Jornada e que o item saiu do menu. Minha Jornada agora consulta `devotionals` (títulos das aberturas). `ReaderLibrary.test.tsx` considera que a página exibe a última abertura, a lista e as conclusões.
+
+## Pop-up de compartilhar ao concluir
+
+Ao clicar em "Concluir devocional" (só quando o leitor acabou de concluir, não ao reabrir um devocional já concluído), abre um pop-up central com as opções de compartilhar (`ShareCompletionDialog`). Fecha com "Agora não", Esc ou clique fora. Cobertura: `ShareCompletionDialog.test.tsx`, `ReadingProgress.test.tsx` (`onCompletedNow`) e `ReaderLibrary.test.tsx`.
+
+## Quiz bíblico e ranking do owner
+
+Aba "Quiz bíblico" no menu (`#bereia/quiz`), com modalidades Antigo Testamento, Novo Testamento e Bíblia toda. Rodadas de até 10 perguntas de múltipla escolha; ao responder, o leitor vê na hora se acertou, a alternativa certa e a referência bíblica. As respostas certas ficam só no servidor (tabelas sem acesso direto; funções `quiz_start`, `quiz_answer`, `get_my_quiz_stats`) e só a primeira resposta a cada pergunta conta. O owner vê o ranking em `#owner/quiz` (`get_owner_quiz_ranking`, exige owner). Migração: `20261111000100_bible_quiz.sql` (inclui 48 perguntas iniciais). Cobertura: `quiz/repository.test.ts`, `QuizPage.test.tsx`, `QuizRankingPanel.test.tsx`, `OwnerPanel.test.tsx` e `App.test.tsx`. As funções SQL foram verificadas à mão no banco local (leitor comum, owner e acesso direto negado); não há teste automatizado de SQL.
+
+## Quiz: níveis e versículo
+
+- Níveis 1–4 (Iniciante, Intermediário, Avançado, Bigode grosso): `quiz_questions.level`; `quiz_start(p_mode, p_level, p_count)`.
+- Depois de responder, `QuizVerse` busca o capítulo em ARA pela rota `/api/bible` e mostra o texto. Localmente a rota não existe: o componente some em silêncio e a referência continua visível. Só em produção/staging com a Bíblia habilitada o texto aparece.
+
+## Bereia e "Tá na Bíblia ou Tá Amarrado?"
+
+- A aba "Quiz bíblico" virou "Bereia" (`#bereia`), com os dois jogos: `#bereia/quiz` e `#bereia/mito`.
+- Cartas em `claim_cards` (veredito biblia/distorcida/invencao); respostas em `claim_answers`. Tudo só via RPC `claims_start`, `claims_answer`, `get_my_claims_stats` (security definer). O veredito só sai depois de responder.
+- Direita = "Tá na Bíblia"; esquerda = "Tá amarrado" (distorcida e invenção). Também funciona por botões e setas do teclado.
+
+## Bereia: "Quem disse isso?"
+
+- Rota `#bereia/quem-disse`; modos Base e Profundo (`who_cards.mode`). Tabelas `who_cards`/`who_answers` só acessíveis via RPC `who_start`, `who_answer`, `get_my_who_stats` (security definer); resposta e contexto só saem depois de responder.
+- Após responder mostra quem disse, o contexto e o texto em ARA (`QuizVerse`; no local o texto não aparece, pois falta `/api/bible`).
+
+## Bereia: Versículo Oculto
+
+- Rota `#bereia/versiculo`: um desafio por dia (fuso America/Sao_Paulo; nº = dias desde 11/11/2026, ciclando entre as linhas ativas de `verse_puzzles`). 2–3 palavras escondidas, 4 tentativas.
+- O servidor guarda só a referência e as palavras escondidas (índice, palavra, palavra anterior), nunca o texto do versículo. O texto vem de `/api/bible` (ARA) e `locateBlanks` confere tamanho e palavra anterior; se não bater, o jogo mostra erro em vez de um desafio quebrado. **Ao publicar, abra o jogo de cada um dos 16 versículos (mude `verse_puzzles.seq` ou a data) para confirmar que a redação ARA bate.**
+- RPC `verse_today` e `verse_guess` (security definer); as palavras só saem quando o desafio termina. A grade de compartilhamento usa só 🟧/⬛, sem spoiler.
+- Localmente `/api/bible` não existe; para testar no navegador, simule `window.fetch` para `/api/bible` com um capítulo fictício.
+
+## Bereia: Linha do Tempo (Antes ou Depois?)
+
+- Rota `#bereia/linha-do-tempo`: pares sorteados de `timeline_events` (61 acontecimentos em ordem da narrativa bíblica; a coluna `position` só sai do servidor depois da resposta). O lado de cada evento é sorteado no servidor.
+- RPC `timeline_start`, `timeline_answer`, `get_my_timeline_stats` (security definer). Só a primeira resposta a cada par, em qualquer ordem, conta pontos.
+- Eras são rótulos amplos (Origens, Patriarcas, Êxodo e conquista, Juízes, Reino unido, Reino dividido, Exílio e volta, Vida de Jesus, Igreja primitiva); não há datas exatas porque a cronologia varia entre estudiosos. Evitei eventos de ordem controversa (por exemplo, Sansão e Samuel, ou Rute).
+
+## Ranking da Bereia (owner)
+
+- Rota `#owner/bereia` (substitui `#owner/quiz`), com abas: Geral, Quiz bíblico (ranking já existente), Tá na Bíblia ou Tá Amarrado?, Quem disse isso?, Linha do Tempo e Versículo Oculto.
+- RPC `get_owner_bereia_ranking(p_game, p_search, p_page, p_size)`, só para o owner (`private.app_owner`); sem e-mail nem dados pessoais além do username. Conta a primeira resposta de cada leitor. "Geral" = acertos do quiz e dos jogos de resposta + dias de Versículo Oculto resolvidos.
+- Para ver o painel no navegador local, a conta logada precisa ser o owner (tabela `private.app_owner` tem uma única linha); restaure o owner original depois.
+- No navegador de teste (janela oculta) o app refaz as checagens de sessão e remonta os painéis do owner a cada poucos segundos; isso também ocorre no painel de Comunidade e não é do ranking.
+
+## Perguntas dos jogos (owner)
+
+- Rota `#owner/perguntas` (botão "Perguntas dos jogos" no Painel OWNER): o owner lista, busca, filtra (nível ou modo), cria, edita e exclui perguntas e alternativas do **Quiz bíblico** (`quiz_questions`) e as frases de **Quem disse isso?** (`who_cards`). A resposta certa é um botão de opção ao lado de cada alternativa, então a marcação acompanha o texto; a tela mostra "Resposta certa: C — texto".
+- RPC `owner_content_list`, `owner_content_save`, `owner_content_delete` (security definer, exigem `private.owner_identity`); leitor recebe erro de acesso. Validação no cliente (`validateDraft`) e no servidor: 4 alternativas diferentes, resposta certa 0–3, referência, tamanhos.
+- Mudar alternativas ou a resposta certa **zera as respostas já dadas** àquela pergunta (a tela pede confirmação), para o ranking não guardar acertos de uma versão antiga. Excluir apaga também as respostas dos leitores (confirmação mostra quantas).
+- Ainda sem editor para Tá na Bíblia (veredito, sem alternativas), Versículo Oculto e Linha do Tempo.
+
+## Cápsula de Oração ("No secreto" com retorno)
+
+- No fim do devocional (etapa "Oração e resposta" no guiado; depois do texto no devocional simples) o leitor escreve um pedido e escolhe quando rever (7, 14, 30 — padrão —, 60, 90 ou 180 dias). Tabela `prayer_capsules`, privada: sem leitura direta; RPC `prayer_create`, `prayer_due`, `prayer_list`, `prayer_answer`, `prayer_snooze`, `prayer_delete` (security definer, sempre limitadas a `auth.uid()`). Nem o owner nem outros leitores acessam os pedidos; a exclusão da conta apaga os pedidos (on delete cascade). Limite de 50 pedidos abertos por leitor.
+- Quando a data chega (fuso America/Sao_Paulo), a Home mostra "Você orou por isso há N dias. Como Deus agiu?" com "Deus respondeu 🙌" (testemunho opcional, vai para o mural) e "Ainda aguardando" (adia 30 dias).
+- Em Minha Jornada: "Mural de testemunhos" (pedidos respondidos) e "Pedidos em oração" (marcar como respondido, excluir com confirmação).
+- Para testar a data chegando no banco local: `update public.prayer_capsules set created_on = created_on - 30, review_on = review_on - 30;`
+- A Política de privacidade ainda não cita as cápsulas de oração; vale revisar o texto antes de publicar.
+
+## Painel OWNER em formato de dashboard
+
+- `#owner` abre a **Visão geral**; o trilho lateral (no celular, chips no topo) troca a área sem sair da tela: **Leitores** (`#owner/comunidade`), **Bereia** (`#owner/bereia`), **Reflexões** (`#owner/moderacao`) e **Conteúdo** (`#owner/perguntas` e `#owner/publicadores`). Cada área mostra seus cartões e gráficos e, embaixo, o detalhamento (ranking de ofensivas, ranking da Bereia, fila de moderação, perguntas dos jogos, publicadores). Atalho fixo para Gerenciar devocionais.
+- Seletor de período (Hoje, 7, 30 ou 90 dias) e botão Atualizar. Uma única RPC, `get_owner_dashboard(p_days)` (security definer, exige `private.owner_identity`), devolve todos os agregados; trocar de área não busca de novo, trocar de período sim.
+- Só agregados: nada de textos de leitores, pedidos de oração, respostas pessoais, e-mail ou telefone. Atividade = conclusões, aberturas, jogos (quiz, Tá na Bíblia, Quem disse isso, Linha do Tempo, Versículo Oculto), reflexões e fila de moderação, conteúdo ativo.
+- Gráficos em SVG próprio (`DashboardCharts.tsx`), sem biblioteca. Cores dos cartões fixas; o resto usa as variáveis de tema.
+
+## Editor do owner para todos os jogos, sorteio diário estável e lembrete da cápsula
+
+- `#owner/perguntas` ("Conteúdo dos jogos") cobre os cinco jogos: Quiz, Quem disse isso?, **Tá na Bíblia ou Tá Amarrado?** (frase, veredito, explicação, referência opcional), **Linha do Tempo** (acontecimento, era, referência, posição — inserir numa posição empurra os seguintes) e **Versículo Oculto** (referência + palavras escondidas escolhidas tocando no texto ARA carregado de `/api/bible`; no ambiente local o texto não carrega e as palavras atuais são mantidas).
+- Zera respostas: Quiz/Quem disse (alternativas ou resposta certa), Tá na Bíblia (veredito entra ou sai de "Tá na Bíblia"), Linha do Tempo (posição), Versículo Oculto (só as tentativas de hoje). Versículo já sorteado ou jogado não pode ser excluído, só desativado.
+- **Sorteio diário estável**: `verse_days` grava o versículo de cada dia (próximo ativo depois do último sorteado, em ciclo). Editar, adicionar ou desativar versículos não troca o desafio de um dia já iniciado.
+- Versículos conferidos com o texto ARA em 13/11/2026: corrigidos Salmos 46:1 ("…bem-presente nas tribulações") e Jeremias 29:11.
+- **Lembrete da cápsula**: além do card na Home, um aviso "🙏 N pedidos para rever" aparece no topo do app nas outras páginas. Notificação push ou e-mail não foi feita: o worker de lembretes existe só como protótipo local (sem serviço agendado nem chave VAPID em produção).

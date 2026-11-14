@@ -18,7 +18,9 @@ export function libraryBoundary(publications: Publication[], initialOpenings: Op
   })
   const completionsQuery = { select: vi.fn(), eq: vi.fn(), order: vi.fn(), range: vi.fn().mockResolvedValue({ data: [], error: null }) }
   for (const method of ['select', 'eq', 'order'] as const) completionsQuery[method].mockReturnValue(completionsQuery)
-  vi.mocked(supabase.from).mockImplementation(table => (table === 'devotionals' ? publicationsQuery : table === 'devotional_completions' ? completionsQuery : historyQuery) as never)
+  const responsesQuery = { select: vi.fn(), eq: vi.fn(), order: vi.fn(), range: vi.fn().mockResolvedValue({ data: [], error: null }), maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) }
+  for (const method of ['select', 'eq', 'order'] as const) responsesQuery[method].mockReturnValue(responsesQuery)
+  vi.mocked(supabase.from).mockImplementation(table => (table === 'devotionals' ? publicationsQuery : table === 'devotional_completions' ? completionsQuery : table === 'devotional_private_responses' ? responsesQuery : historyQuery) as never)
   return { publicationsQuery, historyQuery, completionsQuery }
 }
 

@@ -5,6 +5,22 @@ import { supabase } from '../lib/supabase'
 import { AuthForm } from './AuthForm'
 
 describe('formulários de autenticação', () => {
+  it('oferece entrada Google no STAGING sem solicitar senha ou transportar WhatsApp pela URL', async () => {
+    const user = userEvent.setup()
+    render(<AuthForm register={false} googleEnabled />)
+    await user.click(screen.getByRole('button', { name: 'Fazer Login com o Google' }))
+    expect(supabase.auth.signInWithOAuth).toHaveBeenCalledOnce()
+    expect(supabase.auth.signInWithOAuth).toHaveBeenCalledWith({
+      provider: 'google', options: { redirectTo: location.origin + '/' },
+    })
+    expect(supabase.auth.signUp).not.toHaveBeenCalled()
+  })
+  it('não inicia OAuth se o modo Google não estiver habilitado', async () => {
+    render(<AuthForm register={false} googleEnabled={false} />)
+    expect(screen.queryByRole('button', { name: 'Fazer Login com o Google' })).not.toBeInTheDocument()
+    expect(supabase.auth.signInWithOAuth).not.toHaveBeenCalled()
+  })
+
   it('agrupa país, código e telefone e recusa código internacional inválido', async () => {
     const user = userEvent.setup()
     render(<AuthForm register />)

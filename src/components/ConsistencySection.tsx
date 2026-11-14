@@ -1,8 +1,8 @@
 import { useEffect, useId, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { createConsistencyRepository, consistencyMessage } from '../consistency/repository'
-import type { Consistency } from '../consistency/repository'
-import { calendarWeeks, dayLabel, monthLabel, shiftMonth } from '../consistency/calendar'
+import type { Consistency, ConsistencyDay } from '../consistency/repository'
+import { calendarWeeks, dayLabel, monthDays, monthLabel, presenceWeek, shiftMonth } from '../consistency/calendar'
 import { Icon } from './UI'
 
 const repository = createConsistencyRepository(supabase)
@@ -13,16 +13,17 @@ const messages = {
   completed_today: 'Conclusão de hoje registrada. Continue no seu ritmo.',
   interrupted: 'Você pode recomeçar hoje. Seus dias anteriores continuam na sua história.',
 }
-export function ConsistencySection({ userId, refreshKey = 0, showHistory = false }: { userId: string; refreshKey?: number; showHistory?: boolean }) {
+export function ConsistencySection({ userId, refreshKey = 0, showHistory = false, compact = false }: { userId: string; refreshKey?: number; showHistory?: boolean; compact?: boolean }) {
   // A new account always receives a fresh component and no prior reader state.
-  return <ConsistencyView key={userId} refreshKey={refreshKey} showHistory={showHistory} />
+  return <ConsistencyView key={userId} refreshKey={refreshKey} showHistory={showHistory} compact={compact} />
 }
-function ConsistencyView({ refreshKey, showHistory }: { refreshKey: number; showHistory: boolean }) {
+function ConsistencyView({ refreshKey, showHistory, compact }: { refreshKey: number; showHistory: boolean; compact: boolean }) {
   const [data, setData] = useState<Consistency | null>(null)
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null)
   const [attempt, setAttempt] = useState(0)
   const [settledRequest, setSettledRequest] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [prior, setPrior] = useState<{ month: string; days: ConsistencyDay[] } | null>(null)
   const titleId = useId(), calendarId = useId()
   const request = `${selectedMonth ?? 'current'}:${attempt}:${refreshKey}`
   const pending = settledRequest !== request
@@ -51,6 +52,26 @@ function ConsistencyView({ refreshKey, showHistory }: { refreshKey: number; show
   // Navigation follows the user's selection even while an older month is loading.
   const navigationMonth = selectedMonth ?? data?.current_month
   const previous = navigationMonth && shiftMonth(navigationMonth, -1), next = navigationMonth && shiftMonth(navigationMonth, 1)
+  const firstWeekDay = data && compact ? presenceWeek(data.server_today, data.days)[0].date : null
+  const priorMonth = data && firstWeekDay && firstWeekDay < data.current_month ? firstWeekDay.slice(0, 7) + '-01' : null
+  useEffect(() => {
+    if (!compact || !priorMonth || !data || priorMonth < data.first_month) return
+    let alive = true
+    repository.snapshot(priorMonth).then(value => {
+      if (alive) setPrior({ month: priorMonth, days: value.days })
+    }).catch(() => { if (alive) setPrior(null) })
+    return () => { alive = false }
+  }, [compact, priorMonth, data, refreshKey])
+  const earlierDays = priorMonth && data && priorMonth < data.first_month
+    ? monthDays(priorMonth).map(date => ({ date, completions: 0 }))
+    : prior?.month === priorMonth ? prior.days : []
+  const week = data && compact ? presenceWeek(data.server_today, data.days, earlierDays) : []
+  if (compact) return <section className="coram-presence" aria-label="Sua presença diária" aria-busy={pending}>
+    <span className={`coram-presence-flame ${data?.today_completed ? 'lit' : ''}`} aria-hidden="true"><Icon name="flame" /></span>
+    <div><div className="eyebrow">UM DIA DE CADA VEZ</div><h2>{data ? data.current_streak > 0 ? `Dia ${data.current_streak} na Presença` : 'Seu primeiro dia na Presença' : 'Sua presença diária'}</h2><p>{data ? messages[data.status] : pending ? 'Carregando sua constância…' : error}</p></div>
+    {week.length > 0 && <ol className="coram-week" aria-label="Constância desta semana">{week.map(day => <li key={day.date} className={`${day.today ? 'today' : ''} ${day.completed ? 'done' : ''}`} aria-label={`${dayLabel(day.date)}: ${day.completed === null ? 'dados indisponíveis' : day.future ? 'data futura' : day.completed ? 'devocional concluído' : 'sem conclusão'}`}><span>{day.label}</span><strong aria-hidden="true">{day.completed ? '✓' : Number(day.date.slice(8))}</strong></li>)}</ol>}
+    {error && <button type="button" className="button secondary" disabled={pending} onClick={() => setAttempt(value => value + 1)}>Tentar novamente</button>}
+  </section>
   return <section className="consistency" aria-labelledby={titleId} aria-busy={pending}>
     <div className="section-heading"><div><div className="eyebrow">UM DIA DE CADA VEZ</div><h2 id={titleId}>Sua constância</h2></div><span className="muted">Horário de Brasília</span></div>
     {!data && pending && <p role="status">Carregando sua consistência…</p>}

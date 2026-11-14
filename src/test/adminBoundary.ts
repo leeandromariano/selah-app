@@ -2,7 +2,7 @@ import { vi } from 'vitest'
 import { supabase } from '../lib/supabase'
 import type { AdminDevotional } from '../admin/repository'
 
-export const editorialFixture: AdminDevotional = { id: '20000000-0000-4000-8000-000000000001', author_name: 'Autoria Fictícia', review_requested_at: null, title: 'Mensagem Editorial Fictícia', bible_reference: 'Referência fictícia', bible_text: 'Texto fictício', content: 'Reflexão fictícia', reflection_question: 'Pergunta fictícia?', publish_at: null, status: 'draft', author_id: '10000000-0000-4000-8000-000000000001', created_at: '2026-10-26T12:00:00Z', updated_at: '2026-10-26T12:00:00Z' }
+export const editorialFixture: AdminDevotional = { id: '20000000-0000-4000-8000-000000000001', author_name: 'Autoria Fictícia', review_requested_at: null, title: 'Mensagem Editorial Fictícia', bible_reference: 'Referência fictícia', bible_text: 'Texto fictício', content: 'Reflexão fictícia', reflection_question: 'Pergunta fictícia?', practical_challenge: 'Faça uma pausa fictícia.', prayer_prompt: 'Ore por paz.', publish_at: null, status: 'draft', author_id: '10000000-0000-4000-8000-000000000001', created_at: '2026-10-26T12:00:00Z', updated_at: '2026-10-26T12:00:00Z' }
 export function adminBoundary(initial: AdminDevotional[] = [editorialFixture]) {
   let rows = [...initial]
   let payload: Partial<AdminDevotional> = {}

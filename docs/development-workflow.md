@@ -35,7 +35,9 @@
 > Modelo, transparência, limites e roteiro: [consistency-local.md](consistency-local.md).
 > Editorial não herda OWNER; promoção da conta efetiva exige auditoria no servidor.
 
-# Processo de desenvolvimento do Selah
+# Processo de desenvolvimento do Coram
+
+> Rebranding local em andamento: identidade Coram, modo escuro inicial, home com devocional e constância reais, faixa semanal e pergunta opcional de chegada. Contratos e dados existentes preservados. Ver [registro da etapa](coram-rebrand-local.md). A publicação requer aprovação específica.
 
 O painel `#owner` oferece comunidade e ofensivas e moderação em rotas próprias.
 O item de navegação depende da confirmação da RPC `get_my_discussion_access`
@@ -151,4 +153,8 @@ A Jornada retoma a ultima abertura e a posicao aproximada neste navegador.
 
 Build Preview STAGING exige SELAH_STAGING_PREVIEW_BUILD=LOCAL_STAGING_PREVIEW_BUILD e VITE_STAGING_PREVIEW_ORIGIN com origem HTTPS exata; configurar somente no contexto Preview. O build principal permanece restrito a VITE_STAGING_SITE_ORIGIN. A URL muda por deployment e exige nova autorizacao.
 
+Na migração para um domínio personalizado, o build principal pode declarar uma segunda origem HTTPS exata em `VITE_STAGING_ADDITIONAL_SITE_ORIGIN`. A prévia continua isolada e não recebe essa origem. A função hospedada da Bíblia precisa da variável correspondente `BIBLE_ADDITIONAL_SITE_ORIGIN`. Consulte [o roteiro do domínio Coram](coram-domain-cutover.md) antes de alterar DNS ou autenticação.
+
 O acervo permite escolher a ordem das publicacoes anteriores e buscar por titulo ou referencia, sem novos dados de servidor.
+
+O devocional guiado requer a migração `20261109023238_coram_guided_devotional.sql` antes do uso local. O build STAGING só inclui os novos campos quando `VITE_STAGING_GUIDED_DEVOTIONAL_ENABLED=true`; configurar o sinal apenas após migrar o banco do mesmo ambiente e validar com dados fictícios. A resposta pessoal fica em `devotional_private_responses`, protegida por RLS. O site principal exige aprovação própria de migração e deploy.

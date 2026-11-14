@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 export type DeviceKey = { id: string; secret: string }
 export type ReminderSnapshot = {
-  enabled: boolean; mode: 'simulation' | 'webpush'; vapid_public_key: string | null;
+  enabled: boolean; invite_seen?: boolean; mode: 'simulation' | 'webpush'; vapid_public_key: string | null;
   device: null | { id: string; binding: string; mode: 'simulation' | 'webpush'; state: string; permission: string; time: string; timezone: string; expires_at: string | null };
   last: null | { kind: string | null; status: string; brt_day: string; local_day: string; at: string };
 }
@@ -27,6 +27,8 @@ export function createReminderRepository(client: Pick<SupabaseClient, 'rpc'>) {
         p_time: settings.time, p_timezone: settings.timezone, p_permission: settings.permission,
         p_subscription: settings.subscription ?? null, p_simulated: settings.simulated }))
     },
+    // Marca na conta que o convite de notificações já foi mostrado (uma vez por pessoa).
+    async markInviteSeen() { await invoke('mark_reminder_invite_seen', {}) },
     async revoke(key: DeviceKey) { await invoke('revoke_my_push_device', identity(key)) },
     async confirm(key: DeviceKey, proof: string) { await invoke('confirm_my_push_device', { ...identity(key), p_proof: proof }) },
   }
