@@ -10,6 +10,8 @@ import { PrayerCapsuleForm } from './PrayerCapsuleForm'
 import { ShareDevotional } from './ShareDevotional'
 
 const steps = ['A Palavra', 'A Real', 'Coram Deo na Prática', 'Oração', 'Para lembrar'] as const
+// objeto 3D de cada etapa (public/home)
+const stepArt = ['palavra', 'real', 'pratica', 'oracao', 'favoritados'] as const
 const prayerStep = 3
 const lastStep = steps.length - 1
 const swipeThreshold = 64
@@ -58,8 +60,8 @@ export function GuidedDevotional({ item, alreadyCompleted = false, onCompleted, 
   return <div className="guided-devotional">
     <nav className="guided-steps" aria-label="Etapas do devocional">{steps.map((label, index) => <button key={label} type="button" aria-current={step === index ? 'step' : undefined} data-complete={index < step ? 'true' : undefined} onClick={() => void navigate(index)}><span>{String(index + 1).padStart(2, '0')}</span>{label}</button>)}</nav>
     <section key={step} className="guided-panel" aria-label={steps[step]} data-direction={direction ?? undefined} onTouchStart={startSwipe} onTouchEnd={finishSwipe} onTouchCancel={() => { touchStart.current = null }} onTouchMove={event => { if (event.touches.length !== 1) touchStart.current = null }}>
-      <div className="eyebrow">{String(step + 1).padStart(2, '0')} / {String(steps.length).padStart(2, '0')} · VIVER CORAM DEO</div>
-      <h2>{steps[step]}</h2>
+      <div className="guided-head"><span className="guided-art" aria-hidden="true"><img src={`/home/${stepArt[step]}.webp`} alt="" width="96" height="96" decoding="async" /></span><div><div className="eyebrow">{String(step + 1).padStart(2, '0')} / {String(steps.length).padStart(2, '0')} · VIVER CORAM DEO</div>
+      <h2>{steps[step]}</h2></div></div>
       {step === 0 && <>{item.bible_selection ? <DevotionalPassage key={`${item.id}:${item.reading_revision}`} selection={item.bible_selection} reference={item.bible_reference} inlineChapter /> : <LegacyDevotionalPassage reference={item.bible_reference} text={item.bible_text} />}<p className="guided-intro">Leia com calma. O que essa Palavra revela hoje?</p></>}
       {step === 1 && <>{item.content.split(/\n\s*\n/).map((text, index) => <p key={index}>{text}</p>)}{item.reflection_question && <div className="reflection"><div className="eyebrow">PARA REFLETIR</div><h3>{item.reflection_question}</h3></div>}</>}
       {step === 2 && <p>{item.practical_challenge}</p>}

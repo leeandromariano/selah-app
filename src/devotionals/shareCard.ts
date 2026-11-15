@@ -1,5 +1,7 @@
 export type CardFormat = 'post' | 'story'
 export type CardTheme = 'obsidian' | 'paper' | 'ember'
+// Objetos 3D opcionais (já carregados) que ilustram o canto inferior direito: livro aberto e chama.
+export type CardArt = { book: CanvasImageSource; flame: CanvasImageSource }
 
 const themes = {
   obsidian: { background: '#0D0E11', text: '#F4F1EA', accent: '#FF5500', subtle: '#C5C2BB' },
@@ -30,11 +32,19 @@ function lines(ctx: CanvasRenderingContext2D, text: string, width: number): stri
   return output
 }
 
-export function drawDevotionalCard(ctx: CanvasRenderingContext2D, options: { title: string; phrase?: string | null; author?: string | null; reference: string; url: string; format: CardFormat; theme: CardTheme }) {
+// A imagem leva só o nome (CORAM): o endereço do devocional não aparece nela.
+export function drawDevotionalCard(ctx: CanvasRenderingContext2D, options: { title: string; phrase?: string | null; author?: string | null; reference: string; format: CardFormat; theme: CardTheme; art?: CardArt }) {
   const { width, height } = cardDimensions[options.format]
   const palette = themes[options.theme]
   ctx.fillStyle = palette.background
   ctx.fillRect(0, 0, width, height)
+  const stackTop = height - 295
+  if (options.art && typeof ctx.drawImage === 'function') {
+    // livro e chama no canto inferior direito, atrás do texto, sangrando para fora da borda
+    const book = 760, flame = 400
+    ctx.drawImage(options.art.book, width - book + 170, stackTop - book * 0.6, book, book)
+    ctx.drawImage(options.art.flame, width - flame - 150, stackTop - book * 0.6 - flame * 0.5, flame, flame)
+  }
   ctx.fillStyle = palette.accent
   ctx.fillRect(84, 84, 90, 10)
   ctx.font = '600 26px "JetBrains Mono", monospace'
@@ -48,12 +58,13 @@ export function drawDevotionalCard(ctx: CanvasRenderingContext2D, options: { tit
   const referenceLines = lines(ctx, reference.toLocaleUpperCase('pt-BR'), width - 220).slice(0, 3)
   ctx.strokeStyle = palette.accent
   ctx.lineWidth = 2
-  ctx.strokeRect(84, referenceY, width - 168, 72 + (referenceLines.length - 1) * 43)
+  const pillHeight = 72 + (referenceLines.length - 1) * 43
+  if (typeof ctx.roundRect === 'function') { ctx.beginPath(); ctx.roundRect(84, referenceY, width - 168, pillHeight, Math.min(36, pillHeight / 2)); ctx.stroke() }
+  else ctx.strokeRect(84, referenceY, width - 168, pillHeight)
   referenceLines.forEach((line, index) => ctx.fillText(line, 108, referenceY + 48 + index * 43))
 
   ctx.fillStyle = palette.text
   const availableWidth = width - 168
-  const stackTop = height - 335
   const phrase = options.phrase?.trim() || options.title.trim()
   const showTitle = Boolean(options.phrase?.trim() && options.phrase.trim() !== options.title.trim())
   ctx.font = '600 26px "JetBrains Mono", monospace'
@@ -102,18 +113,12 @@ export function drawDevotionalCard(ctx: CanvasRenderingContext2D, options: { tit
   ctx.fillRect(84, stackTop, 110, 8)
   ctx.fillStyle = palette.text
   ctx.font = '800 52px "Plus Jakarta Sans", sans-serif'
-  ctx.fillText('MENOS ROTINA.', 84, height - 262)
+  ctx.fillText('MENOS ROTINA.', 84, height - 222)
   ctx.font = 'italic 52px "Instrument Serif", Georgia, serif'
-  ctx.fillText('mais presença.', 84, height - 197)
+  if (options.theme === 'paper') ctx.fillStyle = palette.accent
+  ctx.fillText('mais presença.', 84, height - 157)
   ctx.fillStyle = palette.subtle
   ctx.font = '800 25px "Plus Jakarta Sans", sans-serif'
-  ctx.fillText('CORAM', 84, height - 140)
-  // O link tem a própria linha na base, com a largura toda; não divide altura com a frase de marca.
-  const url = options.url.trim()
-  ctx.font = '500 19px "JetBrains Mono", monospace'
-  const urlLines = lines(ctx, url, width - 168)
-  const urlTop = height - 50 - (urlLines.length - 1) * 25
-  ctx.fillText('ACESSE O APP:', 84, urlTop - 30)
-  urlLines.forEach((line, index) => ctx.fillText(line, 84, urlTop + index * 25, width - 168))
+  ctx.fillText('CORAM', 84, height - 100)
 }
 

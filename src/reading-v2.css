@@ -1,0 +1,39 @@
+/* Dentro da devocional: Obsidian, vidro e brasa. Tudo sob .reading-v2; cores vêm dos tokens. */
+.reading-column.reading-v2 { max-width: 1040px; padding: clamp(10px, 2vw, 22px); margin: 18px auto; border-radius: 28px; background-image: radial-gradient(var(--home-dots) 1px, transparent 1px); background-size: 22px 22px; }
+.reading-v2 .reading { width: 100%; max-width: none; margin: 14px 0 0; }
+.reading-v2 .reading .eyebrow { color: var(--accent); }
+.reading-v2 .reading h1 { margin: 4px 0 8px; font: italic 500 clamp(32px, 5vw, 54px)/1.08 Literata, Georgia, serif; letter-spacing: -.02em; }
+.reading-v2 .reading .reading-meta { color: var(--text-muted); }
+
+/* etapas */
+.reading-v2 .guided-devotional { margin-top: 1.2rem; }
+.reading-v2 .guided-steps { gap: .65rem; margin-bottom: 1.1rem; }
+.reading-v2 .guided-steps button { padding: .9rem 1rem; border-color: var(--glass-border); border-radius: 18px; background: var(--surface-soft); }
+.reading-v2 .guided-steps button::before { height: 4px; background: var(--glass-border); }
+.reading-v2 .guided-steps button span { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+.reading-v2 .guided-steps button[aria-current=step] { border-color: var(--brand-ember); background: var(--accent-bg); box-shadow: 0 10px 26px var(--hero-glow); }
+
+/* painel da etapa */
+.reading-v2 .guided-panel { padding: clamp(18px, 3vw, 32px); border-color: var(--glass-border); border-radius: 26px; background: linear-gradient(150deg, var(--glass-bg), transparent 70%), var(--surface); }
+.guided-head { display: flex; align-items: center; gap: clamp(14px, 2.4vw, 22px); margin-bottom: 1.2rem; }
+.guided-head h2 { margin: 2px 0 0; font: italic 500 clamp(26px, 3.6vw, 38px)/1.1 Literata, Georgia, serif; letter-spacing: -.02em; }
+.guided-art { flex: none; width: clamp(84px, 11vw, 116px); aspect-ratio: 1; display: grid; place-items: center; border-radius: 26px; border: 1px solid var(--plate-border); background: radial-gradient(circle at 50% 70%, var(--hero-glow), transparent 66%), linear-gradient(160deg, var(--plate-top), var(--plate-bottom)); box-shadow: 0 14px 32px var(--hero-glow); }
+.guided-art img { width: 90%; height: auto; }
+.reading-v2 .guided-panel blockquote { padding: 1rem 1.3rem; border-left: 3px solid var(--brand-ember); border-radius: 0 16px 16px 0; background: var(--surface-soft); }
+.reading-v2 .guided-phrase { border-left-color: var(--brand-ember); border-radius: 0 16px 16px 0; }
+.reading-v2 .devotional-chapter { border-color: var(--glass-border); border-radius: 16px; }
+.reading-v2 .guided-panel .reflection { padding: 1rem 1.2rem; border: 1px solid var(--glass-border); border-radius: 18px; background: var(--surface-soft); }
+
+/* navegação */
+.reading-v2 .guided-navigation .button.primary { min-height: 48px; padding-inline: 26px; border: 0; border-radius: 999px; background: var(--brand-ember); color: #fff; font-weight: 700; }
+.reading-v2 .guided-navigation .button.secondary { border-color: transparent; background: transparent; color: var(--text-muted); }
+
+@media (max-width: 650px) {
+  .reading-v2 .guided-steps { display: flex; overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: 6px; }
+  .reading-v2 .guided-steps button { flex: none; min-width: 108px; scroll-snap-align: start; }
+  .reading-v2 .guided-steps button:last-child:nth-child(odd) { grid-column: auto; }
+  .guided-art { width: 72px; border-radius: 20px; }
+}
+
+/* a frase do devocional já tem a barra de brasa na própria caixa; a citação dentro dela fica sem caixa */
+.reading-v2 .guided-phrase blockquote { padding: 0; border-left: 0; border-radius: 0; background: none; }
