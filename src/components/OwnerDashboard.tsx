@@ -12,6 +12,7 @@ import { ModerationPanel } from './ModerationPanel'
 import { OwnerContentPanel } from './OwnerContentPanel'
 import '../owner-v2.css'
 import { PublisherManagement } from './PublisherManagement'
+import { StudyTermsManager } from './StudyTermsManager'
 
 const defaultRepository = createOwnerDashboardRepository(supabase)
 const dateLabel = (value: string) => `${value.slice(8, 10)}/${value.slice(5, 7)}/${value.slice(0, 4)}`
@@ -172,9 +173,10 @@ export function OwnerDashboard({ page, repo = defaultRepository }: { page: strin
         {mode === 'conteudo' && <>
           <div className="actions dash-subnav">
             <a className="button secondary" href="#owner/perguntas" aria-current={page === 'owner/perguntas' ? 'page' : undefined}>Perguntas dos jogos</a>
+            <a className="button secondary" href="#owner/raio-x" aria-current={page === 'owner/raio-x' ? 'page' : undefined}>Raio-X do Texto</a>
             <a className="button secondary" href="#owner/publicadores" aria-current={page === 'owner/publicadores' ? 'page' : undefined}>Gerenciar publicadores</a>
           </div>
-          {page === 'owner/publicadores' ? <PublisherManagement /> : <OwnerContentPanel />}
+          {page === 'owner/publicadores' ? <PublisherManagement /> : page === 'owner/raio-x' ? <StudyTermsManager /> : <OwnerContentPanel />}
         </>}
       </div>
     </div>

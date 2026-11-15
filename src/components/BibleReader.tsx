@@ -11,6 +11,9 @@ import { displayAttribution } from '../bible/attribution'
 import type { AnnotationStore } from '../bible/annotations'
 import { BibleVerseList } from './BibleVerseList'
 import { BibleFavorites } from './BibleFavorites'
+import { StudyChips, StudySheet, TermText } from './StudyTerms'
+import { useChapterTerms } from '../study/useChapterTerms'
+import type { StudyTerm } from '../study/repository'
 import { ReadingFontControl } from './ReadingFontControl'
 import './bible.css'
 import '../bible-v2.css'
@@ -43,6 +46,8 @@ export function BibleReader({ page, source = bibleProvider, userId, annotationSt
   const [searchError, setSearchError] = useState('')
   const searchTicket = useRef(0)
   const [expiredHighlight, setExpiredHighlight] = useState<typeof result>(null)
+  const studyTerms = useChapterTerms(route?.book, route?.chapter)
+  const [studyOpen, setStudyOpen] = useState<StudyTerm | null>(null)
   const translation = source.translations.find(item => item.id === route?.translation)
   const book = route && bookById(route.book)
   const key = `${page}:${attempt}`
@@ -101,14 +106,16 @@ export function BibleReader({ page, source = bibleProvider, userId, annotationSt
     <article className="reading bible-chapter"><h2>{book.name} {route.chapter} <small>· {translation.abbreviation}</small></h2>
       {!verses && !error && <p role="status">Carregando capítulo…</p>}
       {error && <div role="alert">{error} <button className="text-link" onClick={() => setAttempt(value => value + 1)}>Tentar novamente</button></div>}
+      {verses && <StudyChips terms={studyTerms} onOpen={setStudyOpen} />}
       {verses && !verses.length && <p className="info">Nenhum conteúdo disponível para este capítulo.</p>}
       {missingVerse && <p className="info" role="status">O versículo solicitado não está disponível neste capítulo.</p>}
       {verses && bibleAnnotationsEnabled && userId && annotationStore && current?.copyright && ['nvt', 'ara', 'ntlh'].includes(route.translation)
-        ? <BibleVerseList key={`${userId}:${route.translation}:${route.book}:${route.chapter}`} userId={userId} location={route} verses={verses} copyright={current.copyright} store={annotationStore} highlighted={highlighted} />
-        : verses?.map(verse => <p id={`bible-verse-${verse.number}`} className={highlighted(verse) ? 'bible-verse highlighted' : 'bible-verse'} key={verse.number}><span className="bible-number">{verse.number}{verse.endNumber ? `–${verse.endNumber}` : ''}</span> {verse.text}</p>)}
+        ? <BibleVerseList key={`${userId}:${route.translation}:${route.book}:${route.chapter}`} userId={userId} location={route} verses={verses} copyright={current.copyright} store={annotationStore} highlighted={highlighted} studyTerms={studyTerms} onStudyTerm={setStudyOpen} />
+        : verses?.map(verse => <p id={`bible-verse-${verse.number}`} className={highlighted(verse) ? 'bible-verse highlighted' : 'bible-verse'} key={verse.number}><span className="bible-number">{verse.number}{verse.endNumber ? `–${verse.endNumber}` : ''}</span> <TermText text={verse.text} terms={studyTerms} number={verse.number} endNumber={verse.endNumber} onOpen={setStudyOpen} /></p>)}
     </article>
     <p className="bible-attribution">{displayAttribution(current?.copyright ?? translation.attribution)}</p>
     <nav className="actions bible-navigation" aria-label="Navegação de capítulos"><button className="button secondary" disabled={!previous} onClick={() => previous && go(previous)}>← Capítulo anterior</button><button className="button secondary" disabled={!next} onClick={() => next && go(next)}>Próximo capítulo →</button></nav>
     </>}
+    {studyOpen && <StudySheet term={studyOpen} onClose={() => setStudyOpen(null)} />}
   </section>
 }

@@ -4,13 +4,15 @@ import { bibleFavoritesEnabled } from '../bible/favoritesFeature'
 import { bookById } from '../bible/catalog'
 import type { Location } from '../bible/catalog'
 import type { Verse } from '../bible/provider'
+import { TermText } from './StudyTerms'
+import type { StudyTerm } from '../study/repository'
 
-type Props = { userId: string; location: Location; verses: Verse[]; copyright: string; store: AnnotationStore; highlighted: (verse: Verse) => boolean }
+type Props = { userId: string; location: Location; verses: Verse[]; copyright: string; store: AnnotationStore; highlighted: (verse: Verse) => boolean; studyTerms?: StudyTerm[]; onStudyTerm?: (term: StudyTerm) => void }
 const colors: { value: AnnotationColor; label: string }[] = [{ value: 'yellow', label: 'Amarelo' }, { value: 'blue', label: 'Azul-claro' }, { value: 'pink', label: 'Rosa' }]
 const icons = { copy: 'M8 8h10v12H8zM5 16H4V4h10v1', favorite: 'M6 3h12v18l-6-4-6 4z', note: 'M4 20l4-1L19 8l-3-3L5 16zM14 7l3 3' }
 function ActionIcon({ name }: { name: keyof typeof icons }) { return <svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={icons[name]} /></svg> }
 
-export function BibleVerseList({ userId, location, verses, copyright, store, highlighted }: Props) {
+export function BibleVerseList({ userId, location, verses, copyright, store, highlighted, studyTerms = [], onStudyTerm }: Props) {
   const { translation, book, chapter } = location
   const [rows, setRows] = useState<BibleAnnotation[]>([])
   const [favorites, setFavorites] = useState<BibleFavorite[]>([])
@@ -118,7 +120,7 @@ export function BibleVerseList({ userId, location, verses, copyright, store, hig
       const label = `${verse.number}${verse.endNumber ? `–${verse.endNumber}` : ''}`
       const expanded = selected.includes(verse.number)
       return <div key={verse.number} className="bible-verse-item">
-        <p id={`bible-verse-${verse.number}`} className={`bible-verse${highlighted(verse) ? ' highlighted' : ''}${mark?.color ? ` bible-mark-${mark.color}` : ''}${expanded ? ' bible-verse-selected' : ''}`}><button type="button" className="bible-verse-button" aria-expanded={expanded} aria-pressed={expanded} aria-label={`Versículo ${label}${favorite ? ', favorito' : ''}${mark?.note ? ', com anotação' : ''}`} aria-describedby={`bible-verse-text-${verse.number}`} onClick={() => open(verse)}><span className="bible-number">{label}</span> <span id={`bible-verse-text-${verse.number}`}>{verse.text}</span>{favorite && <span className="bible-saved-indicator" aria-hidden="true"> ♥</span>}{mark?.note && <span className="bible-saved-indicator" aria-hidden="true"> ✎</span>}</button></p>
+        <p id={`bible-verse-${verse.number}`} className={`bible-verse${highlighted(verse) ? ' highlighted' : ''}${mark?.color ? ` bible-mark-${mark.color}` : ''}${expanded ? ' bible-verse-selected' : ''}`}><button type="button" className="bible-verse-button" aria-expanded={expanded} aria-pressed={expanded} aria-label={`Versículo ${label}${favorite ? ', favorito' : ''}${mark?.note ? ', com anotação' : ''}`} aria-describedby={`bible-verse-text-${verse.number}`} onClick={() => open(verse)}><span className="bible-number">{label}</span> <span id={`bible-verse-text-${verse.number}`}>{onStudyTerm ? <TermText text={verse.text} terms={studyTerms} number={verse.number} endNumber={verse.endNumber} onOpen={onStudyTerm} /> : verse.text}</span>{favorite && <span className="bible-saved-indicator" aria-hidden="true"> ♥</span>}{mark?.note && <span className="bible-saved-indicator" aria-hidden="true"> ✎</span>}</button></p>
         {expanded && !multiple && <div className="bible-verse-tools" role="group" aria-label={`Ações do versículo ${label}`}>
           <div className="bible-tools-header"><span>{bookById(book)?.name ?? book} {chapter}:{label} · {translation.toUpperCase()}</span><button type="button" className="bible-tools-close" aria-label="Fechar ações" onClick={() => setSelected([])}>×</button></div>
           <div className="bible-tools-row">
