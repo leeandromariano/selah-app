@@ -8,6 +8,7 @@ import './App.css'
 import './coram.css'
 import './home.css'
 import './journey-v2.css'
+import './games-v2.css'
 import { AuthProvider } from './auth/AuthContext'
 import { useAuth } from './auth/auth'
 import { PasswordForm } from './components/PasswordForm'
@@ -33,6 +34,9 @@ import { NotificationInvite } from './components/NotificationInvite'
 import { BrandLogo } from './components/BrandLogo'
 
 const bibleAnnotationStore = createBibleAnnotationStore(supabase)
+
+// arte 3D de cada jogo da Bereia; o CSS .game-v2 usa este valor para desenhar a placa no cabeçalho
+const gameArts: Record<string, string> = { 'bereia/quiz': 'trophy', 'bereia/mito': 'cards', 'bereia/quem-disse': 'bust', 'bereia/versiculo': 'blocks', 'bereia/linha-do-tempo': 'hourglass' }
 
 function route() {
   const hash = location.hash.slice(1)
@@ -69,11 +73,13 @@ function AppContent() {
     {page === 'privacidade' && <PrivacyPolicy />}
     {page === 'minha-jornada' && <JourneyPage />}
     {page === 'bereia' && <BereiaHub />}
-    {page === 'bereia/quiz' && <QuizPage />}
-    {page === 'bereia/mito' && <ClaimsGame />}
-    {page === 'bereia/quem-disse' && <WhoSaidPage />}
-    {page === 'bereia/versiculo' && <VerseGame />}
-    {page === 'bereia/linha-do-tempo' && <TimelineGame />}
+    {gameArts[page] && <div className="game-v2" data-art={gameArts[page]}>
+      {page === 'bereia/quiz' && <QuizPage />}
+      {page === 'bereia/mito' && <ClaimsGame />}
+      {page === 'bereia/quem-disse' && <WhoSaidPage />}
+      {page === 'bereia/versiculo' && <VerseGame />}
+      {page === 'bereia/linha-do-tempo' && <TimelineGame />}
+    </div>}
     {(page === 'biblia' || page.startsWith('biblia/')) && <BibleReader page={page} userId={auth.session?.user.id} annotationStore={bibleAnnotationStore} />}
     {(page === 'admin' || page === 'admin/comunidade' || page === 'admin/moderacao') && ((auth.loading || auth.adminLoading) ? <p role="status">Verificando acesso administrativo…</p> : auth.session && auth.admin && !auth.recovery ? <AdminPanel community={page === 'admin/comunidade'} moderation={page === 'admin/moderacao'} /> : <div className="info" role="alert">Acesso restrito a administradores. <a href="#login">Entrar</a></div>)}
     {(page === 'owner' || page === 'owner/comunidade' || page === 'owner/moderacao' || page === 'owner/bereia' || page === 'owner/perguntas' || page === 'owner/publicadores') && (auth.ownerLoading ? <p role="status">Verificando acesso OWNER…</p> : auth.owner ? <OwnerPanel page={page} /> : <div className="info" role="alert">Acesso restrito ao OWNER.</div>)}

@@ -1,0 +1,76 @@
+/* Jogos da Bereia por dentro: Obsidian, vidro e brasa. Tudo sob .game-v2; cores vêm dos tokens. */
+.game-v2 { display: grid; gap: 16px; align-content: start; padding: clamp(10px, 2vw, 22px); margin: calc(-1 * clamp(10px, 2vw, 22px)); border-radius: 28px; background-image: radial-gradient(var(--home-dots) 1px, transparent 1px); background-size: 22px 22px; }
+.game-v2 > * { min-width: 0; margin-block: 0; }
+
+/* cabeçalho: título em itálico serifado e o objeto 3D do jogo numa placa */
+.game-v2 .page-heading { position: relative; min-height: 112px; padding-right: 124px; margin: 0; }
+.game-v2 .page-heading .eyebrow { color: var(--accent); }
+.game-v2 .page-heading h1 { margin: 4px 0 8px; font: italic 500 clamp(32px, 5vw, 54px)/1.05 Literata, Georgia, serif; letter-spacing: -.02em; }
+.game-v2 .page-heading p { max-width: 62ch; }
+.game-v2 .page-heading::after { content: ''; position: absolute; top: 0; right: 0; width: 104px; aspect-ratio: 1; border-radius: 26px; border: 1px solid var(--plate-border); background: var(--game-art, none) center / 82% no-repeat, radial-gradient(circle at 50% 70%, var(--hero-glow), transparent 66%), linear-gradient(160deg, var(--plate-top), var(--plate-bottom)); box-shadow: 0 14px 32px var(--hero-glow); }
+.game-v2[data-art="trophy"] { --game-art: url(/home/trophy.webp); }
+.game-v2[data-art="cards"] { --game-art: url(/home/cards.webp); }
+.game-v2[data-art="bust"] { --game-art: url(/home/bust.webp); }
+.game-v2[data-art="blocks"] { --game-art: url(/home/blocks.webp); }
+.game-v2[data-art="hourglass"] { --game-art: url(/home/hourglass.webp); }
+
+/* cartões de jogo em vidro */
+.game-v2 .quiz-card, .game-v2 .claims-board, .game-v2 .verse-board { border-color: var(--glass-border); border-radius: 26px; background: linear-gradient(150deg, var(--glass-bg), transparent 70%), var(--surface); padding: clamp(18px, 2.6vw, 28px); }
+.game-v2 .quiz-card h2 { font: 800 clamp(20px, 2.4vw, 27px)/1.2 'Plus Jakarta Sans', Inter, sans-serif; letter-spacing: -.03em; }
+.game-v2 progress { accent-color: var(--brand-ember); }
+.game-v2 .quiz-close { border-color: var(--glass-border); background: var(--surface-soft); }
+.game-v2 .quiz-close:hover, .game-v2 .quiz-close:focus-visible { border-color: var(--brand-ember); }
+.game-v2 .quiz-verse { border-left: 2px solid var(--brand-ember); border-radius: 0 12px 12px 0; background: var(--accent-bg); font-family: Literata, Georgia, serif; }
+.game-v2 .quiz-verse cite, .game-v2 .quiz-verse small { font-family: 'Plus Jakarta Sans', Inter, sans-serif; }
+
+/* passos e níveis do quiz */
+.game-v2 .quiz-step-number, .game-v2 .timeline-step { background: var(--brand-ember); color: #fff; }
+.game-v2 .quiz-level { border-color: var(--glass-border); border-radius: 18px; background: var(--surface-soft); }
+.game-v2 .quiz-level[data-checked='true'] { border-color: var(--brand-ember); box-shadow: 0 0 0 1px var(--brand-ember) inset, 0 8px 24px var(--hero-glow); background: var(--accent-bg); }
+.game-v2 .quiz-meter i[data-on='true'] { background: var(--brand-ember); }
+.game-v2 .quiz-level:focus-within { outline-color: var(--focus); }
+
+/* opções de resposta */
+.game-v2 .quiz-option { border-color: var(--glass-border); border-radius: 18px; background: var(--surface-soft); transition: border-color .16s ease, transform .16s ease; }
+.game-v2 .quiz-option:not(:disabled):hover { border-color: var(--brand-ember); transform: translateY(-1px); }
+.game-v2 .quiz-letter { border-color: var(--brand-ember); color: var(--brand-ember); }
+.game-v2 .quiz-option[data-state='correct'] { border-color: var(--success); background: var(--success-bg); }
+.game-v2 .quiz-option[data-state='wrong'] { border-color: var(--error); background: var(--accent-bg); }
+.game-v2 .quiz-feedback { border: 1px solid var(--glass-border); border-radius: 18px; background: var(--surface-soft); }
+.game-v2 .quiz-feedback[data-correct='true'] strong { color: var(--success); }
+.game-v2 .quiz-feedback[data-correct='false'] strong { color: var(--error); }
+
+/* modos de "Quem disse isso?" */
+.game-v2 .quiz-mode { border-color: var(--glass-border); border-radius: 20px; background: linear-gradient(150deg, var(--glass-bg), transparent 70%), var(--surface); }
+.game-v2 .quiz-mode:hover, .game-v2 .quiz-mode:focus-visible { border-color: var(--brand-ember); box-shadow: 0 12px 30px var(--hero-glow); }
+.game-v2 .quiz-mode-go { color: var(--brand-ember); }
+.game-v2 .who-quote { font-family: Literata, Georgia, serif; font-weight: 500; }
+
+/* Tá na Bíblia ou Tá Amarrado? */
+.game-v2 .claims-card { border-color: var(--glass-border); border-radius: 26px; background: linear-gradient(160deg, var(--plate-top), var(--plate-bottom)); color: var(--plate-text, #f4f1ea); font-family: Literata, Georgia, serif; font-weight: 500; box-shadow: 0 18px 40px var(--hero-glow); }
+.game-v2 .claims-card[data-mood='yes'], .game-v2 .claims-card[data-state='correct'] { border-color: var(--success); }
+.game-v2 .claims-card[data-mood='no'], .game-v2 .claims-card[data-state='wrong'] { border-color: var(--error); }
+.game-v2 .claims-actions button { border-color: var(--glass-border); border-radius: 999px; background: var(--surface-soft); }
+.game-v2 .claims-no:hover:not(:disabled), .game-v2 .claims-no:focus-visible { border-color: var(--error); }
+.game-v2 .claims-yes:hover:not(:disabled), .game-v2 .claims-yes:focus-visible { border-color: var(--success); }
+.game-v2 .claims-badge { background: var(--surface-soft); border: 1px solid var(--glass-border); }
+.game-v2 .claims-badge[data-verdict='biblia'] { background: var(--success-bg); color: var(--success); }
+.game-v2 .claims-badge[data-verdict='invencao'] { background: var(--accent-bg); color: var(--error); }
+
+/* Versículo Oculto */
+.game-v2 .verse-text { font-family: Literata, Georgia, serif; }
+.game-v2 .verse-blank { background: var(--surface-soft); border: 1px dashed var(--brand-ember); }
+.game-v2 .verse-word { background: var(--accent-bg); }
+.game-v2 .verse-word[data-ok='true'] { background: var(--success-bg); }
+.game-v2 .verse-form input { border-color: var(--glass-border); border-radius: 14px; background: var(--surface-soft); }
+.game-v2 .verse-share { border: 1px solid var(--glass-border); border-radius: 16px; background: var(--surface-soft); }
+
+/* botões e links dentro dos jogos */
+.game-v2 .button.primary { border: 0; border-radius: 999px; background: var(--brand-ember); color: #fff; font-weight: 700; }
+.game-v2 .button.secondary { border-color: var(--glass-border); border-radius: 999px; }
+
+@media (max-width: 640px) {
+  .game-v2 .page-heading { min-height: 0; padding-right: 92px; }
+  .game-v2 .page-heading::after { width: 76px; border-radius: 20px; }
+}
+@media (prefers-reduced-motion: reduce) { .game-v2 .quiz-option { transition: none; } .game-v2 .quiz-option:not(:disabled):hover { transform: none; } }

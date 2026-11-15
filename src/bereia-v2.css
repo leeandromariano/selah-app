@@ -1,0 +1,28 @@
+/* Bereia Games: Obsidian, vidro e brasa. Tudo sob .bereia-v2; cores vêm dos tokens. */
+.bereia-v2 { display: grid; gap: 14px; padding: clamp(10px, 2vw, 22px); margin: calc(-1 * clamp(10px, 2vw, 22px)); border-radius: 28px; background-image: radial-gradient(var(--home-dots) 1px, transparent 1px); background-size: 22px 22px; }
+.bereia-v2 > * { min-width: 0; margin: 0; }
+.bereia-heading .eyebrow { color: var(--accent); }
+.bereia-heading h1 { margin: 4px 0 8px; font-size: clamp(40px, 6vw, 64px); }
+.bereia-heading h1 em { font-family: Literata, Georgia, serif; font-style: italic; font-weight: 500; letter-spacing: -.02em; }
+.bereia-heading p { max-width: 70ch; }
+
+.bereia-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 10px; }
+.bereia-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "text art" "go art"; align-content: space-between; gap: 18px 14px; min-height: 230px; padding: 24px; color: var(--text); text-decoration: none; border: 1px solid var(--glass-border); border-radius: 26px; background: linear-gradient(150deg, var(--glass-bg), transparent 70%), var(--surface); transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease; }
+.bereia-card:hover { transform: translateY(-2px); border-color: var(--brand-ember); box-shadow: 0 16px 38px var(--hero-glow); }
+.bereia-card:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.bereia-card-text { grid-area: text; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.bereia-card-text strong { font: 800 clamp(20px, 2vw, 25px)/1.18 'Plus Jakarta Sans', Inter, sans-serif; letter-spacing: -.03em; }
+.bereia-card-text span { color: var(--text-muted); font-size: 14px; line-height: 1.55; opacity: 1; }
+.bereia-card-art { grid-area: art; align-self: center; width: 118px; aspect-ratio: 1; display: grid; place-items: center; border-radius: 26px; border: 1px solid var(--plate-border); background: radial-gradient(circle at 50% 70%, var(--hero-glow), transparent 66%), linear-gradient(160deg, var(--plate-top), var(--plate-bottom)); }
+.bereia-card-art img { width: 88%; height: auto; }
+.bereia-card-go { grid-area: go; align-self: end; color: var(--brand-ember); font-size: 22px; }
+
+@media (max-width: 1000px) { .bereia-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) {
+  .bereia-grid { gap: 12px; }
+  .bereia-card { grid-template-columns: 1fr; grid-template-areas: "text" "art" "go"; justify-items: start; min-height: 0; padding: 16px; border-radius: 22px; }
+  .bereia-card-text strong { font-size: 17px; }
+  .bereia-card-text span { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 12px; }
+  .bereia-card-art { justify-self: center; width: 92px; border-radius: 22px; }
+}
+@media (prefers-reduced-motion: reduce) { .bereia-card { transition: none; } .bereia-card:hover { transform: none; } }
