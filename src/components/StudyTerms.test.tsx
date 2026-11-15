@@ -47,6 +47,23 @@ describe('Raio-X do Texto: leitor', () => {
   })
 })
 
+describe('Raio-X do Texto: aba lateral no computador', () => {
+  it('no computador vira aba à direita, sem fundo bloqueando a leitura, e libera o espaço ao fechar', () => {
+    const original = window.matchMedia
+    window.matchMedia = (() => ({ media: '(max-width: 900px)', matches: false, addEventListener: () => {}, removeEventListener: () => {} })) as never
+    try {
+      const { unmount } = render(<StudySheet term={grace} onClose={vi.fn()} />)
+      const dialog = screen.getByRole('dialog', { name: 'Graça' })
+      expect(dialog).toHaveAttribute('data-docked', 'true')
+      expect(dialog).toHaveAttribute('aria-modal', 'false')
+      expect(document.querySelector('.study-backdrop')).toBeNull()
+      expect(document.body).toHaveClass('study-docked')
+      unmount()
+      expect(document.body).not.toHaveClass('study-docked')
+    } finally { window.matchMedia = original }
+  })
+})
+
 describe('Raio-X do Texto: repositório', () => {
   it('descarta termos fora do formato e devolve vazio em erro, sem quebrar a leitura', async () => {
     const repo = createStudyRepository(supabase)

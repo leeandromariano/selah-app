@@ -23,8 +23,13 @@
 .study-sheet dd { margin: 0; font-size: 16px; line-height: 1.55; }
 .study-sheet dd .text-link { font-weight: 700; }
 
+/* computador: aba lateral fixa à direita; o texto continua visível e rolável ao lado */
+.study-sheet[data-docked] { left: auto; right: 0; top: 0; bottom: 0; transform: none; width: 400px; max-height: none; padding: 22px 24px 28px; border: 0; border-left: 1px solid var(--glass-border); border-radius: 0; box-shadow: -18px 0 50px #00000040, inset 1px 0 0 var(--plate-border); animation: study-in .24s ease-out; }
+body.study-docked .main-shell { padding-right: 400px; transition: padding-right .24s ease-out; }
+@keyframes study-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+
 @media (prefers-reduced-motion: no-preference) {
-  .study-sheet { animation: study-up .24s ease-out; }
+  .study-sheet:not([data-docked]) { animation: study-up .24s ease-out; }
   .study-backdrop { animation: study-fade .2s ease-out; }
 }
 @keyframes study-up { from { transform: translate(-50%, 24px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }

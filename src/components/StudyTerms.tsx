@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import type { StudyTerm } from '../study/repository'
 import { splitByTerms, termsForVerse } from '../study/mark'
 import { BibleReference } from './BibleReference'
+import { useViewport } from './navigation'
 import '../study.css'
 
 // Texto do versículo com os termos sublinhados. O toque abre a gaveta; os chips do capítulo são a via por teclado e leitor de tela.
@@ -25,10 +26,17 @@ export function StudyChips({ terms, onOpen }: { terms: StudyTerm[]; onOpen: (ter
   </div>
 }
 
-// Gaveta inferior em vidro fosco: o sentido no original, o contexto da época e um versículo paralelo.
+// No celular: gaveta inferior em vidro fosco. No computador: aba lateral à direita que não cobre o texto, para continuar lendo.
+// Mostra o sentido no original, o contexto da época e um versículo paralelo.
 export function StudySheet({ term, onClose }: { term: StudyTerm; onClose: () => void }) {
   const titleId = useId()
   const close = useRef<HTMLButtonElement>(null)
+  const docked = useViewport() === 'desktop'
+  useEffect(() => {
+    if (!docked) return
+    document.body.classList.add('study-docked')
+    return () => document.body.classList.remove('study-docked')
+  }, [docked])
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null
     close.current?.focus()
@@ -37,9 +45,9 @@ export function StudySheet({ term, onClose }: { term: StudyTerm; onClose: () => 
     return () => { window.removeEventListener('keydown', key); previous?.focus?.() }
   }, [onClose])
   return createPortal(<>
-    <div className="study-backdrop" onClick={onClose} />
-    <section className="study-sheet" role="dialog" aria-modal="true" aria-labelledby={titleId}>
-      <span className="study-grip" aria-hidden="true" />
+    {!docked && <div className="study-backdrop" onClick={onClose} />}
+    <section className="study-sheet" data-docked={docked ? 'true' : undefined} role="dialog" aria-modal={docked ? 'false' : 'true'} aria-labelledby={titleId}>
+      {!docked && <span className="study-grip" aria-hidden="true" />}
       <div className="study-head"><div><div className="eyebrow">RAIO-X DO TEXTO</div><h2 id={titleId}>{term.term}</h2></div>
         <button ref={close} type="button" className="study-close" aria-label="Fechar Raio-X" onClick={onClose}>×</button></div>
       <dl>
