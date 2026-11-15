@@ -92,6 +92,16 @@ describe('painel administrativo real', () => {
     expect(screen.queryByText('Visualizações')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Remover' })).not.toBeInTheDocument()
   })
+  it('filtra a lista por título, sem acento e sem diferenciar maiúsculas, e conta os encontrados', async () => {
+    adminBoundary([editorialFixture, { ...editorialFixture, id: 'scheduled', title: 'Agendado Fictício', status: 'scheduled', publish_at: '2099-01-01T12:00:00Z' }])
+    openAdmin()
+    expect(await screen.findByText('Agendado Fictício')).toBeVisible()
+    expect(screen.getByText('2 devocionais encontrados')).toBeVisible()
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Filtrar por título' }), { target: { value: 'AGENDADO ficticio' } })
+    expect(screen.getByText('1 devocional encontrado')).toBeVisible()
+    expect(screen.queryByText(editorialFixture.title)).not.toBeInTheDocument()
+    expect(screen.getByText('Agendado Fictício')).toBeVisible()
+  })
   it('valida formulário vazio e cria rascunho com autoria da sessão', async () => {
     const table = adminBoundary([])
     const user = userEvent.setup()

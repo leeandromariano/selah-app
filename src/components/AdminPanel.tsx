@@ -4,12 +4,13 @@ import { useAuth } from '../auth/auth'
 import { supabase } from '../lib/supabase'
 import { adminMessage, createAdminRepository, dateTimeInput, publicationInstant, statusLabels } from '../admin/repository'
 import type { AdminDevotional, DevotionalInput, DevotionalStatus } from '../admin/repository'
-import { Heading, Icon } from './UI'
+import { Heading } from './UI'
 import { CommunityPanel } from './CommunityPanel'
 import { ModerationLink, ModerationPanel } from './ModerationPanel'
 import { BiblePassagePicker } from './BiblePassagePicker'
 import { bibleEditorialEnabled } from '../bible/editorialFeature'
 import { guidedDevotionalsEnabled } from '../devotionals/guidedFeature'
+import '../admin-v2.css'
 
 const repository = createAdminRepository(supabase)
 const blank: DevotionalInput = { author_name: '', title: '', share_phrase: '', bible_reference: '', bible_text: '', content: '', reflection_question: '', practical_challenge: '', prayer_prompt: '', publish_at: null, status: 'draft' }
@@ -66,17 +67,21 @@ function EditorialPanel({ userId, community, moderation }: { userId: string; com
   }
   function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); void save(false) }
   const format = (instant: string) => new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' }).format(new Date(instant))
-  return <><Heading eyebrow="CUIDANDO DE CADA MENSAGEM" title="Painel administrativo" description="Crie, revise e publique devocionais no Coram." />
-    {owner && <button className="button secondary" aria-expanded={community} onClick={() => { location.hash = community ? 'admin' : 'admin/comunidade' }}>Comunidade e ofensivas</button>}
+  const [filter, setFilter] = useState('')
+  const normal = (text: string) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR')
+  const shown = items.filter(item => normal(item.title).includes(normal(filter.trim())))
+  return <div className="admin-v2">
+    <div className="admin-head"><Heading eyebrow="CUIDANDO DE CADA MENSAGEM" title="Painel administrativo" description="Crie, revise e publique devocionais no Coram." />
+      <div className="admin-switch">{owner && <button className="button secondary" aria-expanded={community} onClick={() => { location.hash = community ? 'admin' : 'admin/comunidade' }}>Comunidade e ofensivas</button>}
+        <ModerationLink selected={moderation} /></div></div>
     {owner && community && <CommunityPanel />}
-    <ModerationLink selected={moderation} />
     {moderation && <ModerationPanel />}
     <div className="info">Agendados permanecem ocultos até uma publicação explícita. As datas da lista usam o horário de Brasília.</div>
     {loading ? <p role="status">Carregando painel…</p> : <>
       {error && <div className="info" role="alert">{error}</div>}
       {!ready ? <button className="button secondary" onClick={() => { setLoading(true); setAttempt(value => value + 1) }}>Tentar novamente</button> : <>
-        <div className="stats">{[{ title: 'Devocionais', value: items.length }, ...(['draft', 'scheduled', 'published'] as const).map(status => ({ title: statusLabels[status], value: items.filter(item => item.status === status).length })), { title: 'Em revisão', value: items.filter(item => item.status === 'draft' && item.review_requested_at).length }].map(stat => <div className="stat" key={stat.title}><Icon name="book" /><p>{stat.title}</p><strong>{stat.value}</strong><small>Contagem de conteúdo</small></div>)}</div>
-        <div className="section-heading"><h2>Gerenciar devocionais</h2><button className="button primary" disabled={saving} onClick={() => edit(blank)}>+ Novo devocional</button></div>
+        <div className="stats">{[{ title: 'Devocionais', art: 'devocionais', value: items.length }, ...(['draft', 'scheduled', 'published'] as const).map(status => ({ title: statusLabels[status], art: ({ draft: 'rascunho', scheduled: 'agendado', published: 'publicado' } as const)[status], value: items.filter(item => item.status === status).length })), { title: 'Em revisão', art: 'revisao', value: items.filter(item => item.status === 'draft' && item.review_requested_at).length }].map(stat => <div className="stat" key={stat.title}><p>{stat.title}</p><strong>{stat.value}</strong><small>Contagem de conteúdo</small><img src={`/home/${stat.art}.webp`} alt="" width="96" height="96" loading="lazy" /></div>)}</div>
+        <div className="section-heading admin-manage"><div><h2>Gerenciar devocionais</h2><p className="muted">{shown.length} {shown.length === 1 ? 'devocional encontrado' : 'devocionais encontrados'}</p></div><input type="search" className="admin-filter" aria-label="Filtrar por título" placeholder="Filtrar por título…" value={filter} onChange={event => setFilter(event.target.value)} /><button className="button primary" disabled={saving} onClick={() => edit(blank)}>+ Novo devocional</button></div>
         {notice && <p className="success" role="status">{notice}</p>}
         {editing && <form className="editor" onSubmit={submit} noValidate><h3>{'id' in editing ? 'Editar devocional' : 'Novo devocional'}</h3><fieldset disabled={saving}><div className="form-grid"><label>Autor (crédito público)<input required maxLength={120} value={editing.author_name ?? ''} onChange={event => setEditing({ ...editing, author_name: event.target.value })} /></label>{([{ key: 'title', label: 'Título' }, { key: 'share_phrase', label: 'Frase central para compartilhar' }, ...(!bibleEditorialEnabled ? [{ key: 'bible_reference', label: 'Referência bíblica' }, { key: 'bible_text', label: 'Texto bíblico' }] as const : []), { key: 'content', label: 'Reflexão' }, { key: 'reflection_question', label: 'Para refletir' }, ...(guidedDevotionalsEnabled ? [{ key: 'practical_challenge', label: 'Coram Deo na Prática' }, { key: 'prayer_prompt', label: 'Oração' }] as const : [])] as const).map(field => <label key={field.key}>{field.label}<textarea required={field.key !== 'share_phrase' && !('id' in editing && (field.key === 'practical_challenge' || field.key === 'prayer_prompt') && !editing.practical_challenge && !editing.prayer_prompt)} maxLength={field.key === 'share_phrase' ? 180 : field.key === 'title' || field.key === 'bible_reference' ? 200 : field.key === 'practical_challenge' || field.key === 'prayer_prompt' ? 500 : undefined} value={editing[field.key] ?? ''} onChange={event => setEditing({ ...editing, [field.key]: event.target.value })} /></label>)}
           {bibleEditorialEnabled && <div><p>Passagem: {editing.bible_reference || 'nenhuma selecionada'}{editing.bible_selection && ` · ${editing.bible_selection.translation.toUpperCase()}`}</p><button type="button" className="button secondary" onClick={() => setShowBiblePicker(value => !value)}>Selecionar passagem</button>{showBiblePicker && <BiblePassagePicker onSelect={({ reference, ...selection }) => { setEditing({ ...editing, bible_reference: reference, bible_text: null, bible_selection: selection }); setShowBiblePicker(false) }} />}</div>}
@@ -85,8 +90,8 @@ function EditorialPanel({ userId, community, moderation }: { userId: string; com
         </div><p className="muted">Fuso do editor: {Intl.DateTimeFormat().resolvedOptions().timeZone}. O acervo usa America/Sao_Paulo. Publicar agora disponibiliza o texto imediatamente.</p>
           <div className="actions"><button className="button primary">{saving ? 'Salvando…' : 'Salvar devocional'}</button><button type="button" className="button secondary" onClick={() => void save(true)}>Publicar agora</button><button type="button" className="button secondary" onClick={() => setEditing(null)}>Cancelar</button></div></fieldset></form>}
         {!items.length && <div className="info">Nenhum devocional cadastrado.</div>}
-        <div className="admin-list">{items.map(item => <div className="admin-row" key={item.id}><span className="mini-icon"><Icon name="book" /></span><div><strong>{item.title}</strong><small>Por {item.author_name?.trim() || 'Autoria não informada'} · {item.bible_reference} · {item.publish_at ? format(item.publish_at) : 'Sem data de publicação'}</small></div><span className="chip">{item.status === 'draft' && item.review_requested_at ? 'Em revisão' : statusLabels[item.status]}</span>{item.status === 'draft' && item.review_requested_at && <button className="text-link" disabled={saving} onClick={() => void returnSubmission(item.id)}>Devolver ao autor</button>}<button className="text-link" disabled={saving} onClick={() => edit(item)}>Editar</button></div>)}</div>
+        <div className="admin-list">{shown.map(item => <div className="admin-row" key={item.id}><span className="mini-icon"><img src="/home/devocionais.webp" alt="" width="40" height="40" loading="lazy" /></span><div><strong>{item.title}</strong><small>Por {item.author_name?.trim() || 'Autoria não informada'} · {item.bible_reference} · {item.publish_at ? format(item.publish_at) : 'Sem data de publicação'}</small></div><span className="chip" data-status={item.status === 'draft' && item.review_requested_at ? 'review' : item.status}>{item.status === 'draft' && item.review_requested_at ? 'Em revisão' : statusLabels[item.status]}</span>{item.status === 'draft' && item.review_requested_at && <button className="text-link" disabled={saving} onClick={() => void returnSubmission(item.id)}>Devolver ao autor</button>}<button className="text-link" disabled={saving} onClick={() => edit(item)}>Editar</button></div>)}</div>
       </>}
     </>}
-  </>
+  </div>
 }
