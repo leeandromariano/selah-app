@@ -40,10 +40,18 @@ export function drawDevotionalCard(ctx: CanvasRenderingContext2D, options: { tit
   ctx.fillRect(0, 0, width, height)
   const stackTop = height - 295
   if (options.art && typeof ctx.drawImage === 'function') {
-    // livro e chama no canto inferior direito, atrás do texto, sangrando para fora da borda
-    const book = 760, flame = 400
-    ctx.drawImage(options.art.book, width - book + 170, stackTop - book * 0.6, book, book)
-    ctx.drawImage(options.art.flame, width - flame - 150, stackTop - book * 0.6 - flame * 0.5, flame, flame)
+    // Livro aberto no canto inferior direito (sangrando pela borda) e, sobre a lombada, a chama sem o pedestal,
+    // flutuando acima das páginas e à direita do fim da frase, como no modelo.
+    const book = width * 0.66
+    const bookX = width * 0.5, bookY = height * 0.562
+    ctx.drawImage(options.art.book, bookX, bookY, book, book)
+    const source = options.art.flame as { naturalWidth?: number; width?: number }
+    const side = source.naturalWidth ?? source.width ?? 320
+    // só a chama: o pedestal ocupa o último quinto da imagem
+    const crop = side * 0.8
+    const flameWidth = width * 0.37, flameHeight = flameWidth * (crop / side)
+    const spineX = bookX + book * 0.4, flameBottom = bookY + book * 0.68 - height * 0.047
+    ctx.drawImage(options.art.flame, 0, 0, side, crop, spineX + width * 0.025 - flameWidth / 2, flameBottom - flameHeight, flameWidth, flameHeight)
   }
   ctx.fillStyle = palette.accent
   ctx.fillRect(84, 84, 90, 10)
