@@ -1,5 +1,5 @@
 /* Minha Jornada: Obsidian, vidro e brasa. Tudo sob .journey-v2; cores vêm dos tokens. */
-.journey-v2 { display: grid; gap: 20px; padding: clamp(10px, 2vw, 22px); margin: calc(-1 * clamp(10px, 2vw, 22px)); border-radius: 28px; background-image: radial-gradient(var(--home-dots) 1px, transparent 1px); background-size: 22px 22px; }
+.journey-v2 { display: grid; gap: 20px; padding: clamp(10px, 2vw, 22px); margin: calc(-1 * clamp(10px, 2vw, 22px)); border-radius: 28px; }
 .journey-v2 > * { min-width: 0; margin-block: 0; }
 .journey-v2 .journey-heading { margin: 0; }
 .journey-v2 .journey-heading h1 em { font-family: Literata, Georgia, serif; font-style: italic; font-weight: 500; color: var(--text); }

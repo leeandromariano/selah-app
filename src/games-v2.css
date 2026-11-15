@@ -1,5 +1,5 @@
 /* Jogos da Bereia por dentro: Obsidian, vidro e brasa. Tudo sob .game-v2; cores vêm dos tokens. */
-.game-v2 { display: grid; gap: 16px; align-content: start; padding: clamp(10px, 2vw, 22px); margin: calc(-1 * clamp(10px, 2vw, 22px)); border-radius: 28px; background-image: radial-gradient(var(--home-dots) 1px, transparent 1px); background-size: 22px 22px; }
+.game-v2 { display: grid; gap: 16px; align-content: start; padding: clamp(10px, 2vw, 22px); margin: calc(-1 * clamp(10px, 2vw, 22px)); border-radius: 28px; }
 .game-v2 > * { min-width: 0; margin-block: 0; }
 
 /* cabeçalho: título em itálico serifado e o objeto 3D do jogo numa placa */

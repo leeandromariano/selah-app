@@ -1,5 +1,5 @@
 /* Dentro da devocional: Obsidian, vidro e brasa. Tudo sob .reading-v2; cores vêm dos tokens. */
-.reading-column.reading-v2 { max-width: 1040px; padding: clamp(10px, 2vw, 22px); margin: 18px auto; border-radius: 28px; background-image: radial-gradient(var(--home-dots) 1px, transparent 1px); background-size: 22px 22px; }
+.reading-column.reading-v2 { max-width: 1040px; padding: clamp(10px, 2vw, 22px); margin: 18px auto; border-radius: 28px; }
 .reading-v2 .reading { width: 100%; max-width: none; margin: 14px 0 0; }
 .reading-v2 .reading .eyebrow { color: var(--accent); }
 .reading-v2 .reading h1 { margin: 4px 0 8px; font: italic 500 clamp(32px, 5vw, 54px)/1.08 Literata, Georgia, serif; letter-spacing: -.02em; }

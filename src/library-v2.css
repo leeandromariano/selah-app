@@ -1,5 +1,5 @@
 /* Devocionais (lista): Obsidian, vidro e brasa. Tudo sob .library-v2; cores vêm dos tokens. Os cartões reaproveitam .home-card (home.css). */
-.library-v2 { display: grid; gap: 14px; padding: clamp(10px, 2vw, 22px); margin: calc(-1 * clamp(10px, 2vw, 22px)); border-radius: 28px; background-image: radial-gradient(var(--home-dots) 1px, transparent 1px); background-size: 22px 22px; }
+.library-v2 { display: grid; gap: 14px; padding: clamp(10px, 2vw, 22px); margin: calc(-1 * clamp(10px, 2vw, 22px)); border-radius: 28px; }
 .library-v2 > * { min-width: 0; margin-block: 0; }
 .library-v2 .page-heading { margin: 0; }
 .library-v2 .page-heading .eyebrow { color: var(--accent); }

@@ -1,6 +1,6 @@
 /* Tela inicial: Obsidian com grade de pontos, bento grid, objetos 3D em vidro fosco e brasa.
    Tudo sob .home-v2. As cores vêm dos tokens (appearance/tokens.css); as placas de arte são sempre escuras, nos dois temas. */
-.home-v2 { display: grid; gap: 20px; padding: clamp(10px, 2vw, 22px); margin: calc(-1 * clamp(10px, 2vw, 22px)); border-radius: 28px; background-image: radial-gradient(var(--home-dots) 1px, transparent 1px); background-size: 22px 22px; }
+.home-v2 { display: grid; gap: 20px; padding: clamp(10px, 2vw, 22px); margin: calc(-1 * clamp(10px, 2vw, 22px)); border-radius: 28px; }
 .home-v2 > * { min-width: 0; }
 
 /* cartão principal: chama + saudação + constância da semana */

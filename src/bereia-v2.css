@@ -1,5 +1,5 @@
 /* Bereia Games: Obsidian, vidro e brasa. Tudo sob .bereia-v2; cores vêm dos tokens. */
-.bereia-v2 { display: grid; gap: 14px; padding: clamp(10px, 2vw, 22px); margin: calc(-1 * clamp(10px, 2vw, 22px)); border-radius: 28px; background-image: radial-gradient(var(--home-dots) 1px, transparent 1px); background-size: 22px 22px; }
+.bereia-v2 { display: grid; gap: 14px; padding: clamp(10px, 2vw, 22px); margin: calc(-1 * clamp(10px, 2vw, 22px)); border-radius: 28px; }
 .bereia-v2 > * { min-width: 0; margin: 0; }
 .bereia-heading .eyebrow { color: var(--accent); }
 .bereia-heading h1 { margin: 4px 0 8px; font-size: clamp(40px, 6vw, 64px); }

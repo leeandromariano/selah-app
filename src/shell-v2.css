@@ -1,0 +1,54 @@
+/* Estrutura global: grade de pontos no app todo, barra de topo em vidro, links do topo (computador),
+   selo da chama e barra inferior flutuante (celular). Cores vêm dos tokens. */
+.app { background-image: radial-gradient(var(--home-dots) 1px, transparent 1px); background-size: 22px 22px; background-attachment: fixed; }
+
+/* barra de topo em vidro, fixa ao rolar */
+.main-shell > header { position: sticky; top: 0; z-index: 30; background: color-mix(in srgb, var(--page) 82%, transparent); backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); border-bottom: 1px solid var(--glass-border); }
+.main-shell > header .header-note { display: none; }
+.main-shell > header .header-brand { margin-right: 4px; }
+@media (min-width: 901px) { .main-shell > header .menu-toggle { order: 99; margin-left: 4px; } }
+.main-shell > header .menu-toggle {  border-color: var(--glass-border); border-radius: 14px; background: var(--surface-soft); }
+
+/* links do topo (só existem no DOM em telas largas) */
+.top-nav { display: flex; align-items: stretch; align-self: stretch; gap: clamp(8px, 1.6vw, 22px); margin-right: auto; margin-left: clamp(8px, 2vw, 28px); }
+.top-nav a { position: relative; display: inline-flex; align-items: center; color: var(--text-muted); font-size: 13px; font-weight: 500; text-decoration: none; white-space: nowrap; }
+.top-nav a:hover { color: var(--text); }
+.top-nav a[aria-current="page"] { color: var(--accent); font-weight: 600; }
+.top-nav a[aria-current="page"]::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px; background: var(--brand-ember); }
+.top-nav a:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; border-radius: 4px; }
+
+/* selo da chama com a ofensiva */
+.streak-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 12px 3px 6px; border: 1px solid var(--glass-border); border-radius: 999px; background: var(--surface-soft); color: var(--text); text-decoration: none; }
+.streak-badge img { width: 26px; height: 26px; object-fit: contain; filter: drop-shadow(0 2px 8px var(--hero-glow)); }
+.streak-badge b { font: 800 15px/1 'Plus Jakarta Sans', Inter, sans-serif; color: var(--brand-ember); }
+.streak-badge[data-empty="true"] img { filter: grayscale(.8) brightness(.8); }
+.streak-badge[data-empty="true"] b { color: var(--text-muted); }
+.main-shell > header a.streak-badge { min-height: 36px; }
+
+/* barra inferior flutuante em vidro (só existe no DOM em celular) */
+.bottom-nav { position: fixed; left: 50%; bottom: max(12px, env(safe-area-inset-bottom)); z-index: 35; transform: translateX(-50%); display: flex; gap: 2px; width: min(calc(100% - 24px), 440px); padding: 6px; border: 1px solid var(--glass-border); border-radius: 30px; background: color-mix(in srgb, var(--surface) 78%, transparent); backdrop-filter: blur(18px) saturate(1.3); -webkit-backdrop-filter: blur(18px) saturate(1.3); box-shadow: 0 18px 40px #0000004d, inset 0 1px 0 var(--plate-border); }
+.bottom-nav a { flex: 1 1 0; min-width: 0; display: grid; justify-items: center; align-content: center; gap: 3px; min-height: 52px; padding: 6px 2px; border-radius: 24px; color: var(--text-muted); font-size: 10px; font-weight: 600; text-decoration: none; }
+.bottom-nav a svg { width: 22px; height: 22px; }
+.bottom-nav a span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bottom-nav a[aria-current="page"] { background: var(--brand-ember); color: #fff; box-shadow: 0 6px 18px var(--hero-glow); }
+.bottom-nav a:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* a barra não cobre o fim das páginas nem o rodapé */
+.app:has(.bottom-nav) .main-shell { padding-bottom: 96px; }
+
+@media (max-width: 900px) {
+  .main-shell > header { height: auto; min-height: 60px; flex-wrap: nowrap; gap: 10px; padding: 8px 16px; }
+  .main-shell > header .header-brand b { display: none; }
+  .main-shell > header .streak-badge { margin-right: auto; }
+}
+.menu-account { display: grid; gap: 2px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--glass-border); }
+.menu-account .nav-item { width: 100%; text-align: left; background: none; border: 0; border-left: 3px solid transparent; font: inherit; color: var(--text); cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { .top-nav a, .bottom-nav a { transition: none; } }
+
+/* telas intermediárias: tudo numa linha só, sem quebrar nem criar rolagem lateral */
+.main-shell > header a, .main-shell > header .text-link { white-space: nowrap; }
+@media (min-width: 901px) and (max-width: 1280px) {
+  .main-shell > header { gap: 12px; padding-inline: 18px; }
+  .top-nav { gap: 11px; margin-left: 6px; }
+  .top-nav a { font-size: 12px; }
+  .main-shell > header .header-brand b { display: none; }
+}

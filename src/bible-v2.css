@@ -1,5 +1,5 @@
 /* Bíblia: Obsidian, vidro e brasa. Tudo sob .bible-v2; cores vêm dos tokens. */
-.bible-v2.bible-reader { max-width: 1040px; padding: clamp(10px, 2vw, 22px); border-radius: 28px; background-image: radial-gradient(var(--home-dots) 1px, transparent 1px); background-size: 22px 22px; }
+.bible-v2.bible-reader { max-width: 1040px; padding: clamp(10px, 2vw, 22px); border-radius: 28px; }
 
 /* cabeçalho: livro 3D, título em itálico, favoritos e tamanho da fonte */
 .bible-hero { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "art head fav" "art font font"; align-items: center; gap: 6px clamp(14px, 3vw, 36px); margin-bottom: 18px; }
