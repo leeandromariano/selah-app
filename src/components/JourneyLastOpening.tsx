@@ -29,7 +29,7 @@ export function JourneyLastOpening({ userId }: { userId: string }) {
     {error ? <div role="alert" className="info">{error} <button type="button" className="button secondary" onClick={retry}>Tentar carregar última abertura</button></div>
       : result === undefined ? <p role="status">Carregando sua última abertura…</p>
       : result === null ? <p>Você ainda não abriu nenhum devocional. <a href="#historico">Conhecer o acervo</a></p>
-      : <div className="journey-last-content"><div><strong>{result.title ?? 'Devocional indisponível'}</strong><p>Aberto em {displayDate(result.opening.opened_at)} · Horário de Brasília</p>{!result.title && <p>Esta publicação não está disponível para leitura agora.</p>}</div>
+      : <div className="journey-last-content"><img className="journey-last-art" src="/home/art-2.svg" alt="" width="160" height="96" decoding="async" /><div><strong>{result.title ?? 'Devocional indisponível'}</strong><p>Aberto em {displayDate(result.opening.opened_at)} · Horário de Brasília</p>{!result.title && <p>Esta publicação não está disponível para leitura agora.</p>}</div>
         {result.title && result.opening.devotional_id && <a className="button primary" href={`#leitura/${encodeURIComponent(result.opening.devotional_id)}/retomar`}>Continuar leitura</a>}</div>}
     <p className="journey-last-note">A abertura indica que você acessou o devocional; ela não representa uma conclusão.</p>
   </section>

@@ -84,13 +84,13 @@ function ConsistencyView({ refreshKey, showHistory, compact, lead, cta }: { refr
     {data && <>
       <div className="consistency-layout">
         <div className="consistency-summary">
-          <div className="consistency-current"><Icon name="flame" /><div><span>Ofensiva atual</span><p><strong>{data.current_streak}</strong> {data.current_streak === 1 ? 'dia consecutivo' : 'dias consecutivos'}</p></div></div>
+          <div className="consistency-current"><img className="consistency-flame" src="/home/flame.webp" alt="" width="96" height="96" decoding="async" /><div><span>Ofensiva atual</span><p><strong>{data.current_streak}</strong> {data.current_streak === 1 ? 'dia consecutivo' : 'dias consecutivos'}</p></div></div>
           <p className="consistency-message" role="status">{messages[data.status]}</p>
           <span className="consistency-today">Hoje: {data.today_completed ? 'concluído ✓' : 'pendente'}</span>
           <dl className="consistency-totals">
-            <div><dt>Recorde pessoal</dt><dd>{data.best_streak} {data.best_streak === 1 ? 'dia' : 'dias'}</dd></div>
-            <div><dt>Dias com conclusões</dt><dd>{data.total_days}</dd></div>
-            <div><dt>Devocionais concluídos</dt><dd>{data.total_devotionals}</dd></div>
+            <div><dt>Recorde pessoal</dt><dd>{data.best_streak} {data.best_streak === 1 ? 'dia' : 'dias'}</dd><img src="/home/trophy.webp" alt="" width="64" height="64" loading="lazy" /></div>
+            <div><dt>Dias com conclusões</dt><dd>{data.total_days}</dd><img src="/home/cards.webp" alt="" width="64" height="64" loading="lazy" /></div>
+            <div><dt>Devocionais concluídos</dt><dd>{data.total_devotionals}</dd><img src="/home/blocks.webp" alt="" width="64" height="64" loading="lazy" /></div>
           </dl>
           <p className="consistency-reference">Referência do servidor: {dayLabel(data.server_today)}.</p>
         </div>
