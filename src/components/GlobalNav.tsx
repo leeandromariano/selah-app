@@ -8,7 +8,7 @@ const consistency = createConsistencyRepository(supabase)
 
 type Extra = { id: string; name: string }
 export function TopNav({ page, extras }: { page: string; extras: Extra[] }) {
-  return <nav className="top-nav" aria-label="Navegação do topo">{[...mainPages, ...extras.map(extra => ({ ...extra, icon: 'grid' }))].map(item => <a key={item.id} href={`#${item.id}`} aria-current={isCurrent(page, item.id) || (item.id !== 'inicio' && page.startsWith(`${item.id}/`)) ? 'page' : undefined}>{item.name}</a>)}</nav>
+  return <nav className="top-nav" data-extras={extras.length} aria-label="Navegação do topo">{[...mainPages.map(page => ({ ...page, extra: false })), ...extras.map(extra => ({ ...extra, icon: 'grid', extra: true }))].map(item => <a key={item.id} className={item.extra ? 'top-nav-extra' : undefined} href={`#${item.id}`} aria-current={isCurrent(page, item.id) || (item.id !== 'inicio' && page.startsWith(`${item.id}/`)) ? 'page' : undefined}>{item.name}</a>)}</nav>
 }
 
 export function BottomNav({ page }: { page: string }) {

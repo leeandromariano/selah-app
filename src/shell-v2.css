@@ -52,3 +52,6 @@
   .top-nav a { font-size: 12px; }
   .main-shell > header .header-brand b { display: none; }
 }
+
+/* quem tem os três painéis (admin, owner e publicador) só os vê no topo em telas bem largas; antes disso ficam no menu lateral */
+@media (max-width: 1499px) { .top-nav[data-extras="3"] .top-nav-extra { display: none; } }
