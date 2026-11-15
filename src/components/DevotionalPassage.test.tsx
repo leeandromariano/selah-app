@@ -29,6 +29,8 @@ describe('passagem do devocional', () => {
     expect(quote).toHaveTextContent('3 Versículo fictício 3')
     expect(quote).not.toHaveTextContent('Versículo fictício 1')
     expect(quote).not.toHaveTextContent('Versículo fictício 4')
+    // cada versículo é um span com a classe que o CSS usa para não aplicar o estilo do aspas de abertura
+    expect([...quote.querySelectorAll(':scope > span.devotional-verse')].map(span => span.querySelector('sup')?.textContent)).toEqual(['2', '3'])
     unmount()
     vi.mocked(fetchApiChapter).mockResolvedValueOnce({ verses, copyright: 'Atribuição fictícia', fumsToken: 'ficticio' })
     const whole = render(<DevotionalPassage reference="Esdras 1" selection={{ translation: 'ntlh', book: 'esdras', chapter: 1, verse: 1, endVerse: 4 }} />)
