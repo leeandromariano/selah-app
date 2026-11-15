@@ -1,0 +1,45 @@
+/* Painel OWNER: Obsidian, vidro e brasa. Tudo sob .dash; cores vêm dos tokens (as cores dos gráficos seguem a paleta do painel). */
+.dash .dash-head h1 { margin: 4px 0 4px; font: 500 clamp(30px, 4.4vw, 48px)/1.08 'Plus Jakarta Sans', Inter, sans-serif; letter-spacing: -.02em; }
+.dash .dash-head h1 em { font-family: Literata, Georgia, serif; font-style: italic; font-weight: 500; }
+.dash .dash-head .eyebrow { color: var(--accent); }
+
+/* período e atualizar */
+.dash .dash-seg { border-color: var(--glass-border); background: var(--surface-soft); }
+.dash .dash-seg button { color: var(--text); font-weight: 600; }
+.dash .dash-seg button[aria-pressed='true'] { background: var(--brand-ember); color: #fff; }
+.dash .dash-controls .button.secondary { min-height: 48px; padding: 0 22px; border: 1px solid var(--glass-border); border-radius: 999px; background: var(--surface-soft); color: var(--accent); font-weight: 600; }
+
+/* menu lateral em vidro */
+.dash .dash-rail-link { border-radius: 16px; }
+.dash .dash-rail-link b { font-weight: 600; }
+.dash .dash-rail-link[aria-current='page'] { background: var(--accent-bg); border-color: var(--accent-border); box-shadow: none; color: var(--accent); }
+@media (min-width: 1000px) {
+  .dash .dash-rail { border-color: var(--glass-border); border-radius: 26px; background: linear-gradient(150deg, var(--glass-bg), transparent 70%), var(--surface); }
+}
+.dash .dash-rail-title { font-family: 'JetBrains Mono', monospace; }
+
+/* contagens: vidro com objeto 3D */
+.dash .dash-kpis { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
+.dash .dash-kpi { position: relative; min-height: 118px; padding: 16px 18px; overflow: hidden; align-content: start; gap: 4px; color: var(--text); border: 1px solid var(--glass-border); border-radius: 22px; background: linear-gradient(150deg, var(--glass-bg), transparent 70%), var(--surface); box-shadow: none; }
+.dash .dash-kpi[data-tone] { background: linear-gradient(150deg, var(--glass-bg), transparent 70%), var(--surface); }
+.dash .dash-kpi[data-alert] { outline: 0; border-color: var(--brand-ember); box-shadow: 0 8px 26px var(--hero-glow); }
+.dash .dash-kpi-label { font: 500 15px/1.2 'Plus Jakarta Sans', Inter, sans-serif; opacity: 1; }
+.dash .dash-kpi-value { margin-top: 2px; font: 800 clamp(30px, 3.4vw, 42px)/1.05 'Plus Jakarta Sans', Inter, sans-serif; letter-spacing: -.03em; }
+.dash .dash-kpi-hint { max-width: calc(100% - 70px); color: var(--text-muted); font-size: 12.5px; opacity: 1; line-height: 1.35; }
+.dash .dash-kpi:has(.dash-kpi-art) .dash-kpi-value { max-width: calc(100% - 78px); }
+.dash .dash-kpi-art { position: absolute; right: 8px; top: 50%; width: 76px; height: 76px; transform: translateY(-46%); object-fit: contain; filter: drop-shadow(0 8px 18px var(--hero-glow)); }
+
+/* cartões dos gráficos */
+.dash .dash-card { border-color: var(--glass-border); border-radius: 24px; background: linear-gradient(150deg, var(--glass-bg), transparent 70%), var(--surface); padding: 20px; }
+.dash .dash-card h3 { font: 600 clamp(17px, 1.8vw, 20px)/1.25 'Plus Jakarta Sans', Inter, sans-serif; letter-spacing: -.02em; }
+.dash .dash-bars { border-bottom-color: var(--glass-border); }
+.dash .dash-hbar { background: var(--surface-soft); }
+.dash .dash-table th, .dash .dash-table td { border-bottom-color: var(--glass-border); }
+
+@media (max-width: 650px) {
+  .dash .dash-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .dash .dash-kpi { min-height: 112px; padding: 14px; }
+  .dash .dash-kpi-art { width: 54px; height: 54px; right: 6px; }
+  .dash .dash-kpi:has(.dash-kpi-art) .dash-kpi-value { max-width: calc(100% - 56px); }
+  .dash .dash-kpi-hint { max-width: 100%; }
+}

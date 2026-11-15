@@ -10,6 +10,7 @@ import { modeForPage, modes } from '../owner/modes'
 import { CommunityPanel } from './CommunityPanel'
 import { ModerationPanel } from './ModerationPanel'
 import { OwnerContentPanel } from './OwnerContentPanel'
+import '../owner-v2.css'
 import { PublisherManagement } from './PublisherManagement'
 
 const defaultRepository = createOwnerDashboardRepository(supabase)
@@ -21,10 +22,10 @@ function Overview({ d }: { d: Dashboard }) {
   const answers = sum(games.per_game.map(item => item.answers)), days = g.daily_completions.map(item => item.day)
   return <>
     <div className="dash-kpis">
-      <KpiCard tone={0} label="Leitores" value={number(r.total)} hint={`+${number(r.new_in_period)} no período`} />
-      <KpiCard tone={1} label="Ativos no período" value={number(r.active_in_period)} hint={`${percent(r.active_in_period, r.total)}% dos leitores`} />
-      <KpiCard tone={2} label="Devocionais concluídos" value={number(g.completions)} hint={`${number(r.completed_today)} leitores concluíram hoje`} />
-      <KpiCard tone={3} label="Respostas nos jogos" value={number(answers)} hint={`${number(games.players)} jogadores`} />
+      <KpiCard tone={0} art="leitores" label="Leitores" value={number(r.total)} hint={`+${number(r.new_in_period)} no período`} />
+      <KpiCard tone={1} art="ativos" label="Ativos no período" value={number(r.active_in_period)} hint={`${percent(r.active_in_period, r.total)}% dos leitores`} />
+      <KpiCard tone={2} art="concluidos" label="Devocionais concluídos" value={number(g.completions)} hint={`${number(r.completed_today)} leitores concluíram hoje`} />
+      <KpiCard tone={3} art="jogos" label="Respostas nos jogos" value={number(answers)} hint={`${number(games.players)} jogadores`} />
       <KpiCard tone={4} alert={c.pending + c.open_reports > 0} label="Para moderar" value={number(c.pending + c.open_reports)} hint={`${number(c.pending)} reflexões · ${number(c.open_reports)} denúncias`} />
     </div>
     <div className="dash-grid">
@@ -53,11 +54,11 @@ function Readers({ d }: { d: Dashboard }) {
   const { readers: r } = d
   return <>
     <div className="dash-kpis">
-      <KpiCard tone={0} label="Leitores cadastrados" value={number(r.total)} />
-      <KpiCard tone={1} label="Novos no período" value={number(r.new_in_period)} hint={`${percent(r.new_in_period, r.total)}% da base`} />
-      <KpiCard tone={2} label="Ativos no período" value={number(r.active_in_period)} hint={`${percent(r.active_in_period, r.total)}% dos leitores`} />
-      <KpiCard tone={3} label="Concluíram hoje" value={number(r.completed_today)} />
-      <KpiCard tone={4} label="Maior sequência" value={`${number(r.best_streak)} dias`} hint="Maior já registrada" />
+      <KpiCard tone={0} art="leitores" label="Leitores cadastrados" value={number(r.total)} />
+      <KpiCard tone={1} art="leitores" label="Novos no período" value={number(r.new_in_period)} hint={`${percent(r.new_in_period, r.total)}% da base`} />
+      <KpiCard tone={2} art="ativos" label="Ativos no período" value={number(r.active_in_period)} hint={`${percent(r.active_in_period, r.total)}% dos leitores`} />
+      <KpiCard tone={3} art="concluidos" label="Concluíram hoje" value={number(r.completed_today)} />
+      <KpiCard tone={4} art="flame" label="Maior sequência" value={`${number(r.best_streak)} dias`} hint="Maior já registrada" />
     </div>
     <div className="dash-grid">
       <Card title="Novos leitores por dia" wide><Bars label="Novos leitores por dia" color={palette[1]} data={r.daily_new.map(item => ({ label: item.day, value: item.n }))} /></Card>
@@ -74,10 +75,10 @@ function Bereia({ d }: { d: Dashboard }) {
   const top = [...games.per_game].sort((a, b) => b.answers - a.answers)[0]
   return <>
     <div className="dash-kpis">
-      <KpiCard tone={0} label="Jogadores" value={number(games.players)} hint={`${percent(games.players, readers.total)}% dos leitores`} />
-      <KpiCard tone={1} label="Respostas e tentativas" value={number(answers)} />
-      <KpiCard tone={2} label="Aproveitamento" value={`${percent(correct, answers)}%`} hint="Acertos e desafios resolvidos" />
-      <KpiCard tone={3} label="Jogo mais jogado" value={top && top.answers > 0 ? gameNames[top.id] : '—'} hint={top && top.answers > 0 ? `${number(top.answers)} no período` : 'Sem jogadas no período'} />
+      <KpiCard tone={0} art="leitores" label="Jogadores" value={number(games.players)} hint={`${percent(games.players, readers.total)}% dos leitores`} />
+      <KpiCard tone={1} art="jogos" label="Respostas e tentativas" value={number(answers)} />
+      <KpiCard tone={2} art="atividade" label="Aproveitamento" value={`${percent(correct, answers)}%`} hint="Acertos e desafios resolvidos" />
+      <KpiCard tone={3} art="jogos" label="Jogo mais jogado" value={top && top.answers > 0 ? gameNames[top.id] : '—'} hint={top && top.answers > 0 ? `${number(top.answers)} no período` : 'Sem jogadas no período'} />
     </div>
     <div className="dash-grid">
       <Card title="Jogadas por dia" wide><Bars label="Jogadas por dia" color={palette[2]} data={games.daily.map(item => ({ label: item.day, value: item.n }))} /></Card>
@@ -94,11 +95,11 @@ function Reflections({ d }: { d: Dashboard }) {
   const { community: c } = d
   return <>
     <div className="dash-kpis">
-      <KpiCard tone={0} label="Reflexões aprovadas" value={number(c.approved)} />
-      <KpiCard tone={1} label="Novas no período" value={number(c.approved_in_period)} />
+      <KpiCard tone={0} art="concluidos" label="Reflexões aprovadas" value={number(c.approved)} />
+      <KpiCard tone={1} art="atividade" label="Novas no período" value={number(c.approved_in_period)} />
       <KpiCard tone={3} alert={c.pending > 0} label="Pendentes" value={number(c.pending)} hint="Aguardando moderação" />
       <KpiCard tone={4} alert={c.open_reports > 0} label="Denúncias abertas" value={number(c.open_reports)} />
-      <KpiCard tone={2} label="Reações" value={number(c.reactions)} hint="Total acumulado" />
+      <KpiCard tone={2} art="favoritados" label="Reações" value={number(c.reactions)} hint="Total acumulado" />
     </div>
     <div className="dash-grid">
       <Card title="Reflexões aprovadas por dia" wide><Bars label="Reflexões aprovadas por dia" color={palette[0]} data={c.daily_comments.map(item => ({ label: item.day, value: item.n }))} /></Card>
@@ -111,11 +112,11 @@ function Content({ d }: { d: Dashboard }) {
   const { content: k, reading: g } = d
   return <>
     <div className="dash-kpis">
-      <KpiCard tone={0} label="Perguntas do quiz" value={number(k.quiz)} />
-      <KpiCard tone={1} label="Frases (Quem disse isso?)" value={number(k.who)} />
-      <KpiCard tone={2} label="Cartas (Tá na Bíblia)" value={number(k.claims)} />
-      <KpiCard tone={3} label="Versículos ocultos" value={number(k.verse)} hint="Um por dia, em ciclo" />
-      <KpiCard tone={4} label="Acontecimentos" value={number(k.timeline)} hint="Linha do Tempo" />
+      <KpiCard tone={0} art="trophy" label="Perguntas do quiz" value={number(k.quiz)} />
+      <KpiCard tone={1} art="bust" label="Frases (Quem disse isso?)" value={number(k.who)} />
+      <KpiCard tone={2} art="cards" label="Cartas (Tá na Bíblia)" value={number(k.claims)} />
+      <KpiCard tone={3} art="blocks" label="Versículos ocultos" value={number(k.verse)} hint="Um por dia, em ciclo" />
+      <KpiCard tone={4} art="hourglass" label="Acontecimentos" value={number(k.timeline)} hint="Linha do Tempo" />
     </div>
     <div className="dash-grid">
       <Card title="Perguntas do quiz por nível"><HBars label="Perguntas por nível" color={palette[0]} items={k.quiz_levels.map(item => ({ label: levelNames[item.level] ?? `Nível ${item.level}`, value: item.n }))} /></Card>
@@ -148,7 +149,7 @@ export function OwnerDashboard({ page, repo = defaultRepository }: { page: strin
     </nav>
     <div className="dash-main">
       <div className="dash-head">
-        <div><div className="eyebrow">CUIDANDO DA COMUNIDADE</div><h1>Painel OWNER</h1></div>
+        <div><div className="eyebrow">CUIDANDO DA COMUNIDADE</div><h1><em>Painel</em> OWNER</h1></div>
         <div className="dash-controls">
           <div role="group" aria-label="Período" className="dash-seg">{periods.map(item => <button key={item.days} type="button" aria-pressed={days === item.days} onClick={() => setDays(item.days)}>{item.label}</button>)}</div>
           <button type="button" className="button secondary" onClick={() => setAttempt(n => n + 1)}>Atualizar</button>

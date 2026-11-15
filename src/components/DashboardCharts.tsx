@@ -3,11 +3,13 @@ import type { ReactNode } from 'react'
 import { number, palette, percent, shortDay } from '../owner/format'
 
 // Cartão numérico colorido (estilo dashboard).
-export function KpiCard({ label, value, hint, tone = 0, alert = false }: { label: string; value: ReactNode; hint?: ReactNode; tone?: number; alert?: boolean }) {
+// `art` é o nome de um objeto 3D em public/home (opcional), desenhado no canto do cartão.
+export function KpiCard({ label, value, hint, tone = 0, alert = false, art }: { label: string; value: ReactNode; hint?: ReactNode; tone?: number; alert?: boolean; art?: string }) {
   return <div className="dash-kpi" data-tone={tone % 6} data-alert={alert || undefined}>
     <span className="dash-kpi-label">{label}</span>
     <strong className="dash-kpi-value">{value}</strong>
     {hint && <small className="dash-kpi-hint">{hint}</small>}
+    {art && <img className="dash-kpi-art" src={`/home/${art}.webp`} alt="" width="96" height="96" loading="lazy" />}
   </div>
 }
 

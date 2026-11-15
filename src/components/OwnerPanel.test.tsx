@@ -26,7 +26,9 @@ describe('Painel OWNER', () => {
     path(route); rpc(async () => ({ data: true, error: null }))
     vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: session('owner') }, error: null })
     render(<App />)
-    expect(await screen.findByText(content, { selector: route === 'owner' ? 'h1' : 'div' })).toBeInTheDocument()
+    // no painel OWNER o título tem "Painel" em itálico (<em>), então o texto vem em dois nós
+    if (route === 'owner') expect(await screen.findByRole('heading', { level: 1, name: content })).toBeInTheDocument()
+    else expect(await screen.findByText(content, { selector: 'div' })).toBeInTheDocument()
     await openMenu()
     expect(screen.getByRole('link', { name: 'Painel OWNER' })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Painel administrativo' })).not.toBeInTheDocument()
