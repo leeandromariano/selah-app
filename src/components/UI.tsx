@@ -8,8 +8,20 @@ export function Heading({ eyebrow, title, description }: { eyebrow: string; titl
 export function DevotionalCard<Id extends string | number>({ item, onOpen, completed = false, variant = 'default', featured = false, artIndex = 0 }: {
   item: Omit<Devotional, 'id'> & { id: Id; author?: string }; onOpen: (id: Id) => void; completed?: boolean
   // 'home': cartão da tela inicial, com arte em vidro; 'featured' é o devocional de hoje
-  variant?: 'default' | 'home'; featured?: boolean; artIndex?: number
+  variant?: 'default' | 'home' | 'library'; featured?: boolean; artIndex?: number
 }) {
+  // 'library': cartão da lista de devocionais, com resumo e a referência bíblica no rodapé
+  if (variant === 'library') return <button className="home-card library-card" onClick={() => onOpen(item.id)}>
+    <span className="home-card-art" aria-hidden="true"><img src={`/home/art-${(artIndex % 3) + 1}.svg`} alt="" loading="lazy" decoding="async" /></span>
+    <span className="home-card-badges"><span className="home-badge">Devocional</span></span>
+    <span className="home-card-body">
+      <small>{item.date} · {item.minutes} min de leitura</small>
+      <h3>{item.title}</h3>
+      <span className="library-byline">{item.author && <small>Por {item.author}</small>}{completed && <span className="home-badge done">Concluído</span>}</span>
+      <span className="home-card-summary">{item.summary}</span>
+      <span className="home-card-foot library-foot"><strong>{item.reference}</strong><span className="home-card-arrow" aria-hidden="true">↗</span></span>
+    </span>
+  </button>
   if (variant === 'home') return <button className={`home-card ${featured ? 'featured' : ''}`} onClick={() => onOpen(item.id)}>
     <span className="home-card-art" aria-hidden="true"><img src={`/home/art-${(artIndex % 3) + 1}.svg`} alt="" loading="lazy" decoding="async" /></span>
     <span className="home-card-badges"><span className="home-badge">Devocional</span>{featured && <span className="home-badge hot">Hoje</span>}</span>
