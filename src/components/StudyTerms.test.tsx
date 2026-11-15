@@ -94,4 +94,36 @@ describe('Raio-X do Texto: painel OWNER', () => {
       p_verses: [{ book: 'genesis', chapter: 15, start: 18, end: 18 }, { book: 'exodo', chapter: 24, start: 8, end: 9 }],
     })))
   })
+  it('importa em lote: confere antes, ignora os que já existem e envia só os válidos como rascunho', async () => {
+    respond([draft])
+    const user = userEvent.setup()
+    render(<StudyTermsManager />)
+    await screen.findByText('Graça')
+    await user.click(screen.getByRole('button', { name: 'Importar em lote' }))
+    const file = JSON.stringify([
+      { term: 'Graça', words: ['graça'], original: 'o', context: 'c', parallel_reference: 'Romanos 11:6', verses: ['Efésios 2:8'] },
+      { term: 'Aliança', words: ['aliança'], original: 'o', context: 'c', parallel_reference: 'Hebreus 8:10', verses: ['Gênesis 15:18'] },
+      { term: 'Ruim', words: ['x'], original: 'o', context: 'c', parallel_reference: 'João 1:1', verses: ['Nada 1:1'] },
+    ])
+    fireEvent.change(screen.getByLabelText('Ou cole aqui'), { target: { value: file } })
+    await user.click(screen.getByRole('button', { name: 'Conferir' }))
+    await waitFor(() => expect(document.querySelector('.study-import [role=status]')?.textContent).toMatch(/2 termo.s. válido.s., 1 com problema, 1 já existe/))
+    expect(vi.mocked(supabase.rpc)).not.toHaveBeenCalledWith('owner_save_study_term', expect.anything())
+    await user.click(screen.getByRole('button', { name: 'Importar 1 termo(s) como rascunho' }))
+    await waitFor(() => expect(vi.mocked(supabase.rpc)).toHaveBeenCalledWith('owner_save_study_term', expect.objectContaining({ p_id: null, p_term: 'Aliança', p_status: 'draft' })))
+    expect(vi.mocked(supabase.rpc).mock.calls.filter(call => call[0] === 'owner_save_study_term')).toHaveLength(1)
+    expect(await screen.findByText('Importação concluída: 1 novo(s) como rascunho, 0 atualizado(s), 1 já existente(s) ignorado(s).')).toBeVisible()
+  })
+  it('publica e despublica vários termos de uma vez', async () => {
+    const other: OwnerStudyTerm = { ...draft, id: 'h', term: 'Fé', words: ['fé'] }
+    respond([draft, other])
+    const user = userEvent.setup()
+    render(<StudyTermsManager />)
+    await screen.findByText('Fé')
+    await user.click(screen.getByRole('checkbox', { name: 'Selecionar todos' }))
+    await user.click(screen.getByRole('button', { name: 'Publicar selecionados (2)' }))
+    await waitFor(() => expect(vi.mocked(supabase.rpc).mock.calls.filter(call => call[0] === 'owner_save_study_term')).toHaveLength(2))
+    expect(vi.mocked(supabase.rpc).mock.calls.filter(call => call[0] === 'owner_save_study_term').every(call => (call[1] as { p_status: string }).p_status === 'published')).toBe(true)
+    expect(await screen.findByText('2 termo(s) publicado(s).')).toBeVisible()
+  })
 })
