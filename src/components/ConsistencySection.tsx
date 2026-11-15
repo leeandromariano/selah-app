@@ -1,4 +1,5 @@
 import { useEffect, useId, useState } from 'react'
+import type { ReactNode } from 'react'
 import { supabase } from '../lib/supabase'
 import { createConsistencyRepository, consistencyMessage } from '../consistency/repository'
 import type { Consistency, ConsistencyDay } from '../consistency/repository'
@@ -13,11 +14,11 @@ const messages = {
   completed_today: 'Conclusão de hoje registrada. Continue no seu ritmo.',
   interrupted: 'Você pode recomeçar hoje. Seus dias anteriores continuam na sua história.',
 }
-export function ConsistencySection({ userId, refreshKey = 0, showHistory = false, compact = false }: { userId: string; refreshKey?: number; showHistory?: boolean; compact?: boolean }) {
+export function ConsistencySection({ userId, refreshKey = 0, showHistory = false, compact = false, lead, cta }: { userId: string; refreshKey?: number; showHistory?: boolean; compact?: boolean; lead?: ReactNode; cta?: ReactNode }) {
   // A new account always receives a fresh component and no prior reader state.
-  return <ConsistencyView key={userId} refreshKey={refreshKey} showHistory={showHistory} compact={compact} />
+  return <ConsistencyView key={userId} refreshKey={refreshKey} showHistory={showHistory} compact={compact} lead={lead} cta={cta} />
 }
-function ConsistencyView({ refreshKey, showHistory, compact }: { refreshKey: number; showHistory: boolean; compact: boolean }) {
+function ConsistencyView({ refreshKey, showHistory, compact, lead, cta }: { refreshKey: number; showHistory: boolean; compact: boolean; lead?: ReactNode; cta?: ReactNode }) {
   const [data, setData] = useState<Consistency | null>(null)
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null)
   const [attempt, setAttempt] = useState(0)
@@ -66,9 +67,13 @@ function ConsistencyView({ refreshKey, showHistory, compact }: { refreshKey: num
     ? monthDays(priorMonth).map(date => ({ date, completions: 0 }))
     : prior?.month === priorMonth ? prior.days : []
   const week = data && compact ? presenceWeek(data.server_today, data.days, earlierDays) : []
-  if (compact) return <section className="coram-presence" aria-label="Sua presença diária" aria-busy={pending}>
-    <span className={`coram-presence-flame ${data?.today_completed ? 'lit' : ''}`} aria-hidden="true"><Icon name="flame" /></span>
-    <div><div className="eyebrow">UM DIA DE CADA VEZ</div><h2>{data ? data.current_streak > 0 ? `Dia ${data.current_streak} na Presença` : 'Seu primeiro dia na Presença' : 'Sua presença diária'}</h2><p>{data ? messages[data.status] : pending ? 'Carregando sua constância…' : error}</p></div>
+  if (compact) return <section className="coram-presence home-hero" aria-label="Sua presença diária" aria-busy={pending}>
+    <span className={`home-hero-art ${data?.today_completed ? 'lit' : ''}`} aria-hidden="true"><img src="/home/flame.webp" alt="" width="176" height="176" decoding="async" /></span>
+    <div className="home-hero-main">
+      {lead ?? <div className="eyebrow">UM DIA DE CADA VEZ</div>}
+      <div className="home-hero-actions"><h2 className="home-streak"><Icon name="flame" />{data ? data.current_streak > 0 ? `Dia ${data.current_streak} na Presença` : 'Seu primeiro dia na Presença' : 'Sua presença diária'}</h2>{cta}</div>
+      <p className="home-hero-message">{data ? messages[data.status] : pending ? 'Carregando sua constância…' : error}</p>
+    </div>
     {week.length > 0 && <ol className="coram-week" aria-label="Constância desta semana">{week.map(day => <li key={day.date} className={`${day.today ? 'today' : ''} ${day.completed ? 'done' : ''}`} aria-label={`${dayLabel(day.date)}: ${day.completed === null ? 'dados indisponíveis' : day.future ? 'data futura' : day.completed ? 'devocional concluído' : 'sem conclusão'}`}><span>{day.label}</span><strong aria-hidden="true">{day.completed ? '✓' : Number(day.date.slice(8))}</strong></li>)}</ol>}
     {error && <button type="button" className="button secondary" disabled={pending} onClick={() => setAttempt(value => value + 1)}>Tentar novamente</button>}
   </section>

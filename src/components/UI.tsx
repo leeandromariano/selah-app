@@ -5,6 +5,24 @@ export function Icon({ name }: { name: string }) {
   return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name] ?? paths.book} /></svg>
 }
 export function Heading({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) { return <div className="page-heading"><div className="eyebrow">{eyebrow}</div><h1>{title}</h1><p>{description}</p></div> }
-export function DevotionalCard<Id extends string | number>({ item, onOpen, completed = false }: { item: Omit<Devotional, 'id'> & { id: Id; author?: string }; onOpen: (id: Id) => void; completed?: boolean }) {
+export function DevotionalCard<Id extends string | number>({ item, onOpen, completed = false, variant = 'default', featured = false, artIndex = 0 }: {
+  item: Omit<Devotional, 'id'> & { id: Id; author?: string }; onOpen: (id: Id) => void; completed?: boolean
+  // 'home': cartão da tela inicial, com arte em vidro; 'featured' é o devocional de hoje
+  variant?: 'default' | 'home'; featured?: boolean; artIndex?: number
+}) {
+  if (variant === 'home') return <button className={`home-card ${featured ? 'featured' : ''}`} onClick={() => onOpen(item.id)}>
+    <span className="home-card-art" aria-hidden="true"><img src={`/home/art-${(artIndex % 3) + 1}.svg`} alt="" loading="lazy" decoding="async" /></span>
+    <span className="home-card-badges"><span className="home-badge">Devocional</span>{featured && <span className="home-badge hot">Hoje</span>}</span>
+    <span className="home-card-body">
+      <small>{item.date} · {item.minutes} min de leitura</small>
+      <h3>{item.title}</h3>
+      {featured && <span className="home-card-summary">{item.summary}</span>}
+      <span className="home-card-foot">
+        <small>{item.author ? `Por ${item.author}` : item.reference}</small>
+        {completed && <span className={`home-badge done`}>{featured ? 'Concluído por você' : 'Concluído'}</span>}
+        {featured ? <span className="home-card-cta">Entrar na Presença <span aria-hidden="true">→</span></span> : <span className="home-card-arrow" aria-hidden="true">↗</span>}
+      </span>
+    </span>
+  </button>
   return <button className="card" onClick={() => onOpen(item.id)}><div className={`landscape ${item.color}`}><span className="landscape-sun" /><span className="hill" /><span className="hill second" /><span className="landscape-label">{item.theme}</span></div><div className="card-body"><small>{item.date} · {item.minutes} min de leitura</small><h3>{item.title}</h3>{item.author && <small>Por {item.author}</small>}{completed && <span className="completion-badge">Concluído</span>}<p>{item.summary}</p><div className="card-link">{item.reference}<span>↗</span></div></div></button>
 }

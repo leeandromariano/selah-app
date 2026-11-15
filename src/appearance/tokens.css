@@ -53,10 +53,26 @@
   --art-peach-hill: #d29774;
   --art-peach-second: #e8ba96;
   --art-label: #fffffff0;
+  /* Home: placas escuras de vidro (a arte 3D só funciona sobre fundo escuro), vidro dos cartões e botão em pílula */
+  --plate-top: #25272d;
+  --plate-bottom: #121317;
+  --plate-border: #ffffff1f;
+  --glass-bg: #ffffffb3;
+  --glass-border: #cbc4b9;
+  --home-dots: #1b1d2014;
+  --hero-glow: #ff550040;
+  --pill-bg: #1b1d20;
+  --pill-text: #ffffff;
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
+  --glass-bg: #1d1f25cc;
+  --glass-border: #ffffff1a;
+  --home-dots: #ffffff12;
+  --hero-glow: #ff550052;
+  --pill-bg: #f4f1ea;
+  --pill-text: #0d0e11;
   --page: #0d0e11;
   --surface: #16181d;
   --surface-soft: #22252d;

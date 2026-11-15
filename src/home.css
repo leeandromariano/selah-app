@@ -1,0 +1,82 @@
+/* Tela inicial: Obsidian com grade de pontos, bento grid, objetos 3D em vidro fosco e brasa.
+   Tudo sob .home-v2. As cores vêm dos tokens (appearance/tokens.css); as placas de arte são sempre escuras, nos dois temas. */
+.home-v2 { display: grid; gap: 20px; padding: clamp(10px, 2vw, 22px); margin: calc(-1 * clamp(10px, 2vw, 22px)); border-radius: 28px; background-image: radial-gradient(var(--home-dots) 1px, transparent 1px); background-size: 22px 22px; }
+.home-v2 > * { min-width: 0; }
+
+/* cartão principal: chama + saudação + constância da semana */
+.home-hero { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 22px clamp(18px, 3vw, 32px); padding: clamp(16px, 2.4vw, 26px); border: 1px solid var(--glass-border); border-radius: 28px; background: linear-gradient(150deg, var(--glass-bg), transparent 70%), var(--surface); box-shadow: inset 0 1px 0 var(--plate-border); }
+.home-hero-art { width: clamp(104px, 15vw, 176px); aspect-ratio: 1; display: grid; place-items: center; border-radius: 24px; border: 1px solid var(--plate-border); background: radial-gradient(circle at 50% 72%, var(--hero-glow), transparent 66%), linear-gradient(160deg, var(--plate-top), var(--plate-bottom)); box-shadow: inset 0 1px 0 var(--plate-border), 0 18px 40px var(--hero-glow); }
+.home-hero-art img { width: 88%; height: auto; filter: saturate(.6) brightness(.82); transition: filter .4s; }
+.home-hero-art.lit img { filter: saturate(1.1) brightness(1.05) drop-shadow(0 6px 22px #ff550080); }
+.home-hero-main { min-width: 0; }
+.home-hero .eyebrow { color: var(--accent); font-size: 11px; font-weight: 700; }
+.home-hero h1 { margin: 6px 0 4px; font: 800 clamp(26px, 3.6vw, 42px)/1.08 'Plus Jakarta Sans', Inter, sans-serif; letter-spacing: -.035em; }
+.home-date { margin: 0; color: var(--text-muted); font-size: 13px; }
+.home-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 18px 0 8px; }
+.home-streak { display: inline-flex; align-items: center; gap: 9px; margin: 0; padding: 9px 18px 9px 13px; border: 1px solid var(--glass-border); border-radius: 999px; background: var(--surface-soft); font: 700 clamp(15px, 1.6vw, 19px)/1.2 'Plus Jakarta Sans', Inter, sans-serif; letter-spacing: -.02em; }
+.home-streak svg { color: var(--brand-ember); }
+.home-cta { min-height: 44px; padding: 0 22px; border: 0; border-radius: 999px; background: var(--pill-bg); color: var(--pill-text); font: 700 14px/1 'Plus Jakarta Sans', Inter, sans-serif; cursor: pointer; }
+.home-cta:hover:not(:disabled) { filter: brightness(1.08); }
+.home-cta:disabled { opacity: .6; cursor: progress; }
+.home-done { color: var(--success); font-weight: 700; font-size: 14px; }
+.home-hero-message { margin: 0; max-width: 46ch; color: var(--text-muted); font-size: 13px; line-height: 1.5; }
+.home-hero .coram-week { grid-column: 1 / -1; width: 100%; margin: 0; gap: 8px; }
+.home-hero .coram-week li { min-height: 62px; gap: 4px; border-radius: 16px; border: 1px solid var(--glass-border); background: var(--surface-soft); color: var(--text-muted); }
+.home-hero .coram-week li span { font-size: 11px; }
+.home-hero .coram-week li strong { font-size: 17px; }
+.home-hero .coram-week li.done { border-color: var(--accent-border); }
+.home-hero .coram-week li.done strong { color: var(--brand-ember); }
+.home-hero .coram-week li.today { border-color: var(--brand-ember); box-shadow: 0 0 0 1px var(--brand-ember) inset, 0 6px 20px var(--hero-glow); color: var(--accent); }
+@media (min-width: 1000px) {
+  .home-hero { grid-template-columns: auto minmax(0, 1fr) minmax(300px, 400px); }
+  .home-hero .coram-week { grid-column: auto; }
+}
+@media (max-width: 560px) {
+  .home-hero { grid-template-columns: 1fr; justify-items: start; }
+  .home-hero-art { width: 112px; }
+}
+
+/* cartões de devocional */
+.home-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.home-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.home-card { position: relative; display: grid; grid-template-rows: 128px 1fr; padding: 0; overflow: hidden; text-align: left; color: var(--text); border: 1px solid var(--glass-border); border-radius: 24px; background: var(--surface); cursor: pointer; transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease; }
+.home-card:hover { transform: translateY(-2px); border-color: var(--brand-ember); box-shadow: 0 14px 34px var(--hero-glow); }
+.home-card:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.home-card-art { display: block; background: linear-gradient(160deg, var(--plate-top), var(--plate-bottom)); }
+.home-card-art img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.home-card-badges { position: absolute; top: 12px; left: 12px; display: flex; gap: 6px; }
+.home-badge { padding: 5px 11px; border: 1px solid var(--plate-border); border-radius: 999px; background: #0d0e11b3; color: var(--plate-text, #f4f1ea); font: 600 12px/1 'Plus Jakarta Sans', Inter, sans-serif; backdrop-filter: blur(8px); }
+.home-badge.hot { border-color: var(--brand-ember); color: #ffb899; }
+.home-badge.done { border-color: transparent; background: var(--success-bg); color: var(--success); }
+.home-card-body { display: grid; gap: 8px; align-content: start; padding: 18px 20px 20px; }
+.home-card-body small { color: var(--text-muted); font-size: 12px; }
+.home-card h3 { margin: 0; font: 800 clamp(19px, 2vw, 24px)/1.18 'Plus Jakarta Sans', Inter, sans-serif; letter-spacing: -.03em; overflow-wrap: anywhere; }
+.home-card-summary { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--text-muted); font-size: 14px; line-height: 1.55; }
+.home-card-foot { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; margin-top: 6px; }
+.home-card-foot small { margin-right: auto; }
+.home-card-arrow { color: var(--brand-ember); font-size: 18px; }
+.home-card-cta { padding: 8px 16px; border-radius: 999px; background: var(--pill-bg); color: var(--pill-text); font: 700 13px/1 'Plus Jakarta Sans', Inter, sans-serif; }
+
+/* Bereia */
+.home-bereia-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.home-game { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 20px; color: var(--text); text-decoration: none; border: 1px solid var(--glass-border); border-radius: 24px; background: var(--surface); transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease; }
+.home-game:hover { transform: translateY(-2px); border-color: var(--brand-ember); box-shadow: 0 14px 34px var(--hero-glow); }
+.home-game:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.home-game-text { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.home-game-text strong { font: 700 17px/1.25 'Plus Jakarta Sans', Inter, sans-serif; letter-spacing: -.02em; }
+.home-game-text > span:not(.home-game-arrow) { color: var(--text-muted); font-size: 13px; line-height: 1.5; }
+.home-game-arrow { color: var(--brand-ember); font-size: 18px; }
+.home-game-art { width: 92px; aspect-ratio: 1; display: grid; place-items: center; border-radius: 22px; border: 1px solid var(--plate-border); background: radial-gradient(circle at 50% 70%, var(--hero-glow), transparent 66%), linear-gradient(160deg, var(--plate-top), var(--plate-bottom)); }
+.home-game-art img { width: 86%; height: auto; }
+
+/* peças que já existiam, no mesmo vidro */
+.home-v2 .mood-checkin, .home-v2 .encouragement, .home-v2 .prayer-due { border-color: var(--glass-border); border-radius: 24px; background: var(--surface); }
+.home-v2 .section-heading { margin-bottom: 14px; }
+
+@media (max-width: 900px) {
+  .home-bereia-grid, .home-grid.three { grid-template-columns: 1fr; }
+  .home-grid { grid-template-columns: 1fr; }
+  .home-game { grid-template-columns: minmax(0, 1fr) 84px; }
+  .home-game-art { width: 84px; }
+}
+@media (prefers-reduced-motion: reduce) { .home-card, .home-game, .home-hero-art img { transition: none; } .home-card:hover, .home-game:hover { transform: none; } }
