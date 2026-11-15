@@ -11,9 +11,9 @@ import { displayAttribution } from '../bible/attribution'
 import type { AnnotationStore } from '../bible/annotations'
 import { BibleVerseList } from './BibleVerseList'
 import { BibleFavorites } from './BibleFavorites'
-import { Heading } from './UI'
 import { ReadingFontControl } from './ReadingFontControl'
 import './bible.css'
+import '../bible-v2.css'
 import { searchBible } from '../bible/search'
 import type { BibleSearchResult } from '../bible/search'
 
@@ -81,10 +81,9 @@ export function BibleReader({ page, source = bibleProvider, userId, annotationSt
   const contains = (verse: Verse, number: number) => number >= verse.number && number <= (verse.endNumber ?? verse.number)
   const highlighted = (verse: Verse) => current !== expiredHighlight && !!route.verse && verse.number <= (route.endVerse ?? route.verse) && (verse.endNumber ?? verse.number) >= route.verse
   const missingVerse = verses && route.verse && (!verses.some(verse => contains(verse, route.verse!)) || (route.endVerse && !verses.some(verse => contains(verse, route.endVerse!))))
-  return <section className="bible-reader" aria-label="Leitor bíblico">
-    <Heading eyebrow="LEITURA" title="Bíblia" description="Escolha um livro e um capítulo para ler." />
-    {bibleFavoritesEnabled && userId && annotationStore && <button className="button secondary bible-favorites-toggle" aria-expanded={showFavorites} onClick={() => setShowFavorites(value => !value)}>{showFavorites ? '← Voltar à Bíblia' : '♡ Favoritados'}</button>}
-    <ReadingFontControl />
+  return <section className="bible-reader bible-v2" aria-label="Leitor bíblico">
+    <div className="bible-hero"><img className="bible-hero-art" src="/home/biblia.webp" alt="" width="150" height="150" decoding="async" /><div className="page-heading bible-heading"><div className="eyebrow">LEITURA</div><h1><em>Bíblia</em></h1><p>Escolha um livro e um capítulo para ler.</p></div>    {bibleFavoritesEnabled && userId && annotationStore && <button className="button secondary bible-favorites-toggle" aria-expanded={showFavorites} onClick={() => setShowFavorites(value => !value)}>{showFavorites ? '← Voltar à Bíblia' : <><img src="/home/favoritados.webp" alt="" width="28" height="28" />Favoritados</>}</button>}
+    <ReadingFontControl /></div>
     {showFavorites && userId && annotationStore ? <BibleFavorites key={userId} userId={userId} store={annotationStore} source={source} onOpen={() => setShowFavorites(false)} /> : <>
     <form className="bible-jump" onSubmit={event => { event.preventDefault(); const target = parseReference(reference); if (target) { setReferenceError(''); go(target); return } if (!bibleAvailable || !['nvt', 'ara', 'ntlh'].includes(route.translation)) { setReferenceError('Digite uma referência completa, como João 3:16.'); return } const query = reference.trim(); if (query.length < 2 || query.length > 80) { setReferenceError('Digite de 2 a 80 caracteres para buscar.'); return } const ticket = ++searchTicket.current; setReferenceError(''); setSearching(true); setSearchError(''); searchBible(route.translation, query).then(results => { if (searchTicket.current === ticket) setSearchResults(results) }).catch(() => { if (searchTicket.current === ticket) setSearchError('Não foi possível buscar agora. Tente novamente.') }).finally(() => { if (searchTicket.current === ticket) setSearching(false) }) }}>
       <label>Passagem ou palavra bíblica<input type="search" value={reference} onChange={event => { searchTicket.current++; setSearching(false); setReference(event.target.value); setReferenceError(''); setSearchResults(null); setSearchError('') }} placeholder="Ex.: João 3:16 ou ansiedade" /></label>

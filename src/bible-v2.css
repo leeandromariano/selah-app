@@ -1,0 +1,43 @@
+/* Bíblia: Obsidian, vidro e brasa. Tudo sob .bible-v2; cores vêm dos tokens. */
+.bible-v2.bible-reader { max-width: 1040px; padding: clamp(10px, 2vw, 22px); border-radius: 28px; background-image: radial-gradient(var(--home-dots) 1px, transparent 1px); background-size: 22px 22px; }
+
+/* cabeçalho: livro 3D, título em itálico, favoritos e tamanho da fonte */
+.bible-hero { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "art head fav" "art font font"; align-items: center; gap: 6px clamp(14px, 3vw, 36px); margin-bottom: 18px; }
+.bible-hero-art { grid-area: art; width: clamp(104px, 14vw, 168px); height: auto; padding: 10px; border-radius: 26px; border: 1px solid var(--plate-border); background: radial-gradient(circle at 50% 72%, var(--hero-glow), transparent 66%), linear-gradient(160deg, var(--plate-top), var(--plate-bottom)); box-shadow: 0 16px 36px var(--hero-glow); }
+.bible-heading { grid-area: head; margin: 0; }
+.bible-heading h1 { margin: 2px 0 6px; font-size: clamp(38px, 6vw, 60px); }
+.bible-heading h1 em { font-family: Literata, Georgia, serif; font-style: italic; font-weight: 500; letter-spacing: -.02em; }
+.bible-heading .eyebrow { color: var(--accent); }
+.bible-v2 .bible-favorites-toggle { grid-area: fav; align-self: start; min-height: 44px; padding: 0 20px; border: 1px solid var(--brand-ember); border-radius: 999px; background: transparent; color: var(--accent); font-weight: 600; display: inline-flex; align-items: center; gap: 8px; }
+.bible-v2 .bible-favorites-toggle img { width: 28px; height: 28px; margin-left: -6px; }
+.bible-v2 .reading-font-control { grid-area: font; justify-self: end; margin: 0; }
+.bible-v2 .reading-font-control input { accent-color: var(--brand-ember); }
+
+/* busca e seletores */
+.bible-v2 .bible-jump { margin: 8px 0 12px; }
+.bible-v2 input[type="search"], .bible-v2 select { min-height: 48px; border: 1px solid var(--glass-border); border-radius: 14px; background: var(--surface-soft); color: var(--text); }
+.bible-v2 .bible-jump .button { min-height: 48px; padding-inline: 26px; border: 0; border-radius: 999px; background: var(--brand-ember); color: #fff; font-weight: 700; }
+.bible-v2 .bible-jump .button:disabled { opacity: .6; }
+.bible-v2 .bible-book-picker { border-color: var(--glass-border); border-radius: 16px; background: var(--surface-soft); }
+.bible-v2 .bible-book-groups button { border-color: var(--glass-border); border-radius: 999px; }
+.bible-v2 .bible-book-groups button:hover, .bible-v2 .bible-book-groups button[aria-pressed="true"] { border-color: var(--brand-ember); color: var(--accent); }
+.bible-v2 .bible-controls { gap: 14px; }
+.bible-v2 .bible-search-results { border: 1px solid var(--glass-border); border-radius: 20px; background: var(--surface); }
+
+/* capítulo: serifa e barra de brasa à esquerda */
+.bible-v2 .bible-chapter { max-width: none; margin: 8px 0 28px; }
+.bible-v2 .bible-chapter h2 { font: 500 clamp(22px, 3vw, 30px)/1.2 'Plus Jakarta Sans', Inter, sans-serif; letter-spacing: -.02em; }
+.bible-v2 .bible-chapter .bible-verse { font-family: Literata, Georgia, 'Times New Roman', serif; line-height: 1.75; padding: .55rem 1rem; margin: .7rem 0; border-radius: 0 10px 10px 0; box-shadow: inset 2px 0 0 var(--brand-ember); }
+.bible-v2 .bible-chapter .bible-verse-selected { box-shadow: inset 3px 0 0 var(--brand-ember); background: var(--accent-bg); }
+.bible-v2 .bible-number { color: var(--brand-ember); font-family: Literata, Georgia, serif; }
+.bible-v2 .bible-verse-tools { border-color: var(--glass-border); border-radius: 18px; background: var(--surface); }
+.bible-v2 .bible-navigation .button { border-color: var(--glass-border); border-radius: 999px; }
+
+@media (max-width: 650px) {
+  .bible-hero { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "head art" "fav fav" "font font"; }
+  .bible-hero-art { width: 88px; justify-self: end; padding: 7px; border-radius: 20px; }
+  .bible-v2 .bible-favorites-toggle { justify-self: start; }
+  .bible-v2 .reading-font-control { justify-self: start; }
+  .bible-v2 .bible-controls { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .bible-v2 .bible-controls label:first-child { grid-column: 1 / -1; }
+}
