@@ -29,3 +29,15 @@ Regras (as mesmas que o painel confere):
 Eu converto o PDF para este formato. Um exemplo está em `docs/raio-x-exemplo.json`. Aceita uma lista, ou um objeto com a chave `terms`. `words` e `verses` podem ser lista ou texto corrido.
 
 Termo que já existe (mesmo nome) é ignorado, a menos que você marque "Atualizar os termos que já existem", que mantém a situação atual (rascunho ou publicado).
+
+## Dicionário de teologia
+
+Cada termo pode ter um verbete mais longo (até 1500 caracteres), mostrado na gaveta/aba como "Dicionário de teologia". Planilha-modelo: `raio-x-dicionario-modelo.xlsx` (colunas `TERMO` e `DICIONARIO`).
+
+No painel OWNER, em Raio-X do Texto, use "Importar dicionário". Cada verbete é ligado ao termo que já existe, pelo nome (sem diferenciar maiúsculas); termo inexistente é apontado e ignorado. Formato do arquivo (JSON), uma lista:
+
+```json
+[{ "term": "Graça", "dictionary": "Definição fictícia.\n\nSegundo parágrafo." }]
+```
+
+Também dá para incluir `"dictionary"` direto no arquivo de termos da importação em lote.

@@ -2,18 +2,18 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
 import { bookById } from '../bible/catalog'
-import { parseImport, parseVerses } from '../study/import'
-import type { ImportRow } from '../study/import'
+import { DICTIONARY_MAX, parseDictionaryImport, parseImport, parseVerses } from '../study/import'
+import type { DictionaryRow, ImportRow } from '../study/import'
 import { createStudyRepository } from '../study/repository'
 import type { OwnerStudyTerm, StudyStatus } from '../study/repository'
 
 const repository = createStudyRepository(supabase)
-const blank = { id: null as string | null, term: '', words: '', original: '', context: '', parallel_reference: '', verses: '', status: 'draft' as StudyStatus }
+const blank = { id: null as string | null, term: '', words: '', original: '', context: '', parallel_reference: '', verses: '', dictionary: '', status: 'draft' as StudyStatus }
 type Draft = typeof blank
 
 const verseLine = (item: { book: string; chapter: number; start: number; end: number }) =>
   `${bookById(item.book)?.name ?? item.book} ${item.chapter}:${item.start}${item.end > item.start ? `-${item.end}` : ''}`
-const toDraft = (item: OwnerStudyTerm): Draft => ({ id: item.id, term: item.term, words: item.words.join(', '), original: item.original, context: item.context, parallel_reference: item.parallel_reference, verses: item.verses.map(verseLine).join('\n'), status: item.status })
+const toDraft = (item: OwnerStudyTerm): Draft => ({ id: item.id, term: item.term, words: item.words.join(', '), original: item.original, context: item.context, parallel_reference: item.parallel_reference, verses: item.verses.map(verseLine).join('\n'), dictionary: item.dictionary ?? '', status: item.status })
 
 // Raio-X do Texto no painel OWNER: os termos entram como rascunho e só aparecem para os leitores depois de publicados.
 export function StudyTermsManager() {
@@ -28,6 +28,9 @@ export function StudyTermsManager() {
   const [importText, setImportText] = useState('')
   const [preview, setPreview] = useState<{ rows: ImportRow[]; error?: string } | null>(null)
   const [updateExisting, setUpdateExisting] = useState(false)
+  const [dictOpen, setDictOpen] = useState(false)
+  const [dictText, setDictText] = useState('')
+  const [dictPreview, setDictPreview] = useState<{ rows: DictionaryRow[]; error?: string } | null>(null)
   useEffect(() => {
     let active = true
     repository.ownerList().then(list => { if (active) { setItems(list); setError('') } }).catch(() => { if (active) setError('Não foi possível carregar os termos.') })
@@ -43,7 +46,7 @@ export function StudyTermsManager() {
     if (!editing.term.trim() || !words.length || !editing.original.trim() || !editing.context.trim() || !editing.parallel_reference.trim() || !verses.length) { setNotice('Preencha todos os campos e ao menos um versículo.'); return }
     setBusy(true); setNotice('')
     try {
-      await repository.ownerSave({ id: editing.id, term: editing.term.trim(), words, original: editing.original.trim(), context: editing.context.trim(), parallel_reference: editing.parallel_reference.trim(), status: override ?? editing.status, verses })
+      await repository.ownerSave({ id: editing.id, term: editing.term.trim(), words, original: editing.original.trim(), context: editing.context.trim(), parallel_reference: editing.parallel_reference.trim(), status: override ?? editing.status, verses, dictionary: editing.dictionary.trim() })
       setEditing(null); setNotice(override === 'published' ? 'Termo publicado: já aparece para os leitores.' : 'Termo salvo.'); setAttempt(value => value + 1)
     } catch { setNotice('Não foi possível salvar o termo. Confira os campos e tente novamente.') }
     finally { setBusy(false) }
@@ -88,6 +91,23 @@ export function StudyTermsManager() {
     setBusy(false); setPreview(null); setImportText(''); setImporting(false); setAttempt(value => value + 1)
     setNotice(`Importação concluída: ${created} novo(s) como rascunho, ${updated} atualizado(s), ${skipped} já existente(s) ignorado(s)${failed ? `, ${failed} com erro ao salvar` : ''}.`)
   }
+  async function readDictFile(file: File | undefined) {
+    if (!file) return
+    const text = await file.text()
+    setDictText(text); setDictPreview(parseDictionaryImport(text)); setNotice('')
+  }
+  async function runDictImport() {
+    if (!dictPreview || busy) return
+    const entries = dictPreview.rows.flatMap(row => row.entry ? [row.entry] : [])
+    if (!entries.length) return
+    setBusy(true); setNotice('')
+    try {
+      const { updated, missing } = await repository.ownerSetDictionary(entries)
+      setDictPreview(null); setDictText(''); setDictOpen(false); setAttempt(value => value + 1)
+      setNotice(`Dicionário: ${updated} verbete(s) gravado(s)${missing.length ? `; sem termo cadastrado: ${missing.join(', ')}` : ''}.`)
+    } catch { setNotice('Não foi possível salvar o dicionário. Tente novamente.') }
+    finally { setBusy(false) }
+  }
   async function bulk(status: StudyStatus) {
     if (busy || !items) return
     const targets = items.filter(item => selected.includes(item.id) && item.status !== status)
@@ -105,6 +125,7 @@ export function StudyTermsManager() {
   return <section className="study-manager" aria-labelledby="study-manager-title">
     <div className="section-heading"><div><div className="eyebrow">RAIO-X DO TEXTO</div><h2 id="study-manager-title">Termos para entender o texto</h2></div>
       <div className="actions"><button type="button" className="button secondary" aria-expanded={importing} onClick={() => { setImporting(value => !value); setPreview(null) }}>Importar em lote</button>
+        <button type="button" className="button secondary" aria-expanded={dictOpen} onClick={() => { setDictOpen(value => !value); setDictPreview(null) }}>Importar dicionário</button>
         <button type="button" className="button primary" disabled={busy} onClick={() => { setEditing(blank); setNotice('') }}>+ Novo termo</button></div></div>
     <p className="muted">Cada termo explica, em poucas linhas, o sentido no original, o contexto da época e um versículo paralelo. Ele aparece sublinhado nos versículos ligados a ele e como atalho no capítulo, e só para leitores depois de publicado.</p>
     {error && <div className="info" role="alert">{error} <button type="button" className="button secondary" onClick={() => setAttempt(value => value + 1)}>Tentar novamente</button></div>}
@@ -123,6 +144,19 @@ export function StudyTermsManager() {
         <div className="actions"><button type="button" className="button primary" disabled={busy || !preview.rows.some(row => row.input)} onClick={() => void runImport()}>{busy ? 'Importando…' : `Importar ${preview.rows.filter(row => row.input && (updateExisting || !existing.has(normal(row.input.term)))).length} termo(s) como rascunho`}</button></div>
       </>}
     </div>}
+    {dictOpen && <div className="editor study-import">
+      <h3>Importar dicionário de teologia</h3>
+      <p className="muted">Cada verbete é ligado ao termo que já existe, pelo nome. Envie o arquivo (JSON) ou cole o conteúdo. Termos que não existem são apontados e ignorados. O verbete aparece na gaveta do Raio-X como "Dicionário de teologia".</p>
+      <label>Arquivo do dicionário<input type="file" accept=".json,application/json" onChange={event => void readDictFile(event.target.files?.[0])} /></label>
+      <label>Ou cole aqui<textarea value={dictText} onChange={event => { setDictText(event.target.value); setDictPreview(null) }} placeholder='[{ "term": "Graça", "dictionary": "..." }]' /></label>
+      <div className="actions"><button type="button" className="button secondary" disabled={!dictText.trim()} onClick={() => setDictPreview(parseDictionaryImport(dictText))}>Conferir dicionário</button></div>
+      {dictPreview?.error && <div className="info" role="alert">{dictPreview.error}</div>}
+      {dictPreview && !dictPreview.error && <>
+        <p role="status"><strong>{dictPreview.rows.filter(row => row.entry && existing.has(normal(row.entry.term))).length}</strong> verbete(s) para gravar, <strong>{dictPreview.rows.filter(row => row.entry && !existing.has(normal(row.entry.term))).length}</strong> sem termo cadastrado, <strong>{dictPreview.rows.filter(row => !row.entry).length}</strong> com problema.</p>
+        <ul className="study-preview">{dictPreview.rows.map((row, index) => <li key={index} data-ok={row.entry && existing.has(normal(row.entry.term)) ? 'true' : 'false'}><strong>{row.label}</strong>{row.entry ? (existing.has(normal(row.entry.term)) ? <span>pronto</span> : <span>termo não cadastrado</span>) : <span>{row.problems.join('; ')}</span>}</li>)}</ul>
+        <div className="actions"><button type="button" className="button primary" disabled={busy || !dictPreview.rows.some(row => row.entry && existing.has(normal(row.entry.term)))} onClick={() => void runDictImport()}>{busy ? 'Gravando…' : `Gravar ${dictPreview.rows.filter(row => row.entry && existing.has(normal(row.entry.term))).length} verbete(s)`}</button></div>
+      </>}
+    </div>}
     {editing && <form className="editor study-editor" onSubmit={event => void save(event)} noValidate>
       <h3>{editing.id ? 'Editar termo' : 'Novo termo'}</h3>
       <fieldset disabled={busy}><div className="form-grid">
@@ -130,6 +164,7 @@ export function StudyTermsManager() {
         <label>Palavras que ficam sublinhadas (separe por vírgula)<input value={editing.words} onChange={event => set({ words: event.target.value })} placeholder="graça, graças" /></label>
         <label className="study-wide">No original<textarea maxLength={300} value={editing.original} onChange={event => set({ original: event.target.value })} /></label>
         <label className="study-wide">Na época (contexto cultural)<textarea maxLength={500} value={editing.context} onChange={event => set({ context: event.target.value })} /></label>
+        <label className="study-wide">Dicionário de teologia (opcional, até 1500 caracteres; linha em branco separa parágrafos)<textarea maxLength={DICTIONARY_MAX} value={editing.dictionary} onChange={event => set({ dictionary: event.target.value })} /></label>
         <label>Versículo paralelo<input maxLength={80} value={editing.parallel_reference} onChange={event => set({ parallel_reference: event.target.value })} placeholder="Romanos 11:6" /></label>
         <label>Situação<select value={editing.status} onChange={event => set({ status: event.target.value as StudyStatus })}><option value="draft">Rascunho</option><option value="published">Publicado</option></select></label>
         <label className="study-wide">Versículos onde vale (um por linha)<textarea value={editing.verses} onChange={event => set({ verses: event.target.value })} placeholder={'Efésios 2:8\nRomanos 3:24'} /></label>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseImport } from './import'
+import { parseDictionaryImport, parseImport } from './import'
 
 const good = { term: 'Aliança', words: ['aliança', 'alianças'], original: 'Do hebraico berit (fictício).', context: 'Contexto fictício.', parallel_reference: 'Hebreus 8:10', verses: ['Gênesis 15:18', 'Êxodo 24:8-9'] }
 
@@ -32,5 +32,26 @@ describe('Raio-X: importação em lote', () => {
     expect(parseImport('não é json').error).toBe('O arquivo não é um JSON válido.')
     expect(parseImport('{"x":1}').error).toBe('Esperava uma lista de termos.')
     expect(parseImport('[]').error).toBe('A lista está vazia.')
+  })
+})
+
+describe('Raio-X: dicionário de teologia', () => {
+  it('o termo importado pode trazer o verbete, e verbete grande demais é apontado', () => {
+    const ok = parseImport(JSON.stringify([{ ...good, dictionary: ' Verbete fictício. ' }]))
+    expect(ok.rows[0].input?.dictionary).toBe('Verbete fictício.')
+    const big = parseImport(JSON.stringify([{ ...good, dictionary: 'x'.repeat(1501) }]))
+    expect(big.rows[0].problems[0]).toContain('1500')
+  })
+  it('importa só o dicionário pelo nome do termo e aponta o que não serve', () => {
+    const { rows } = parseDictionaryImport(JSON.stringify([
+      { term: 'Graça', dictionary: 'Verbete fictício.' }, { term: 'graça', dictionary: 'Repetido.' }, { term: '', dictionary: 'Sem nome.' },
+      { term: 'Fé', dictionary: '' }, { term: 'Longo', dictionary: 'x'.repeat(1501) }, 'solto',
+    ]))
+    expect(rows.map(row => !!row.entry)).toEqual([true, false, false, false, false, false])
+    expect(rows[0].entry).toEqual({ term: 'Graça', dictionary: 'Verbete fictício.' })
+    expect(rows[1].problems).toContain('nome repetido no arquivo')
+    expect(rows[3].problems).toContain('verbete vazio')
+    expect(parseDictionaryImport('x').error).toBe('O arquivo não é um JSON válido.')
+    expect(parseDictionaryImport('{"a":1}').error).toBe('Esperava uma lista de verbetes.')
   })
 })

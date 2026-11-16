@@ -53,6 +53,7 @@ export function StudySheet({ term, onClose }: { term: StudyTerm; onClose: () => 
       <dl>
         <div><dt>No original</dt><dd>{term.original}</dd></div>
         <div><dt>Na época</dt><dd>{term.context}</dd></div>
+        {term.dictionary && <div className="study-dictionary"><dt>Dicionário de teologia</dt>{term.dictionary.split(/\n{2,}/).map((part, index) => <dd key={index}>{part}</dd>)}</div>}
         <div><dt>Versículo paralelo</dt><dd onClick={onClose}><BibleReference reference={term.parallel_reference} /></dd></div>
       </dl>
     </section>

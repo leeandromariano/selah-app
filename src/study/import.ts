@@ -13,9 +13,10 @@ export function parseVerses(lines: string[]): { verses: StudyTermInput['verses']
 }
 
 // Um termo no arquivo de importação (JSON). A situação não vem do arquivo: tudo entra como rascunho e é publicado depois, em lote.
-export type ImportEntry = { term?: unknown; words?: unknown; original?: unknown; context?: unknown; parallel_reference?: unknown; verses?: unknown }
+export type ImportEntry = { term?: unknown; words?: unknown; original?: unknown; context?: unknown; parallel_reference?: unknown; verses?: unknown; dictionary?: unknown }
 export type ImportRow = { label: string; input: StudyTermInput | null; problems: string[] }
 
+export const DICTIONARY_MAX = 1500
 const clean = (value: unknown) => typeof value === 'string' ? value.trim() : ''
 const list = (value: unknown, separator: RegExp) => Array.isArray(value) ? value.map(clean).filter(Boolean) : clean(value).split(separator).map(item => item.trim()).filter(Boolean)
 
@@ -33,8 +34,10 @@ function check(entry: ImportEntry, index: number): ImportRow {
   if (invalid) problems.push(`versículo inválido: "${invalid}"`)
   else if (!verses.length) problems.push('ao menos um versículo')
   else if (verses.length > 60) problems.push('no máximo 60 versículos')
+  const dictionary = clean(entry.dictionary)
+  if (dictionary.length > DICTIONARY_MAX) problems.push(`dicionário com até ${DICTIONARY_MAX} caracteres`)
   const label = term || `Item ${index + 1}`
-  return { label, problems, input: problems.length ? null : { id: null, term, words, original, context, parallel_reference: parallel, status: 'draft', verses } }
+  return { label, problems, input: problems.length ? null : { id: null, term, words, original, context, parallel_reference: parallel, status: 'draft', verses, ...(dictionary ? { dictionary } : {}) } }
 }
 
 // Lê o texto colado ou o arquivo enviado e valida termo a termo, sem enviar nada ao servidor.
@@ -53,5 +56,32 @@ export function parseImport(raw: string): { rows: ImportRow[]; error?: string } 
     const key = row.input.term.toLocaleLowerCase('pt-BR')
     if (seen.has(key)) { row.problems.push('nome repetido no arquivo'); row.input = null } else seen.add(key)
   }
+  return { rows }
+}
+
+// Importação só do Dicionário de teologia: [{ term, dictionary }], ligada ao termo já cadastrado pelo nome.
+export type DictionaryRow = { label: string; entry: { term: string; dictionary: string } | null; problems: string[] }
+export function parseDictionaryImport(raw: string): { rows: DictionaryRow[]; error?: string } {
+  let data: unknown
+  try { data = JSON.parse(raw) } catch { return { rows: [], error: 'O arquivo não é um JSON válido.' } }
+  const entries = Array.isArray(data) ? data : (data && typeof data === 'object' && Array.isArray((data as { entries?: unknown }).entries) ? (data as { entries: unknown[] }).entries : null)
+  if (!entries) return { rows: [], error: 'Esperava uma lista de verbetes.' }
+  if (!entries.length) return { rows: [], error: 'A lista está vazia.' }
+  if (entries.length > 300) return { rows: [], error: 'No máximo 300 verbetes por importação.' }
+  const seen = new Set<string>()
+  const rows = entries.map((item, index): DictionaryRow => {
+    const value = item && typeof item === 'object' ? item as { term?: unknown; dictionary?: unknown } : {}
+    const term = clean(value.term), dictionary = clean(value.dictionary)
+    const problems: string[] = []
+    if (!item || typeof item !== 'object') problems.push('não é um verbete')
+    else {
+      if (!term) problems.push('sem o nome do termo')
+      if (!dictionary) problems.push('verbete vazio')
+      else if (dictionary.length > DICTIONARY_MAX) problems.push(`verbete com até ${DICTIONARY_MAX} caracteres`)
+      const key = term.toLocaleLowerCase('pt-BR')
+      if (term && seen.has(key)) problems.push('nome repetido no arquivo'); else if (term) seen.add(key)
+    }
+    return { label: term || `Item ${index + 1}`, problems, entry: problems.length ? null : { term, dictionary } }
+  })
   return { rows }
 }

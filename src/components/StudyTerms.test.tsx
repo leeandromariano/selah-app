@@ -47,6 +47,34 @@ describe('Raio-X do Texto: leitor', () => {
   })
 })
 
+describe('Raio-X do Texto: dicionário de teologia', () => {
+  it('a gaveta mostra o verbete em parágrafos só quando o termo tem dicionário', () => {
+    const { unmount } = render(<StudySheet term={grace} onClose={vi.fn()} />)
+    expect(screen.queryByText('Dicionário de teologia')).toBeNull()
+    unmount()
+    render(<StudySheet term={{ ...grace, dictionary: 'Primeiro parágrafo fictício.\n\nSegundo parágrafo fictício.' }} onClose={vi.fn()} />)
+    expect(screen.getByText('Dicionário de teologia')).toBeVisible()
+    expect(screen.getByText('Primeiro parágrafo fictício.')).toBeVisible()
+    expect(screen.getByText('Segundo parágrafo fictício.')).toBeVisible()
+  })
+  it('o painel OWNER grava os verbetes em lote pelo nome e avisa dos termos sem cadastro', async () => {
+    const draft: OwnerStudyTerm = { ...grace, status: 'draft', verses: [{ book: 'efesios', chapter: 2, start: 8, end: 8 }] }
+    vi.mocked(supabase.rpc).mockImplementation(((name: string) => name === 'owner_list_study_terms' ? Promise.resolve({ data: [draft], error: null })
+      : Promise.resolve({ data: { updated: 1, missing: ['Aliança'] }, error: null })) as never)
+    const user = userEvent.setup()
+    render(<StudyTermsManager />)
+    await screen.findByText('Graça')
+    await user.click(screen.getByRole('button', { name: 'Importar dicionário' }))
+    fireEvent.change(screen.getByLabelText('Ou cole aqui'), { target: { value: JSON.stringify([{ term: 'Graça', dictionary: 'Verbete fictício.' }, { term: 'Aliança', dictionary: 'Outro fictício.' }]) } })
+    await user.click(screen.getByRole('button', { name: 'Conferir dicionário' }))
+    await waitFor(() => expect(document.querySelector('.study-import [role=status]')?.textContent).toMatch(/1 verbete.s. para gravar, 1 sem termo cadastrado, 0 com problema/))
+    expect(vi.mocked(supabase.rpc)).not.toHaveBeenCalledWith('owner_set_study_dictionary', expect.anything())
+    await user.click(screen.getByRole('button', { name: 'Gravar 1 verbete(s)' }))
+    await waitFor(() => expect(vi.mocked(supabase.rpc)).toHaveBeenCalledWith('owner_set_study_dictionary', { p_entries: [{ term: 'Graça', dictionary: 'Verbete fictício.' }, { term: 'Aliança', dictionary: 'Outro fictício.' }] }))
+    expect(await screen.findByText('Dicionário: 1 verbete(s) gravado(s); sem termo cadastrado: Aliança.')).toBeVisible()
+  })
+})
+
 describe('Raio-X do Texto: aba lateral no computador', () => {
   it('no computador vira aba à direita, sem fundo bloqueando a leitura, e libera o espaço ao fechar', () => {
     const original = window.matchMedia

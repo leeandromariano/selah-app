@@ -63,6 +63,24 @@ reset role;
 select pg_temp.as_user('reader');
 select pg_temp.ok(jsonb_array_length(public.get_study_terms('efesios', 2)) = 0, 'termo despublicado some para o leitor');
 reset role;
+-- Dicionário de teologia: preenchido em lote pelo nome, aparece para o leitor só com o termo publicado; nulo mantém e vazio apaga
+select pg_temp.as_user('reader');
+select pg_temp.denied($$select public.owner_set_study_dictionary('[{"term":"Termo de teste","dictionary":"x"}]'::jsonb)$$, 'leitor não grava dicionário');
+reset role;
+select pg_temp.as_user('owner');
+select pg_temp.ok((public.owner_set_study_dictionary('[{"term":"termo DE teste","dictionary":"  Verbete fictício.  "},{"term":"Não existe","dictionary":"y"}]'::jsonb)->>'updated')::integer = 1, 'dicionário grava pelo nome sem diferenciar maiúsculas');
+select pg_temp.ok(public.owner_set_study_dictionary('[{"term":"Não existe","dictionary":"y"}]'::jsonb)->'missing' = '["Não existe"]'::jsonb, 'termo sem cadastro é apontado');
+select pg_temp.denied($$select public.owner_set_study_dictionary(('[{"term":"Termo de teste","dictionary":"' || repeat('a', 1501) || '"}]')::jsonb)$$, 'verbete acima de 1500 é recusado');
+select public.owner_save_study_term((select id from study_new), 'Termo de teste', array['teste'], 'Original fictício.', 'Contexto fictício.', 'João 1:1', 'published', '[{"book":"efesios","chapter":2,"start":8,"end":9}]'::jsonb);
+select pg_temp.ok((select t->>'dictionary' = 'Verbete fictício.' from jsonb_array_elements(public.owner_list_study_terms()) t where t->>'term' = 'Termo de teste'), 'salvar sem informar dicionário mantém o verbete');
+reset role;
+select pg_temp.as_user('reader');
+select pg_temp.ok((select t->>'dictionary' = 'Verbete fictício.' from jsonb_array_elements(public.get_study_terms('efesios', 2)) t where t->>'term' = 'Termo de teste'), 'leitor recebe o verbete do termo publicado');
+reset role;
+select pg_temp.as_user('owner');
+select public.owner_save_study_term((select id from study_new), 'Termo de teste', array['teste'], 'Original fictício.', 'Contexto fictício.', 'João 1:1', 'published', '[{"book":"efesios","chapter":2,"start":8,"end":9}]'::jsonb, '');
+select pg_temp.ok((select t->'dictionary' = 'null'::jsonb from jsonb_array_elements(public.owner_list_study_terms()) t where t->>'term' = 'Termo de teste'), 'texto vazio apaga o verbete');
+reset role;
 -- sem login
 select pg_temp.denied($$set local role anon; select public.get_study_terms('efesios', 2)$$, 'anônimo não usa o Raio-X');
 reset role;
