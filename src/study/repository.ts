@@ -32,6 +32,12 @@ export function createStudyRepository(client: SupabaseClient) {
       if (error || !Array.isArray(data)) return []
       return data.map(parseTerm).filter((item): item is StudyTerm => item !== null)
     },
+    // Capítulos do livro com ao menos um termo publicado, para marcar no seletor. Falha vira lista vazia: é só um aviso.
+    async bookChapters(book: string): Promise<number[]> {
+      const { data, error } = await client.rpc('get_study_chapters', { p_book: book })
+      if (error || !Array.isArray(data)) return []
+      return data.filter((item): item is number => Number.isInteger(item) && item > 0)
+    },
     async ownerList(): Promise<OwnerStudyTerm[]> {
       const { data, error } = await client.rpc('owner_list_study_terms')
       if (error || !Array.isArray(data)) throw Error('Não foi possível carregar os termos.')

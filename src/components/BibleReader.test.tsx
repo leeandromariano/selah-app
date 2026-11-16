@@ -4,10 +4,25 @@ import { BibleReader } from './BibleReader'
 import { BibleReference } from './BibleReference'
 import { demoProvider } from '../bible/provider'
 import { reportBibleView } from '../bible/fums'
+import { supabase } from '../lib/supabase'
 
 vi.mock('../bible/fums', () => ({ reportBibleView: vi.fn().mockResolvedValue(undefined) }))
 
 describe('leitor bíblico demonstrativo', () => {
+  it('marca no seletor os capítulos que têm Raio-X e deixa os demais como estavam', async () => {
+    vi.mocked(supabase.rpc).mockImplementation(((name: string) => Promise.resolve(name === 'get_study_chapters' ? { data: [1, 3], error: null } : { data: [], error: null })) as never)
+    render(<BibleReader page="biblia/demonstracao/genesis/1" source={demoProvider} />)
+    expect(await screen.findByRole('option', { name: '1 · Raio-X' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: '3 · Raio-X' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: '2' })).toBeInTheDocument()
+    expect(vi.mocked(supabase.rpc)).toHaveBeenCalledWith('get_study_chapters', { p_book: 'genesis' })
+  })
+  it('sem resposta do Raio-X o seletor continua só com os números', async () => {
+    render(<BibleReader page="biblia/demonstracao/genesis/1" source={demoProvider} />)
+    await screen.findByText(/Texto fictício para demonstrar o primeiro/)
+    expect(screen.getByRole('option', { name: '1' })).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: /Raio-X/ })).toBeNull()
+  })
   it('exibe navegação, versículos fictícios, livro e capítulo', async () => {
     render(<BibleReader page="biblia/demonstracao/genesis/1" source={demoProvider} />)
     expect(screen.getByRole('status')).toHaveTextContent('Carregando')

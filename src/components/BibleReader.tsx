@@ -13,6 +13,7 @@ import { BibleVerseList } from './BibleVerseList'
 import { BibleFavorites } from './BibleFavorites'
 import { StudyChips, StudySheet, TermText } from './StudyTerms'
 import { useChapterTerms } from '../study/useChapterTerms'
+import { useBookStudyChapters } from '../study/useBookStudyChapters'
 import type { StudyTerm } from '../study/repository'
 import { ReadingFontControl } from './ReadingFontControl'
 import './bible.css'
@@ -47,6 +48,7 @@ export function BibleReader({ page, source = bibleProvider, userId, annotationSt
   const searchTicket = useRef(0)
   const [expiredHighlight, setExpiredHighlight] = useState<typeof result>(null)
   const studyTerms = useChapterTerms(route?.book, route?.chapter)
+  const studyChapters = useBookStudyChapters(route?.book)
   const [studyOpen, setStudyOpen] = useState<StudyTerm | null>(null)
   const translation = source.translations.find(item => item.id === route?.translation)
   const book = route && bookById(route.book)
@@ -101,7 +103,7 @@ export function BibleReader({ page, source = bibleProvider, userId, annotationSt
     <div className="bible-controls">
       <label>Tradução<select value={translation.id} onChange={event => go({ translation: event.target.value })}>{source.translations.map(item => <option key={item.id} value={item.id} disabled={!item.available}>{item.name}{!item.available ? ' — indisponível' : ''}</option>)}</select></label>
       <label>Livro<select value={book.id} onChange={event => go({ book: event.target.value, chapter: 1 })}>{(['Antigo Testamento', 'Novo Testamento'] as const).map(testament => <optgroup key={testament} label={testament}>{books.filter(item => item.testament === testament).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</optgroup>)}</select></label>
-      <label>Capítulo<select value={route.chapter} onChange={event => go({ chapter: Number(event.target.value) })}>{Array.from({ length: book.chapters }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}</select></label>
+      <label>Capítulo<select value={route.chapter} onChange={event => go({ chapter: Number(event.target.value) })}>{Array.from({ length: book.chapters }, (_, i) => <option key={i + 1} value={i + 1}>{studyChapters.has(i + 1) ? `${i + 1} · Raio-X` : i + 1}</option>)}</select></label>
     </div>
     <article className="reading bible-chapter"><h2>{book.name} {route.chapter} <small>· {translation.abbreviation}</small></h2>
       {!verses && !error && <p role="status">Carregando capítulo…</p>}

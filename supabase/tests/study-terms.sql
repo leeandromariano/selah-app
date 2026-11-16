@@ -81,6 +81,20 @@ select pg_temp.as_user('owner');
 select public.owner_save_study_term((select id from study_new), 'Termo de teste', array['teste'], 'Original fictício.', 'Contexto fictício.', 'João 1:1', 'published', '[{"book":"efesios","chapter":2,"start":8,"end":9}]'::jsonb, '');
 select pg_temp.ok((select t->'dictionary' = 'null'::jsonb from jsonb_array_elements(public.owner_list_study_terms()) t where t->>'term' = 'Termo de teste'), 'texto vazio apaga o verbete');
 reset role;
+-- Capítulos com Raio-X (seletor da Bíblia): só os publicados, só números; sem login não usa
+select pg_temp.as_user('reader');
+select pg_temp.ok(public.get_study_chapters('efesios') @> '[2]'::jsonb, 'seletor marca o capítulo do termo publicado');
+select pg_temp.ok(not (public.get_study_chapters('efesios') @> '[1]'::jsonb), 'seletor não marca capítulo sem termo');
+select pg_temp.denied($$select public.get_study_chapters('Livro Ruim!')$$, 'livro inválido é recusado no seletor');
+reset role;
+select pg_temp.as_user('owner');
+select public.owner_save_study_term((select id from study_new), 'Termo de teste', array['teste'], 'Original fictício.', 'Contexto fictício.', 'João 1:1', 'draft', '[{"book":"efesios","chapter":2,"start":8,"end":9}]'::jsonb);
+reset role;
+select pg_temp.as_user('reader');
+select pg_temp.ok(not (public.get_study_chapters('efesios') @> '[2]'::jsonb), 'termo despublicado não marca o capítulo');
+reset role;
+select pg_temp.denied($$set local role anon; select public.get_study_chapters('efesios')$$, 'anônimo não lê os capítulos do Raio-X');
+reset role;
 -- sem login
 select pg_temp.denied($$set local role anon; select public.get_study_terms('efesios', 2)$$, 'anônimo não usa o Raio-X');
 reset role;
