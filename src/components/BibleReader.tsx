@@ -23,6 +23,10 @@ import type { BibleSearchResult } from '../bible/search'
 
 const defaultLocation: Location = { translation: bibleAvailable ? 'nvt' : 'demonstracao', book: 'genesis', chapter: 1 }
 const storageKey = 'selah.bible.location'
+// Modo da Bíblia: "Apenas leitura" é o padrão (texto limpo); os recursos de estudo (Raio-X etc.) só no modo "Estudo". A escolha fica neste aparelho.
+const modeKey = 'selah.bible.mode'
+type BibleMode = 'leitura' | 'estudo'
+function initialMode(): BibleMode { try { return localStorage.getItem(modeKey) === 'estudo' ? 'estudo' : 'leitura' } catch { return 'leitura' } }
 const bookGroups = [
   { name: 'Pentateuco', start: 0, end: 5 },
   { name: 'Históricos', start: 5, end: 17 },
@@ -47,9 +51,12 @@ export function BibleReader({ page, source = bibleProvider, userId, annotationSt
   const [searchError, setSearchError] = useState('')
   const searchTicket = useRef(0)
   const [expiredHighlight, setExpiredHighlight] = useState<typeof result>(null)
-  const studyTerms = useChapterTerms(route?.book, route?.chapter)
-  const studyChapters = useBookStudyChapters(route?.book)
+  const [mode, setMode] = useState<BibleMode>(initialMode)
+  const studying = mode === 'estudo'
+  const studyTerms = useChapterTerms(route?.book, route?.chapter, studying)
+  const studyChapters = useBookStudyChapters(route?.book, studying)
   const [studyOpen, setStudyOpen] = useState<StudyTerm | null>(null)
+  const changeMode = (next: BibleMode) => { setMode(next); setStudyOpen(null); try { localStorage.setItem(modeKey, next) } catch { /* optional persistence */ } }
   const translation = source.translations.find(item => item.id === route?.translation)
   const book = route && bookById(route.book)
   const key = `${page}:${attempt}`
@@ -95,6 +102,10 @@ export function BibleReader({ page, source = bibleProvider, userId, annotationSt
     <form className="bible-jump" onSubmit={event => { event.preventDefault(); const target = parseReference(reference); if (target) { setReferenceError(''); go(target); return } if (!bibleAvailable || !['nvt', 'ara', 'ntlh'].includes(route.translation)) { setReferenceError('Digite uma referência completa, como João 3:16.'); return } const query = reference.trim(); if (query.length < 2 || query.length > 80) { setReferenceError('Digite de 2 a 80 caracteres para buscar.'); return } const ticket = ++searchTicket.current; setReferenceError(''); setSearching(true); setSearchError(''); searchBible(route.translation, query).then(results => { if (searchTicket.current === ticket) setSearchResults(results) }).catch(() => { if (searchTicket.current === ticket) setSearchError('Não foi possível buscar agora. Tente novamente.') }).finally(() => { if (searchTicket.current === ticket) setSearching(false) }) }}>
       <label>Passagem ou palavra bíblica<input type="search" value={reference} onChange={event => { searchTicket.current++; setSearching(false); setReference(event.target.value); setReferenceError(''); setSearchResults(null); setSearchError('') }} placeholder="Ex.: João 3:16 ou ansiedade" /></label>
       <button type="submit" className="button secondary" disabled={searching}>{searching ? 'Buscando…' : 'Buscar na Bíblia'}</button>
+      <div className="bible-modes" role="group" aria-label="Modo da Bíblia">
+        <button type="button" aria-pressed={!studying} onClick={() => changeMode('leitura')}>Apenas leitura</button>
+        <button type="button" aria-pressed={studying} onClick={() => changeMode('estudo')}>Estudo</button>
+      </div>
       {referenceError && <p role="alert">{referenceError}</p>}
     </form>
     {searchError && <p role="alert" className="info">{searchError}</p>}
@@ -122,6 +133,6 @@ export function BibleReader({ page, source = bibleProvider, userId, annotationSt
     <p className="bible-attribution">{displayAttribution(current?.copyright ?? translation.attribution)}</p>
     <nav className="actions bible-navigation" aria-label="Navegação de capítulos"><button className="button secondary" disabled={!previous} onClick={() => previous && go(previous)}>← Capítulo anterior</button><button className="button secondary" disabled={!next} onClick={() => next && go(next)}>Próximo capítulo →</button></nav>
     </>}
-    {studyOpen && <StudySheet term={studyOpen} onClose={() => setStudyOpen(null)} />}
+    {studying && studyOpen && <StudySheet term={studyOpen} onClose={() => setStudyOpen(null)} />}
   </section>
 }

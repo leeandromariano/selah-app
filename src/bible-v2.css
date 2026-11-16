@@ -41,3 +41,19 @@
   .bible-v2 .bible-controls { grid-template-columns: 1fr 1fr; gap: 10px; }
   .bible-v2 .bible-controls label:first-child { grid-column: 1 / -1; }
 }
+
+/* Modo da Bíblia: "Apenas leitura" (limpo) ou "Estudo" (Raio-X e demais recursos), ao lado do botão de busca */
+.bible-v2 .bible-jump { grid-template-columns: minmax(0, 1fr) auto auto; }
+.bible-v2 .bible-modes { display: flex; gap: 8px; align-items: stretch; }
+.bible-v2 .bible-modes button { min-height: 48px; padding-inline: 18px; border: 1px solid var(--glass-border); border-radius: 999px; background: var(--surface-soft); color: var(--text-muted); font-family: inherit; font-weight: 600; font-size: 14px; line-height: 1; cursor: pointer; white-space: nowrap; }
+.bible-v2 .bible-modes button:hover { color: var(--text); }
+.bible-v2 .bible-modes button[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--text); }
+.bible-v2 .bible-modes button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (max-width: 900px) {
+  .bible-v2 .bible-jump { grid-template-columns: minmax(0, 1fr) auto; }
+  .bible-v2 .bible-modes { grid-column: 1 / -1; }
+  .bible-v2 .bible-modes button { flex: 1 1 0; }
+}
+@media (max-width: 600px) {
+  .bible-v2 .bible-jump { grid-template-columns: 1fr; }
+}

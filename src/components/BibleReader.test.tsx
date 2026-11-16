@@ -10,6 +10,7 @@ vi.mock('../bible/fums', () => ({ reportBibleView: vi.fn().mockResolvedValue(und
 
 describe('leitor bíblico demonstrativo', () => {
   it('lista em atalhos os capítulos do livro que têm Raio-X, sem mexer no campo do seletor', async () => {
+    localStorage.setItem('selah.bible.mode', 'estudo')
     vi.mocked(supabase.rpc).mockImplementation(((name: string) => Promise.resolve(name === 'get_study_chapters' ? { data: [3, 1], error: null } : { data: [], error: null })) as never)
     render(<BibleReader page="biblia/demonstracao/genesis/1" source={demoProvider} />)
     const group = await screen.findByRole('group', { name: 'Capítulos deste livro com Raio-X do texto' })
@@ -22,7 +23,27 @@ describe('leitor bíblico demonstrativo', () => {
     expect(location.hash).toBe('#biblia/demonstracao/genesis/3')
     expect(vi.mocked(supabase.rpc)).toHaveBeenCalledWith('get_study_chapters', { p_book: 'genesis' })
   })
+  it('começa em "Apenas leitura": sem atalhos nem consulta de Raio-X, e o modo Estudo liga e fica lembrado', async () => {
+    vi.mocked(supabase.rpc).mockImplementation(((name: string) => Promise.resolve(name === 'get_study_chapters' ? { data: [1, 3], error: null } : { data: [], error: null })) as never)
+    localStorage.removeItem('selah.bible.mode')
+    render(<BibleReader page="biblia/demonstracao/genesis/1" source={demoProvider} />)
+    await screen.findByText(/Texto fictício para demonstrar o primeiro/)
+    const modes = screen.getByRole('group', { name: 'Modo da Bíblia' })
+    expect(screen.getByRole('button', { name: 'Apenas leitura' })).toHaveAttribute('aria-pressed', 'true')
+    expect(modes).toBeVisible()
+    expect(screen.queryByRole('group', { name: 'Capítulos deste livro com Raio-X do texto' })).toBeNull()
+    expect(vi.mocked(supabase.rpc)).not.toHaveBeenCalledWith('get_study_chapters', expect.anything())
+    expect(vi.mocked(supabase.rpc)).not.toHaveBeenCalledWith('get_study_terms', expect.anything())
+    fireEvent.click(screen.getByRole('button', { name: 'Estudo' }))
+    expect(await screen.findByRole('group', { name: 'Capítulos deste livro com Raio-X do texto' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Estudo' })).toHaveAttribute('aria-pressed', 'true')
+    expect(localStorage.getItem('selah.bible.mode')).toBe('estudo')
+    fireEvent.click(screen.getByRole('button', { name: 'Apenas leitura' }))
+    expect(screen.queryByRole('group', { name: 'Capítulos deste livro com Raio-X do texto' })).toBeNull()
+    expect(localStorage.getItem('selah.bible.mode')).toBe('leitura')
+  })
   it('sem resposta do Raio-X o seletor continua só com os números', async () => {
+    localStorage.setItem('selah.bible.mode', 'estudo')
     render(<BibleReader page="biblia/demonstracao/genesis/1" source={demoProvider} />)
     await screen.findByText(/Texto fictício para demonstrar o primeiro/)
     expect(screen.getByRole('option', { name: '1' })).toBeInTheDocument()
