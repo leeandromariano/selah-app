@@ -103,8 +103,12 @@ export function BibleReader({ page, source = bibleProvider, userId, annotationSt
     <div className="bible-controls">
       <label>Tradução<select value={translation.id} onChange={event => go({ translation: event.target.value })}>{source.translations.map(item => <option key={item.id} value={item.id} disabled={!item.available}>{item.name}{!item.available ? ' — indisponível' : ''}</option>)}</select></label>
       <label>Livro<select value={book.id} onChange={event => go({ book: event.target.value, chapter: 1 })}>{(['Antigo Testamento', 'Novo Testamento'] as const).map(testament => <optgroup key={testament} label={testament}>{books.filter(item => item.testament === testament).map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</optgroup>)}</select></label>
-      <label>Capítulo<select value={route.chapter} onChange={event => go({ chapter: Number(event.target.value) })}>{Array.from({ length: book.chapters }, (_, i) => <option key={i + 1} value={i + 1}>{studyChapters.has(i + 1) ? `${i + 1} · Raio-X` : i + 1}</option>)}</select></label>
+      <label>Capítulo<select value={route.chapter} onChange={event => go({ chapter: Number(event.target.value) })}>{Array.from({ length: book.chapters }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}</select></label>
     </div>
+    {studyChapters.size > 0 && <div className="study-chips study-book-chapters" role="group" aria-label="Capítulos deste livro com Raio-X do texto">
+      <span className="study-chips-label">Raio-X neste livro</span>
+      {[...studyChapters].sort((a, b) => a - b).map(chapter => <button key={chapter} type="button" className="study-chip" aria-label={`Capítulo ${chapter} com Raio-X`} aria-current={chapter === route.chapter ? 'true' : undefined} onClick={() => go({ chapter })}>{chapter}</button>)}
+    </div>}
     <article className="reading bible-chapter"><h2>{book.name} {route.chapter} <small>· {translation.abbreviation}</small></h2>
       {!verses && !error && <p role="status">Carregando capítulo…</p>}
       {error && <div role="alert">{error} <button className="text-link" onClick={() => setAttempt(value => value + 1)}>Tentar novamente</button></div>}

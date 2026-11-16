@@ -61,3 +61,4 @@ body.study-docked .main-shell { padding-right: 400px; transition: padding-right 
 .study-pick { width: 22px; height: 22px; flex: none; accent-color: var(--brand-ember); }
 .study-sheet .study-dictionary { border-color: color-mix(in srgb, var(--accent) 40%, var(--glass-border)) !important; }
 .study-sheet .study-dictionary dd + dd { margin-top: 10px; }
+.study-book-chapters .study-chip[aria-current="true"] { background: color-mix(in srgb, var(--accent) 28%, transparent); border-color: var(--accent); font-weight: 700; }
