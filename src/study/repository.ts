@@ -7,6 +7,9 @@ export type StudyTerm = {
   verses: { start: number; end: number }[]
 }
 export type StudyStatus = 'draft' | 'published'
+// Panorama de um livro: ficha curta mostrada antes do capítulo 1 (modo Estudo).
+export type StudyPanorama = { book: string; author: string; audience: string; context: string; theme: string }
+export type OwnerStudyPanorama = StudyPanorama & { status: StudyStatus }
 export type OwnerStudyTerm = Omit<StudyTerm, 'verses'> & { status: StudyStatus; verses: { book: string; chapter: number; start: number; end: number }[] }
 export type StudyTermInput = {
   id: string | null; term: string; words: string[]; original: string; context: string; parallel_reference: string
@@ -25,8 +28,33 @@ function parseTerm(value: unknown): StudyTerm | null {
   return { id: v.id!, term: v.term!, words: v.words, original: v.original!, context: v.context!, parallel_reference: v.parallel_reference!, dictionary: text(v.dictionary) ? v.dictionary!.trim() : null, verses }
 }
 
+const panoramaFields = ['book', 'author', 'audience', 'context', 'theme'] as const
+function parsePanorama(value: unknown): StudyPanorama | null {
+  const v = value as Record<string, unknown> | null
+  if (!v || panoramaFields.some(field => !text(v[field]))) return null
+  return { book: v.book as string, author: v.author as string, audience: v.audience as string, context: v.context as string, theme: v.theme as string }
+}
+
 export function createStudyRepository(client: SupabaseClient) {
   return {
+    // Panorama PUBLICADO do livro; qualquer falha vira "sem panorama": a ficha é um extra, nunca o texto.
+    async panorama(book: string): Promise<StudyPanorama | null> {
+      const { data, error } = await client.rpc('get_study_panorama', { p_book: book })
+      return error ? null : parsePanorama(data)
+    },
+    async ownerListPanoramas(): Promise<OwnerStudyPanorama[]> {
+      const { data, error } = await client.rpc('owner_list_study_panoramas')
+      if (error || !Array.isArray(data)) throw Error('Não foi possível carregar os panoramas.')
+      return data.flatMap(item => { const base = parsePanorama(item); const status = (item as { status?: unknown })?.status; return base && (status === 'draft' || status === 'published') ? [{ ...base, status }] : [] })
+    },
+    async ownerSavePanorama(input: OwnerStudyPanorama): Promise<void> {
+      const { error } = await client.rpc('owner_save_study_panorama', { p_book: input.book, p_author: input.author, p_audience: input.audience, p_context: input.context, p_theme: input.theme, p_status: input.status })
+      if (error) throw Error('Não foi possível salvar o panorama.')
+    },
+    async ownerDeletePanorama(book: string): Promise<void> {
+      const { error } = await client.rpc('owner_delete_study_panorama', { p_book: book })
+      if (error) throw Error('Não foi possível excluir o panorama.')
+    },
     async chapter(book: string, chapter: number): Promise<StudyTerm[]> {
       const { data, error } = await client.rpc('get_study_terms', { p_book: book, p_chapter: chapter })
       if (error || !Array.isArray(data)) return []

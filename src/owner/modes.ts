@@ -10,6 +10,6 @@ export function modeForPage(page: string): Mode {
   if (page === 'owner/comunidade') return 'leitores'
   if (page === 'owner/bereia') return 'bereia'
   if (page === 'owner/moderacao') return 'reflexoes'
-  if (page === 'owner/perguntas' || page === 'owner/publicadores' || page === 'owner/raio-x') return 'conteudo'
+  if (page === 'owner/perguntas' || page === 'owner/publicadores' || page === 'owner/raio-x' || page === 'owner/panorama') return 'conteudo'
   return 'geral'
 }

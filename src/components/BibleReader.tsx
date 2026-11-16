@@ -14,6 +14,8 @@ import { BibleFavorites } from './BibleFavorites'
 import { StudyChips, StudySheet, TermText } from './StudyTerms'
 import { useChapterTerms } from '../study/useChapterTerms'
 import { useBookStudyChapters } from '../study/useBookStudyChapters'
+import { useBookPanorama } from '../study/useBookPanorama'
+import { BookPanorama } from './BookPanorama'
 import type { StudyTerm } from '../study/repository'
 import { ReadingFontControl } from './ReadingFontControl'
 import './bible.css'
@@ -55,6 +57,7 @@ export function BibleReader({ page, source = bibleProvider, userId, annotationSt
   const studying = mode === 'estudo'
   const studyTerms = useChapterTerms(route?.book, route?.chapter, studying)
   const studyChapters = useBookStudyChapters(route?.book, studying)
+  const panorama = useBookPanorama(route?.book, studying && route?.chapter === 1)
   const [studyOpen, setStudyOpen] = useState<StudyTerm | null>(null)
   const changeMode = (next: BibleMode) => { setMode(next); setStudyOpen(null); try { localStorage.setItem(modeKey, next) } catch { /* optional persistence */ } }
   const translation = source.translations.find(item => item.id === route?.translation)
@@ -120,6 +123,7 @@ export function BibleReader({ page, source = bibleProvider, userId, annotationSt
       <span className="study-chips-label">Raio-X neste livro</span>
       {[...studyChapters].sort((a, b) => a - b).map(chapter => <button key={chapter} type="button" className="study-chip" aria-label={`Capítulo ${chapter} com Raio-X`} aria-current={chapter === route.chapter ? 'true' : undefined} onClick={() => go({ chapter })}>{chapter}</button>)}
     </div>}
+    {studying && route.chapter === 1 && panorama && <BookPanorama key={route.book} bookName={book.name} panorama={panorama} />}
     <article className="reading bible-chapter"><h2>{book.name} {route.chapter} <small>· {translation.abbreviation}</small></h2>
       {!verses && !error && <p role="status">Carregando capítulo…</p>}
       {error && <div role="alert">{error} <button className="text-link" onClick={() => setAttempt(value => value + 1)}>Tentar novamente</button></div>}

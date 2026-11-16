@@ -41,3 +41,13 @@ No painel OWNER, em Raio-X do Texto, use "Importar dicionário". Cada verbete é
 ```
 
 Também dá para incluir `"dictionary"` direto no arquivo de termos da importação em lote.
+
+## Panorama dos livros
+
+Uma ficha por livro (autor, para quem foi escrito, contexto em uma frase e tema central), mostrada recolhida antes do capítulo 1, só no modo Estudo. Planilha-modelo: `raio-x-panorama-livros-modelo.xlsx` (colunas `LIVRO`, `AUTOR`, `PARA_QUEM`, `CONTEXTO`, `TEMA`, com os 66 livros já listados).
+
+No painel OWNER, em Conteúdo, **Panorama dos livros**, use "Importar panoramas" (arquivo JSON, uma lista). O livro pode vir com o nome do app (com ou sem acento) ou o identificador. Tudo entra como rascunho.
+
+```json
+[{ "book": "Romanos", "author": "Paulo", "audience": "Cristãos de Roma", "context": "Carta escrita de Corinto por volta de 57 d.C.", "theme": "A justiça de Deus pela fé" }]
+```

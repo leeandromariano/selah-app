@@ -62,3 +62,19 @@ body.study-docked .main-shell { padding-right: 400px; transition: padding-right 
 .study-sheet .study-dictionary { border-color: color-mix(in srgb, var(--accent) 40%, var(--glass-border)) !important; }
 .study-sheet .study-dictionary dd + dd { margin-top: 10px; }
 .study-book-chapters .study-chip[aria-current="true"] { background: color-mix(in srgb, var(--accent) 28%, transparent); border-color: var(--accent); font-weight: 700; }
+
+/* Panorama do livro: ficha técnica recolhível antes do capítulo 1 (modo Estudo) */
+.study-panorama { margin: 14px 0 6px; border: 1px solid var(--glass-border); border-radius: 22px; background: var(--surface-soft); box-shadow: inset 0 1px 0 var(--plate-border); overflow: hidden; }
+.study-panorama > summary { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 12px; padding: 14px 18px; cursor: pointer; list-style: none; }
+.study-panorama > summary::-webkit-details-marker { display: none; }
+.study-panorama > summary .eyebrow { grid-column: 1; color: var(--accent); }
+.study-panorama > summary strong { grid-column: 1; font: italic 500 22px/1.15 Literata, Georgia, serif; letter-spacing: -.01em; }
+.study-panorama-hint { grid-column: 2; grid-row: 1 / span 2; display: inline-flex; align-items: center; gap: 8px; color: var(--text-muted); font: 600 12px/1 'JetBrains Mono', monospace; letter-spacing: .04em; text-transform: uppercase; }
+.study-panorama-hint::after { content: ''; width: 9px; height: 9px; border-right: 2px solid var(--accent); border-bottom: 2px solid var(--accent); transform: rotate(45deg) translate(-2px, -2px); transition: transform .2s; }
+.study-panorama[open] .study-panorama-hint::after { transform: rotate(-135deg) translate(-2px, -2px); }
+.study-panorama > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; border-radius: 22px; }
+.study-panorama dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0 14px 14px; }
+.study-panorama dl > div { padding: 12px 14px; border: 1px solid var(--glass-border); border-radius: 16px; background: color-mix(in srgb, var(--surface) 60%, transparent); }
+.study-panorama dt { margin-bottom: 4px; color: var(--accent); font: 600 11px/1.2 'JetBrains Mono', monospace; letter-spacing: .06em; text-transform: uppercase; }
+.study-panorama dd { margin: 0; font-size: 15px; line-height: 1.5; }
+@media (max-width: 600px) { .study-panorama dl { grid-template-columns: 1fr; } .study-panorama-hint { display: none; } .study-panorama > summary { grid-template-columns: 1fr auto; } .study-panorama > summary::after { content: ''; grid-column: 2; grid-row: 1 / span 2; width: 9px; height: 9px; border-right: 2px solid var(--accent); border-bottom: 2px solid var(--accent); transform: rotate(45deg); } .study-panorama[open] > summary::after { transform: rotate(-135deg); } }
