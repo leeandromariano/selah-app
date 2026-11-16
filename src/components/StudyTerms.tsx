@@ -37,13 +37,17 @@ export function StudySheet({ term, onClose }: { term: StudyTerm; onClose: () => 
     document.body.classList.add('study-docked')
     return () => document.body.classList.remove('study-docked')
   }, [docked])
+  // onClose pode mudar a cada renderização de quem abre a gaveta; guardado em ref, o foco só é mexido ao abrir e ao fechar.
+  const closeRef = useRef(onClose)
+  useEffect(() => { closeRef.current = onClose })
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null
-    close.current?.focus()
-    const key = (event: globalThis.KeyboardEvent) => { if (event.key === 'Escape') onClose() }
+    // preventScroll: levar o foco à gaveta ou de volta ao termo nunca pode rolar a página do leitor.
+    close.current?.focus({ preventScroll: true })
+    const key = (event: globalThis.KeyboardEvent) => { if (event.key === 'Escape') closeRef.current() }
     window.addEventListener('keydown', key)
-    return () => { window.removeEventListener('keydown', key); previous?.focus?.() }
-  }, [onClose])
+    return () => { window.removeEventListener('keydown', key); previous?.focus?.({ preventScroll: true }) }
+  }, [])
   return createPortal(<>
     {!docked && <div className="study-backdrop" onClick={onClose} />}
     <section className="study-sheet" data-docked={docked ? 'true' : undefined} role="dialog" aria-modal={docked ? 'false' : 'true'} aria-labelledby={titleId}>

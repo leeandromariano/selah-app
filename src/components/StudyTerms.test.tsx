@@ -92,6 +92,22 @@ describe('Raio-X do Texto: aba lateral no computador', () => {
   })
 })
 
+describe('Raio-X do Texto: foco da gaveta', () => {
+  it('levar o foco à gaveta não rola a página, e uma nova renderização de quem abre não refaz o foco', () => {
+    const focus = vi.spyOn(HTMLElement.prototype, 'focus')
+    const first = vi.fn(), second = vi.fn()
+    const view = render(<StudySheet term={grace} onClose={first} />)
+    expect(focus).toHaveBeenCalledTimes(1)
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true })
+    view.rerender(<StudySheet term={grace} onClose={second} />)
+    view.rerender(<StudySheet term={{ ...grace, id: 'h', term: 'Fé' }} onClose={second} />)
+    expect(focus).toHaveBeenCalledTimes(1)
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(first).not.toHaveBeenCalled()
+    expect(second).toHaveBeenCalledTimes(1)
+  })
+})
+
 describe('Raio-X do Texto: repositório', () => {
   it('descarta termos fora do formato e devolve vazio em erro, sem quebrar a leitura', async () => {
     const repo = createStudyRepository(supabase)
