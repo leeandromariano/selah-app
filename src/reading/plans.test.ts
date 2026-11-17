@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { calendarDay, currentDay, dayChapters, formatChapters, planChapters, progressPercent, plans } from './plans'
 import type { PlanId } from './plans'
 
-const ids: PlanId[] = ['biblia-1-ano', 'novo-testamento-90-dias']
+const ids: PlanId[] = ['biblia-1-ano', 'antigo-testamento-150-dias', 'novo-testamento-90-dias']
 
 describe('planos de leitura: divisão dos capítulos', () => {
-  it('a Bíblia tem 1189 capítulos e o Novo Testamento 260', () => {
+  it('a Bíblia tem 1189 capítulos, o Antigo Testamento 929 e o Novo Testamento 260', () => {
     expect(planChapters('biblia-1-ano')).toHaveLength(1189)
+    expect(planChapters('antigo-testamento-150-dias')).toHaveLength(929)
+    expect(planChapters('antigo-testamento-150-dias').at(-1)).toEqual({ book: 'malaquias', chapter: 4 })
     expect(planChapters('novo-testamento-90-dias')).toHaveLength(260)
     expect(planChapters('novo-testamento-90-dias')[0]).toEqual({ book: 'mateus', chapter: 1 })
   })
@@ -23,11 +25,14 @@ describe('planos de leitura: divisão dos capítulos', () => {
     expect(dayChapters('biblia-1-ano', 1)[0]).toEqual({ book: 'genesis', chapter: 1 })
     expect(dayChapters('biblia-1-ano', 365).at(-1)).toEqual({ book: 'apocalipse', chapter: 22 })
     expect(dayChapters('novo-testamento-90-dias', 90).at(-1)).toEqual({ book: 'apocalipse', chapter: 22 })
+    expect(dayChapters('antigo-testamento-150-dias', 1)[0]).toEqual({ book: 'genesis', chapter: 1 })
+    expect(dayChapters('antigo-testamento-150-dias', 150).at(-1)).toEqual({ book: 'malaquias', chapter: 4 })
   })
   it('dia fora do plano não tem leitura', () => {
     expect(dayChapters('biblia-1-ano', 0)).toEqual([])
     expect(dayChapters('biblia-1-ano', 366)).toEqual([])
     expect(dayChapters('novo-testamento-90-dias', 91)).toEqual([])
+    expect(dayChapters('antigo-testamento-150-dias', 151)).toEqual([])
     expect(dayChapters('biblia-1-ano', 1.5)).toEqual([])
   })
 })

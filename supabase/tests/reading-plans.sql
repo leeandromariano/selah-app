@@ -32,7 +32,10 @@ select pg_temp.ok(public.reading_plans_mine() = '[]'::jsonb, 'sem adesão, a lis
 select pg_temp.ok((public.reading_plan_join('biblia-1-ano') ->> 'plan') = 'biblia-1-ano', 'entra no plano de 1 ano');
 select pg_temp.ok(jsonb_array_length(public.reading_plan_join('biblia-1-ano') -> 'completed_days') = 0, 'entrar de novo não zera nem duplica');
 select public.reading_plan_join('novo-testamento-90-dias');
-select pg_temp.ok(jsonb_array_length(public.reading_plans_mine()) = 2, 'os dois planos podem coexistir');
+select public.reading_plan_join('antigo-testamento-150-dias');
+select pg_temp.ok(jsonb_array_length(public.reading_plans_mine()) = 3, 'os três planos podem coexistir');
+select pg_temp.ok((public.reading_plan_set_day('antigo-testamento-150-dias', 150, true) -> 'completed_days') = '[150]'::jsonb, 'o último dia do plano de 150 dias é aceito');
+select pg_temp.denied($$select public.reading_plan_set_day('antigo-testamento-150-dias', 151, true)$$, 'dia 151 não existe no plano de 150');
 select pg_temp.denied($$select public.reading_plan_join('plano-inexistente')$$, 'plano desconhecido é recusado');
 select pg_temp.denied($$select public.reading_plan_join(null)$$, 'plano nulo é recusado');
 
@@ -55,12 +58,12 @@ select pg_temp.denied($$select public.reading_plan_set_day('biblia-1-ano', 5, tr
 select public.reading_plan_leave('biblia-1-ano');
 reset role;
 select pg_temp.as_user('ana');
-select pg_temp.ok(jsonb_array_length(public.reading_plans_mine()) = 2, 'sair de um plano não mexe nos planos de outro leitor');
+select pg_temp.ok(jsonb_array_length(public.reading_plans_mine()) = 3, 'sair de um plano não mexe nos planos de outro leitor');
 select pg_temp.denied($$select count(*) from public.reading_plan_enrollments$$, 'leitor não lê a tabela diretamente');
 
 -- sair do plano
 select public.reading_plan_leave('biblia-1-ano');
-select pg_temp.ok(jsonb_array_length(public.reading_plans_mine()) = 1, 'sair do plano apaga só aquele plano');
+select pg_temp.ok(jsonb_array_length(public.reading_plans_mine()) = 2, 'sair do plano apaga só aquele plano');
 reset role;
 
 -- sem login

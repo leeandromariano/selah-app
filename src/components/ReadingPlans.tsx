@@ -23,7 +23,7 @@ export function PlanCard({ plan, enrollment, state, featured = false }: { plan: 
   const percent = enrollment ? progressPercent(plan, enrollment.completed_days) : 0
   const titleId = `plan-${plan}-title`
   const finished = !!enrollment && day === null
-  const art = finished ? 'plano-concluido' : plan === 'biblia-1-ano' ? 'plano-biblia' : 'plano-90'
+  const art = finished ? 'plano-concluido' : plan === 'biblia-1-ano' ? 'plano-biblia' : plan === 'antigo-testamento-150-dias' ? 'plano-ritmo' : 'plano-90'
   return <article className={`reading-plan${featured ? ' featured' : ''}${enrollment ? ' joined' : ''}`} aria-labelledby={titleId}>
     {featured ? <span className="reading-plan-badge">Plano em destaque · {info.days} dias</span> : <div className="eyebrow">{info.days} DIAS</div>}
     <span className={`reading-plan-art ${art}`} aria-hidden="true"><img src={`/home/${art}.webp`} alt="" width="220" height="220" loading="lazy" decoding="async" />{art === 'plano-biblia' && <span className="reading-plan-pct">{percent}%</span>}</span>

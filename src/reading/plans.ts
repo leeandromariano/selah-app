@@ -3,22 +3,23 @@ import { bibleAvailable } from '../bible/availability'
 
 // Planos de leitura bíblica. Os capítulos de cada dia são calculados aqui (sem tabela): os capítulos, na ordem da Bíblia,
 // são repartidos em partes quase iguais, então o mesmo plano é sempre igual para todos.
-export type PlanId = 'biblia-1-ano' | 'novo-testamento-90-dias'
+export type PlanId = 'biblia-1-ano' | 'antigo-testamento-150-dias' | 'novo-testamento-90-dias'
 export type ChapterRef = { book: string; chapter: number }
-export type PlanInfo = { id: PlanId; title: string; short: string; days: number; scope: 'all' | 'nt'; blurb: string }
+export type PlanInfo = { id: PlanId; title: string; short: string; days: number; scope: 'all' | 'at' | 'nt'; blurb: string }
 
 export const plans: Record<PlanId, PlanInfo> = {
   'biblia-1-ano': { id: 'biblia-1-ano', title: 'A Bíblia toda em 1 ano', short: 'Bíblia em 1 ano', days: 365, scope: 'all', blurb: 'Do Gênesis ao Apocalipse em 365 dias, cerca de 3 a 4 capítulos por dia.' },
+  'antigo-testamento-150-dias': { id: 'antigo-testamento-150-dias', title: 'Antigo Testamento em 5 meses', short: 'Antigo Testamento em 150 dias', days: 150, scope: 'at', blurb: 'De Gênesis a Malaquias em 150 dias, cerca de 6 a 7 capítulos por dia.' },
   'novo-testamento-90-dias': { id: 'novo-testamento-90-dias', title: 'Novo Testamento em 3 meses', short: 'Novo Testamento em 90 dias', days: 90, scope: 'nt', blurb: 'De Mateus ao Apocalipse em 90 dias, cerca de 3 capítulos por dia.' },
 }
-export const planOrder: PlanId[] = ['biblia-1-ano', 'novo-testamento-90-dias']
+export const planOrder: PlanId[] = ['biblia-1-ano', 'antigo-testamento-150-dias', 'novo-testamento-90-dias']
 export const isPlanId = (value: unknown): value is PlanId => typeof value === 'string' && Object.hasOwn(plans, value)
 
 const chapterCache = new Map<PlanId, ChapterRef[]>()
 export function planChapters(plan: PlanId): ChapterRef[] {
   const cached = chapterCache.get(plan)
   if (cached) return cached
-  const list = books.filter(book => plans[plan].scope === 'all' || book.testament === 'Novo Testamento').flatMap(book => Array.from({ length: book.chapters }, (_, i) => ({ book: book.id, chapter: i + 1 })))
+  const list = books.filter(book => plans[plan].scope === 'all' || book.testament === (plans[plan].scope === 'nt' ? 'Novo Testamento' : 'Antigo Testamento')).flatMap(book => Array.from({ length: book.chapters }, (_, i) => ({ book: book.id, chapter: i + 1 })))
   chapterCache.set(plan, list)
   return list
 }

@@ -83,7 +83,7 @@ describe('Panorama dos livros: painel OWNER', () => {
     await user.type(screen.getByLabelText('Tema central'), 'A santidade de Deus')
     await user.click(screen.getByRole('button', { name: 'Salvar panorama' }))
     await waitFor(() => expect(vi.mocked(supabase.rpc)).toHaveBeenCalledWith('owner_save_study_panorama', expect.objectContaining({ p_book: 'levitico', p_author: 'Moisés', p_status: 'draft' })))
-  })
+  }, 20000) // digita quatro campos: com a suíte inteira rodando em paralelo passa dos 5 s padrão
   it('importa em lote: confere antes, ignora os que já existem e envia só os válidos como rascunho', async () => {
     respond([draft])
     const user = userEvent.setup()

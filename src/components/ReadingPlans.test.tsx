@@ -30,6 +30,7 @@ describe('planos de leitura: Home', () => {
     render(<HomeReadingPlans repo={repo} />)
     const year = await screen.findByRole('article', { name: 'A Bíblia toda em 1 ano' })
     const nt = screen.getByRole('article', { name: 'Novo Testamento em 3 meses' })
+    expect(screen.getByRole('article', { name: 'Antigo Testamento em 5 meses' })).toBeVisible()
     expect(within(year).getByText(/Plano em destaque/)).toBeVisible()
     expect(within(nt).queryByText(/Plano em destaque/)).toBeNull()
     await userEvent.setup().click(within(year).getByRole('button', { name: 'Começar este plano' }))

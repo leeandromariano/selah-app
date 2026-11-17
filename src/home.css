@@ -160,3 +160,8 @@
   .reading-plan:not(.featured) > h3, .reading-plan:not(.featured) > .reading-plan-blurb, .reading-plan:not(.featured) > .reading-plan-progress, .reading-plan:not(.featured) > .reading-plan-meta { margin-right: 112px; }
 }
 .home-plans h2 em, .reading-plans-page h1 em { margin-left: .12em; font-size: 1.12em; }
+
+/* três planos: o de 1 ano ocupa a linha toda; os outros dois ficam lado a lado */
+.home-plans-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.home-plans-grid > .reading-plan.featured { grid-column: 1 / -1; }
+@media (max-width: 900px) { .home-plans-grid { grid-template-columns: 1fr; } }
