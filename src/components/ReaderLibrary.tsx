@@ -12,6 +12,7 @@ import { ShareDevotional } from './ShareDevotional'
 import { PrayerCapsuleForm } from './PrayerCapsuleForm'
 import { PrayerDueCards } from './PrayerDueCards'
 import { HomeBereia } from './HomeBereia'
+import { HomeReadingPlans } from './ReadingPlans'
 import { ShareCompletionDialog } from './ShareCompletionDialog'
 import { DiscussionSection } from './DiscussionSection'
 import { BibleReference } from './BibleReference'
@@ -111,6 +112,7 @@ function Library({ userId, name, page, embedded }: { userId: string; name: strin
         lead={<><div className="eyebrow">HOJE NA PRESENÇA</div><h1>{name ? `Bem-vindo, ${name}!` : 'Que bom ter você aqui.'}</h1><p className="home-date">{displayDate(now.toISOString())} · Horário de Brasília</p></>}
         cta={today ? (completions.some(value => value.source_devotional_id === today.id) ? <span className="home-done">✓ Concluído hoje</span> : <button type="button" className="home-cta" disabled={opening} onClick={() => open(today.id)}>Concluir hoje</button>) : undefined} />
       <PrayerDueCards key={userId} />
+      <HomeReadingPlans key={userId} />
       {today ? <div className="home-grid">
         <DevotionalCard variant="home" featured artIndex={0} item={toCard(today)} onOpen={open} completed={completions.some(value => value.source_devotional_id === today.id)} />
         {previous[0] && <DevotionalCard variant="home" artIndex={1} item={toCard(previous[0])} onOpen={open} completed={completions.some(value => value.source_devotional_id === previous[0].id)} />}
