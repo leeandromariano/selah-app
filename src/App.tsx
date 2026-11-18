@@ -1,6 +1,6 @@
 import { supabase } from './lib/supabase'
 import { createBibleAnnotationStore } from './bible/annotations'
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { AuthForm } from './components/AuthForm'
 import { AdminPanel } from './components/AdminPanel'
 import { Icon } from './components/UI'
@@ -41,6 +41,8 @@ import { CoramWrapped } from './components/CoramWrapped'
 import { BottomNav, StreakBadge, TopNav } from './components/GlobalNav'
 import { useViewport } from './components/navigation'
 
+// CORAM // LOGOS carrega só quando a pessoa abre o jogo: o motor e o canvas não entram no pacote principal.
+const LogosPage = lazy(() => import('./game/logos/LogosPage'))
 const bibleAnnotationStore = createBibleAnnotationStore(supabase)
 
 // arte 3D de cada jogo da Bereia; o CSS .game-v2 usa este valor para desenhar a placa no cabeçalho
@@ -98,6 +100,7 @@ function AppContent() {
     {page === 'bereia' && <BereiaHub />}
     {page === 'plano-de-leitura' && <ReadingPlansPage />}
     {(page === 'recap' || page.startsWith('recap/')) && <CoramWrapped page={page} />}
+    {page === 'bereia/logos' && <Suspense fallback={<p role="status">Abrindo o CORAM // LOGOS…</p>}><LogosPage /></Suspense>}
     {(gameArts[page] || duelCode) && <div className="game-v2" data-art={gameArts[page] ?? 'duelo'}>
       {page === 'bereia/duelo' && <DuelHub />}
       {duelCode && <DuelRoom key={duelCode} code={duelCode} />}
@@ -112,7 +115,7 @@ function AppContent() {
     {(page === 'owner' || page === 'owner/comunidade' || page === 'owner/moderacao' || page === 'owner/bereia' || page === 'owner/perguntas' || page === 'owner/publicadores' || page === 'owner/raio-x' || page === 'owner/panorama') && (auth.ownerLoading ? <p role="status">Verificando acesso OWNER…</p> : auth.owner ? <OwnerPanel page={page} /> : <div className="info" role="alert">Acesso restrito ao OWNER.</div>)}
     {page === 'publicador' && <PublisherPanel />}
     {(page === 'recuperar-senha' || page === 'nova-senha' || auth.recovery) && <PasswordForm update={page === 'nova-senha' || auth.recovery} />}
-    {!['biblia', 'configuracoes', 'minha-jornada', 'plano-de-leitura', 'recap', 'bereia', 'bereia/quiz', 'bereia/mito', 'bereia/quem-disse', 'bereia/versiculo', 'bereia/linha-do-tempo', 'bereia/duelo', 'inicio', 'historico', 'leitura', 'login', 'cadastro', 'admin', 'admin/comunidade', 'admin/moderacao', 'owner', 'owner/comunidade', 'owner/moderacao', 'owner/bereia', 'owner/perguntas', 'owner/publicadores', 'owner/raio-x', 'owner/panorama', 'publicador', 'recuperar-senha', 'nova-senha', 'perfil', 'privacidade'].includes(page) && !page.startsWith('leitura/') && !page.startsWith('biblia/') && !page.startsWith('recap/') && !duelCode && <div className="info">Página não encontrada. <a href="#inicio">Voltar ao início →</a></div>}
+    {!['biblia', 'configuracoes', 'minha-jornada', 'plano-de-leitura', 'recap', 'bereia', 'bereia/quiz', 'bereia/mito', 'bereia/quem-disse', 'bereia/versiculo', 'bereia/linha-do-tempo', 'bereia/duelo', 'bereia/logos', 'inicio', 'historico', 'leitura', 'login', 'cadastro', 'admin', 'admin/comunidade', 'admin/moderacao', 'owner', 'owner/comunidade', 'owner/moderacao', 'owner/bereia', 'owner/perguntas', 'owner/publicadores', 'owner/raio-x', 'owner/panorama', 'publicador', 'recuperar-senha', 'nova-senha', 'perfil', 'privacidade'].includes(page) && !page.startsWith('leitura/') && !page.startsWith('biblia/') && !page.startsWith('recap/') && !duelCode && <div className="info">Página não encontrada. <a href="#inicio">Voltar ao início →</a></div>}
   </>}</main><footer><span className="footer-logo">CORAM</span><span>Viver coram deo. Menos rotina. Mais presença.</span></footer></div>{showNavigation && viewport === 'mobile' && <BottomNav page={page} />}</div>
 }
 function SessionContent() {

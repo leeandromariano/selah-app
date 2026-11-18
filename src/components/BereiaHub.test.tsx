@@ -13,4 +13,10 @@ describe('Bereia', () => {
     expect(screen.getByRole('link', { name: /Versículo Oculto/ })).toHaveAttribute('href', '#bereia/versiculo')
     expect(screen.getByRole('link', { name: /Linha do Tempo/ })).toHaveAttribute('href', '#bereia/linha-do-tempo')
   })
+  it('destaca o CORAM // LOGOS no topo, antes dos outros jogos', () => {
+    render(<BereiaHub />)
+    const hero = screen.getByRole('link', { name: /CORAM \/\/ LOGOS/ })
+    expect(hero).toHaveAttribute('href', '#bereia/logos')
+    expect(hero.compareDocumentPosition(screen.getByRole('link', { name: /Quiz bíblico/ })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
 })
