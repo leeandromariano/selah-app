@@ -10,7 +10,7 @@ export function JourneyPage() {
   if (loading) return <p role="status">Carregando sessão…</p>
   if (!session || recovery) return <div className="info">Entre na sua conta para acompanhar sua jornada. <a href="#login">Entrar</a></div>
   return <div className="journey-v2">
-    <div className="page-heading journey-heading"><div className="eyebrow">CADA PAUSA FAZ PARTE DO CAMINHO</div><h1>Minha <em>Jornada</em></h1><p>Acompanhe suas conclusões e revisite sua história, no seu tempo.</p></div>
+    <div className="page-heading journey-heading"><div className="eyebrow">CADA PAUSA FAZ PARTE DO CAMINHO</div><h1>Minha <em>Jornada</em></h1><p>Acompanhe suas conclusões e revisite sua história, no seu tempo.</p><p><a className="button secondary" href="#recap">Ver meu Recap Coram →</a></p></div>
     <ConsistencySection userId={session.user.id} showHistory />
     <JourneyLastOpening key={session.user.id} userId={session.user.id} />
     <JourneyRewards userId={session.user.id} />
