@@ -74,3 +74,55 @@
   .game-v2 .page-heading::after { width: 76px; border-radius: 20px; }
 }
 @media (prefers-reduced-motion: reduce) { .game-v2 .quiz-option { transition: none; } .game-v2 .quiz-option:not(:disabled):hover { transform: none; } }
+
+/* Duelo Relâmpago */
+.duel-setup, .duel-card, .duel-recent { display: grid; gap: 14px; padding: clamp(16px, 2.6vw, 26px); border: 1px solid var(--glass-border); border-radius: 26px; background: linear-gradient(150deg, var(--glass-bg), transparent 70%), var(--surface); }
+.duel-setup fieldset { display: grid; gap: 10px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.duel-setup legend { display: flex; align-items: center; gap: 10px; padding: 0; margin-bottom: 8px; font-weight: 700; }
+.duel-options { display: flex; flex-wrap: wrap; gap: 10px; }
+.duel-option { position: relative; display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border: 1px solid var(--glass-border); border-radius: 999px; background: var(--surface-soft); cursor: pointer; }
+.duel-option input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.duel-option[data-checked='true'] { border-color: var(--brand-ember); box-shadow: 0 0 0 1px var(--brand-ember) inset; background: var(--accent-bg); }
+.duel-option:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
+.duel-option strong { font-size: 14px; }
+.duel-card h2, .duel-recent h2 { margin: 0; font: 800 clamp(22px, 3vw, 30px)/1.15 'Plus Jakarta Sans', Inter, sans-serif; letter-spacing: -.03em; }
+.duel-card h3 { margin: 6px 0 0; }
+.duel-clock { margin: 0; min-height: 1.3em; color: var(--accent); font: 800 20px/1 'Plus Jakarta Sans', Inter, sans-serif; text-align: right; }
+.duel-versus { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; text-align: center; }
+.duel-versus > div { display: grid; gap: 2px; padding: 16px 8px; border: 1px solid var(--glass-border); border-radius: 20px; background: var(--surface-soft); }
+.duel-versus > div[data-lead='true'] { border-color: var(--brand-ember); box-shadow: 0 8px 26px var(--hero-glow); }
+.duel-versus b { font: 800 clamp(44px, 9vw, 72px)/1 'Plus Jakarta Sans', Inter, sans-serif; color: var(--accent); }
+.duel-versus span, .duel-versus small { color: var(--text-muted); font-size: 13px; }
+.duel-x { color: var(--text-muted); font: 800 28px/1 'Plus Jakarta Sans', Inter, sans-serif; }
+.duel-board { list-style: none; display: grid; gap: 8px; margin: 0; padding: 0; }
+.duel-board li { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid var(--glass-border); border-radius: 14px; background: var(--surface-soft); }
+.duel-board li[data-me='true'] { border-color: var(--brand-ember); }
+.duel-name { overflow-wrap: anywhere; font-weight: 700; }
+.duel-board small { color: var(--text-muted); }
+.duel-recent ul { list-style: none; display: grid; gap: 8px; margin: 0; padding: 0; }
+.duel-recent a { display: grid; gap: 2px; padding: 12px 14px; border: 1px solid var(--glass-border); border-radius: 14px; background: var(--surface-soft); color: var(--text); text-decoration: none; }
+.duel-recent a:hover, .duel-recent a:focus-visible { border-color: var(--brand-ember); }
+.duel-recent a span { color: var(--text-muted); font-size: 13px; }
+.duel-again { margin: 0; }
+@media (max-width: 560px) { .duel-board li { grid-template-columns: 30px minmax(0, 1fr) auto; } .duel-board small { grid-column: 2 / -1; } }
+.duel-option { flex-direction: row; justify-content: center; margin: 0; }
+.duel-option strong { margin: 0; line-height: 1.2; }
+.duel-versus { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+.duel-versus > div { min-width: 0; }
+.duel-versus strong { overflow-wrap: anywhere; font-size: 14px; }
+
+/* Duelo Relâmpago, no estilo do mockup: espadas soltas no cabeçalho, moeda VS, troféu do vencedor */
+.game-v2[data-art="duelo"] { --game-art: url(/home/duelo-espadas.webp); }
+.game-v2[data-art="duelo"] .page-heading { min-height: 128px; padding-right: 150px; }
+.game-v2[data-art="duelo"] .page-heading::after { width: 132px; border: 0; border-radius: 0; background: var(--game-art) center / contain no-repeat; box-shadow: none; filter: drop-shadow(0 10px 28px var(--hero-glow)); }
+.duel-versus { position: relative; gap: 0; }
+.duel-versus > div { position: relative; }
+.duel-vs { position: relative; z-index: 1; width: clamp(52px, 9vw, 84px); height: auto; margin-inline: clamp(-26px, -3vw, -14px); filter: drop-shadow(0 6px 18px var(--hero-glow)); }
+.duel-trophy { position: absolute; top: -18px; right: -6px; width: clamp(48px, 8vw, 72px); height: auto; filter: drop-shadow(0 6px 18px var(--hero-glow)); }
+.duel-card .actions a.button { display: inline-flex; align-items: center; gap: 8px; }
+.duel-card .actions a.button img { display: block; width: 28px; height: 28px; object-fit: contain; }
+@media (max-width: 560px) {
+  .game-v2[data-art="duelo"] .page-heading { padding-right: 96px; min-height: 96px; }
+  .game-v2[data-art="duelo"] .page-heading::after { width: 90px; border-radius: 0; }
+  .duel-trophy { width: 44px; top: -14px; }
+}

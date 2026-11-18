@@ -159,3 +159,34 @@ describe('fluxos locais do Selah', () => {
     expect(await screen.findByText('Mensagem Revisada')).toBeVisible()
   })
 })
+
+describe('convite do Duelo Relâmpago', () => {
+  const room = 'bereia/duelo/abcdefghij'
+  it('quem abre o link sem estar logado é levado ao login e o convite é lembrado', async () => {
+    sessionStorage.clear()
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: null }, error: null })
+    location.hash = room
+    render(<App />)
+    expect(await screen.findByRole('heading', { name: 'Que bom te ver de novo' })).toBeVisible()
+    expect(sessionStorage.getItem('coram.pending-duel')).toBe(room)
+  })
+  it('depois de entrar (e cair no início), volta para o duelo e esquece o convite', async () => {
+    sessionStorage.setItem('coram.pending-duel', room)
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'fictional-reader' } } }, error: null } as never)
+    libraryBoundary(olderPublications)
+    location.hash = 'inicio'
+    render(<App />)
+    await vi.waitFor(() => expect(location.hash).toBe(`#${room}`))
+    expect(sessionStorage.getItem('coram.pending-duel')).toBeNull()
+  })
+  it('um convite guardado com formato estranho é ignorado', async () => {
+    sessionStorage.setItem('coram.pending-duel', 'bereia/duelo/../../admin')
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: { user: { id: 'fictional-reader' } } }, error: null } as never)
+    libraryBoundary(olderPublications)
+    location.hash = 'inicio'
+    render(<App />)
+    expect(await screen.findByRole('heading', { name: 'Que bom ter você aqui.' })).toBeVisible()
+    expect(location.hash).toBe('#inicio')
+    sessionStorage.clear()
+  })
+})
