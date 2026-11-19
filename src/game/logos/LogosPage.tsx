@@ -112,6 +112,7 @@ export default function LogosPage({ repo = defaultRepository }: { repo?: LogosRe
 
   return <div className="lg-page">
     <header className="lg-header">
+      <a className="lg-exit" href="#bereia">← Voltar ao Bereia</a>
       <div className="lg-title"><b>CORAM // LOGOS</b><small>{screen === 'armadura' ? 'Armadura & Arsenal // Equipamento' : screen === 'campanha' ? 'Modo História // Campanha' : screen === 'fragmentos' ? 'Fragmentos Bíblicos' : 'The Spiritual Warfare Tactical Arena'}</small></div>
       <nav className="lg-tabs" aria-label="Seções do LOGOS">
         <button type="button" aria-current={screen === 'lobby' ? 'page' : undefined} onClick={() => setScreen('lobby')}>Lobby</button>
@@ -137,7 +138,6 @@ export default function LogosPage({ repo = defaultRepository }: { repo?: LogosRe
         <button type="button" className="lg-menu-item" data-active="true">Arena Rápida</button>
         <button type="button" className="lg-menu-item" onClick={() => setScreen('armadura')}>Armadura &amp; Arsenal</button>
         <button type="button" className="lg-menu-item" onClick={() => setScreen('fragmentos')}>Fragmentos</button>
-        <a className="lg-menu-back" href="#bereia">← Voltar ao Bereia</a>
       </nav>
       <div className="lg-hero"><Art3D name="portador-luz" alt="O Portador da Luz, de capuz e armadura, com a espada em brasa" fallback={<Bearer />} /><span className="lg-hero-tag">Portador da Luz · Pronto</span></div>
       <aside className="lg-side">

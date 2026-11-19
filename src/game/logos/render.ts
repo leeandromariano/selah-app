@@ -3,7 +3,7 @@ import { isVisible, tuning, type Enemy, type Game } from './sim'
 
 const bossColor = { tentador: '#4a2c6a', sentinela: '#1d2233', acusador: '#4a2222', dragao: '#5a1a12' } as const
 
-const ember = '#ff7a2e', gold = '#ffd9a8', cream = '#f5e6c8'
+const ember = '#ff7a2e', gold = '#ffd9a8'
 
 export type View = { w: number; h: number; scale: number; camX: number; camY: number }
 
@@ -165,14 +165,28 @@ function player(ctx: CanvasRenderingContext2D, g: Game) {
   ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(0, 0, aura, 0, 7); ctx.fill()
   ctx.strokeStyle = 'rgba(255,170,90,.35)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, p.r * 1.55 * pulse, 0, 7); ctx.stroke()
   ctx.rotate(p.aim)
-  // espada em brasa
-  ctx.strokeStyle = ember; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.shadowColor = ember; ctx.shadowBlur = 14
-  ctx.beginPath(); ctx.moveTo(p.r * 0.4, 6); ctx.lineTo(p.r + 26, 4); ctx.stroke()
-  ctx.strokeStyle = gold; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(p.r * 0.5, 6); ctx.lineTo(p.r + 24, 4); ctx.stroke(); ctx.shadowBlur = 0
-  // corpo: capa creme e capuz
-  ctx.fillStyle = p.flash > 0 ? '#ffb1a0' : cream; ctx.beginPath(); ctx.arc(0, 0, p.r, 0, 7); ctx.fill()
-  ctx.fillStyle = '#b08a5a'; ctx.beginPath(); ctx.arc(-3, 0, p.r * 0.62, 0, 7); ctx.fill()
-  ctx.fillStyle = '#3a2a1c'; ctx.beginPath(); ctx.arc(p.r * 0.28, 0, p.r * 0.34, 0, 7); ctx.fill()
+  const r = p.r, hit = p.flash > 0
+  // rastro luminoso da lâmina: leque que esmaece atrás da ponta, com brilho pulsante
+  const trail = ctx.createRadialGradient(0, 0, r * 0.6, 0, 0, r + 40)
+  trail.addColorStop(0, 'rgba(255,85,0,0)'); trail.addColorStop(0.7, `rgba(255,85,0,${0.2 + 0.08 * Math.sin(g.time * 9)})`); trail.addColorStop(1, 'rgba(255,85,0,0)')
+  ctx.fillStyle = trail; ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, r + 40, -0.55, 0.12); ctx.closePath(); ctx.fill()
+  // lâmina incandescente (#FF5500) apontando para a mira, com núcleo claro e guarda
+  ctx.lineCap = 'round'; ctx.shadowColor = '#FF5500'; ctx.shadowBlur = 20
+  ctx.strokeStyle = '#FF5500'; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(r * 0.7, 7); ctx.lineTo(r + 34, 3); ctx.stroke()
+  ctx.shadowBlur = 0; ctx.strokeStyle = '#FFD9A8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(r * 0.9, 6.5); ctx.lineTo(r + 32, 3.4); ctx.stroke()
+  ctx.strokeStyle = '#B9BFC9'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(r * 0.82, 1); ctx.lineTo(r * 0.82, 13); ctx.stroke()
+  // ombreiras metálicas dos dois lados
+  for (const side of [-1, 1]) {
+    const sg = ctx.createLinearGradient(0, side * r * 0.4, 0, side * r * 1.3); sg.addColorStop(0, '#d7dce4'); sg.addColorStop(1, '#4a505c')
+    ctx.fillStyle = hit ? '#ffb1a0' : sg; ctx.beginPath(); ctx.ellipse(-1, side * r * 0.92, r * 0.62, r * 0.4, side * 0.25, 0, 7); ctx.fill()
+    ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 1.2; ctx.stroke()
+  }
+  // capuz off-white (#F4F1EA) com a ponta caída para trás, sombra do rosto na frente e emblema brasa
+  ctx.fillStyle = hit ? '#ffb1a0' : '#F4F1EA'; ctx.beginPath(); ctx.arc(0, 0, r * 0.8, 0, 7); ctx.fill()
+  ctx.beginPath(); ctx.moveTo(-r * 0.5, -r * 0.5); ctx.lineTo(-r * 1.25, 0); ctx.lineTo(-r * 0.5, r * 0.5); ctx.closePath(); ctx.fill()
+  ctx.fillStyle = '#C9C2B2'; ctx.beginPath(); ctx.arc(-r * 0.12, 0, r * 0.52, 0, 7); ctx.fill()
+  ctx.fillStyle = '#2a1f17'; ctx.beginPath(); ctx.ellipse(r * 0.32, 0, r * 0.3, r * 0.26, 0, 0, 7); ctx.fill()
+  ctx.fillStyle = '#FF5500'; ctx.shadowColor = '#FF5500'; ctx.shadowBlur = 8; ctx.beginPath(); ctx.arc(-r * 0.2, 0, 2.4, 0, 7); ctx.fill(); ctx.shadowBlur = 0
   ctx.restore()
 }
 

@@ -55,3 +55,9 @@
 
 /* quem tem os três painéis (admin, owner e publicador) só os vê no topo em telas bem largas; antes disso ficam no menu lateral */
 @media (max-width: 1499px) { .top-nav[data-extras="3"] .top-nav-extra { display: none; } }
+
+/* CORAM // LOGOS em tela cheia: sem cabeçalho, rodapé nem navegação do app; a saída é o botão do próprio jogo. */
+.app[data-immersive] .main-shell > header, .app[data-immersive] .main-shell > footer, .app[data-immersive] .skip-link { display: none; }
+.app[data-immersive] .main-shell, .app[data-immersive] main { padding: 0; max-width: none; margin: 0; }
+.app[data-immersive] { background: #0D0E11; }
+body:has(.app[data-immersive]) { background: #0D0E11; }

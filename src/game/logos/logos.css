@@ -242,3 +242,68 @@
 .lg-map[data-art='true'] .lg-map-svg { z-index: 1; } .lg-map[data-art='true'] .lg-node, .lg-map[data-art='true'] .lg-act-label { z-index: 2; }
 .lg-map[data-art='true'] { aspect-ratio: 16 / 9; }
 .lg-map[data-art='true'] .lg-act-label[data-act='1'] { left: 2%; bottom: 3%; } .lg-map[data-art='true'] .lg-act-label[data-act='2'] { left: 30%; bottom: 3%; } .lg-map[data-art='true'] .lg-act-label[data-act='3'] { left: 10%; top: 8%; bottom: auto; } .lg-map[data-art='true'] .lg-act-label[data-act='4'] { left: auto; right: 6%; top: 8%; bottom: auto; text-align: right; }
+
+/* ===== Acabamento final: tela cheia, recortes 3D, vidro fosco, órbita da armadura, mapa imersivo ===== */
+.lg-page {
+  --glass: rgba(22, 24, 29, .72); --glass-line: rgba(255, 255, 255, .08); --brasa: #FF5500;
+  width: 100%; min-height: 100vh; min-height: 100dvh; box-sizing: border-box; border: 0; border-radius: 0; align-content: start;
+  background: radial-gradient(1000px 520px at 50% -8%, rgba(255, 85, 0, .13), transparent 70%), #0D0E11;
+}
+.lg-header { grid-template-columns: auto auto 1fr auto; }
+.lg-exit { border: 1px solid var(--glass-line); border-radius: 10px; padding: 9px 14px; background: var(--glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); color: var(--lg-text); text-decoration: none; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.lg-exit:hover, .lg-exit:focus-visible { border-color: var(--brasa); }
+
+/* recorte dos renders 3D: o fundo escuro some e a borda esmaece, sem caixa retangular */
+.logos-3d-cutout { mix-blend-mode: lighten; -webkit-mask-image: radial-gradient(ellipse farthest-corner at 50% 50%, #000 64%, transparent 84%); mask-image: radial-gradient(ellipse farthest-corner at 50% 50%, #000 64%, transparent 84%); }
+.lg-hero .logos-3d-cutout, .lg-arsenal-figure .logos-3d-cutout { -webkit-mask-image: radial-gradient(ellipse closest-side at 50% 50%, #000 88%, transparent 100%); mask-image: radial-gradient(ellipse closest-side at 50% 50%, #000 88%, transparent 100%); }
+
+/* vidro fosco */
+.lg-card, .lg-menu-item, .lg-detail, .lg-phase-card, .lg-hero-tag, .lg-tabs { background: var(--glass); border-color: var(--glass-line); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.lg-modes button[data-active='true'] { border-color: var(--brasa); background: rgba(255, 85, 0, .14); }
+.lg-menu-item[data-active='true'] { border-color: var(--brasa); box-shadow: 0 0 0 1px var(--brasa) inset, 0 8px 28px rgba(255, 85, 0, .2); }
+
+/* lobby: Portador maior com aura brasa */
+.lg-lobby { min-height: calc(100vh - 150px); }
+.lg-hero { background: radial-gradient(closest-side at 50% 64%, rgba(255, 85, 0, .3), rgba(255, 85, 0, .08) 55%, transparent 78%); }
+.lg-hero .lg-art { height: min(600px, 74vh); filter: drop-shadow(0 12px 40px rgba(255, 85, 0, .32)); }
+
+/* armadura: 3 peças em arco de cada lado do Portador, com linhas pontilhadas apontando para ele */
+.lg-arsenal-stage { background: radial-gradient(closest-side at 50% 58%, rgba(255, 85, 0, .26), transparent 72%); grid-template-columns: minmax(110px, 170px) minmax(160px, 1fr) minmax(110px, 170px); min-height: min(560px, 72vh); }
+.lg-pieces { align-self: center; gap: 22px; }
+.lg-piece { position: relative; background: var(--glass); border-color: var(--glass-line); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.lg-piece::after { content: ''; position: absolute; top: 50%; width: clamp(36px, 7vw, 92px); border-top: 2px dotted rgba(255, 150, 80, .4); pointer-events: none; }
+.lg-pieces-left .lg-piece::after { left: 100%; transform-origin: left center; } .lg-pieces-right .lg-piece::after { right: 100%; transform-origin: right center; }
+.lg-pieces-left .lg-piece:nth-child(1) { transform: translateX(26px); } .lg-pieces-left .lg-piece:nth-child(1)::after { transform: rotate(16deg); }
+.lg-pieces-left .lg-piece:nth-child(2) { transform: translateX(-10px); }
+.lg-pieces-left .lg-piece:nth-child(3) { transform: translateX(26px); } .lg-pieces-left .lg-piece:nth-child(3)::after { transform: rotate(-16deg); }
+.lg-pieces-right .lg-piece:nth-child(1) { transform: translateX(-26px); } .lg-pieces-right .lg-piece:nth-child(1)::after { transform: rotate(-16deg); }
+.lg-pieces-right .lg-piece:nth-child(2) { transform: translateX(10px); }
+.lg-pieces-right .lg-piece:nth-child(3) { transform: translateX(-26px); } .lg-pieces-right .lg-piece:nth-child(3)::after { transform: rotate(16deg); }
+.lg-piece[data-selected='true'] { border-color: var(--brasa); box-shadow: 0 0 0 1px var(--brasa) inset, 0 0 26px rgba(255, 85, 0, .38); }
+.lg-piece[data-selected='true']::after { border-top-color: var(--brasa); }
+
+/* mapa imersivo: o mapa ocupa a área toda e o briefing flutua à direita */
+.lg-campaign { position: relative; display: block; }
+.lg-map { width: 100%; min-height: min(72vh, 760px); border-radius: 20px; border-color: var(--glass-line); }
+.lg-map[data-art='true'] { aspect-ratio: 16 / 9; min-height: 0; }
+.lg-phase-card { position: absolute; z-index: 5; top: 16px; right: 16px; bottom: 16px; width: min(360px, 34%); overflow: auto; background: rgba(22, 24, 29, .62); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-color: rgba(255, 255, 255, .1); }
+.lg-node { width: clamp(30px, 3.4vw, 46px); height: clamp(30px, 3.4vw, 46px); border: 3px solid rgba(255, 255, 255, .22); background: rgba(13, 14, 17, .72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); font-size: clamp(12px, 1.5vw, 17px); text-shadow: 0 1px 3px #000; filter: drop-shadow(0 0 6px rgba(0, 0, 0, .7)); }
+.lg-node[data-state='done'] { background: rgba(226, 232, 150, .2); border-color: #E9E3A1; color: #fff8d6; filter: drop-shadow(0 0 10px rgba(233, 227, 161, .65)); }
+.lg-node[data-state='open'] { background: rgba(255, 85, 0, .24); border-color: var(--brasa); color: #fff; filter: drop-shadow(0 0 12px rgba(255, 85, 0, .85)); animation: lg-node-glow 1.6s ease-in-out infinite; }
+.lg-node[data-state='locked'] { color: rgba(255, 255, 255, .55); border-color: rgba(255, 255, 255, .16); }
+.lg-node[data-state='locked']::after { content: '\1F512'; position: absolute; right: -9px; top: -9px; font-size: 12px; line-height: 1; }
+.lg-node[data-selected='true'] { outline: 3px solid var(--lg-gold); outline-offset: 4px; }
+@keyframes lg-node-glow { 50% { filter: drop-shadow(0 0 22px rgba(255, 85, 0, 1)); transform: translate(-50%, -50%) scale(1.08); } }
+@media (max-width: 900px) { .lg-phase-card { position: static; width: auto; margin-top: 12px; } .lg-map, .lg-map[data-art='true'] { min-height: 0; aspect-ratio: 16 / 9; } }
+@media (prefers-reduced-motion: reduce) { .lg-node[data-state='open'] { animation: none; } }
+
+/* fragmentos: vidro com borda luminosa nos coletados; silhueta do cartão nos que faltam */
+.lg-fragments li { position: relative; overflow: hidden; background: var(--glass); border-color: var(--glass-line); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.lg-fragments li[data-got='true'] { border-color: rgba(255, 85, 0, .7); box-shadow: 0 0 0 1px rgba(255, 85, 0, .35) inset, 0 0 26px rgba(255, 85, 0, .25); }
+.lg-fragments li[data-got='false'] { opacity: 1; }
+.lg-fragments li[data-got='false']::before { content: ''; position: absolute; inset: 6px; background: url('/assets/3d/logos/fragmento.webp') center / contain no-repeat; filter: grayscale(1) brightness(.55); opacity: .16; pointer-events: none; }
+.lg-fragments li > * { position: relative; }
+
+/* HUD: rótulos das habilidades mais legíveis */
+.lg-skill small { color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .05em; text-shadow: 0 1px 3px #000, 0 0 8px rgba(0, 0, 0, .9); background: rgba(8, 8, 10, .62); border-radius: 6px; padding: 2px 4px; }
+.lg-skill kbd { font-size: 13px; font-weight: 800; color: #fff; background: rgba(8, 8, 10, .92); border-color: rgba(255, 140, 70, .55); }
