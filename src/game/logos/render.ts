@@ -43,7 +43,12 @@ function ground(ctx: CanvasRenderingContext2D, g: Game, v: View) {
     const h = hash2(x / tile, y / tile)
     ctx.fillStyle = h > 0.5 ? `rgba(255,255,255,${0.012 + (h - 0.5) * 0.05})` : `rgba(0,0,0,${0.06 + (0.5 - h) * 0.3})`
     ctx.fillRect(x, y, tile, tile)
-    if (h > 0.82) { ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.beginPath(); ctx.moveTo(x + h * 30, y + 8); ctx.lineTo(x + 40 + h * 20, y + tile * 0.55); ctx.lineTo(x + 30, y + tile - 6); ctx.stroke() }
+    if (h > 0.7) { // rachaduras: uma linha principal com um ramo, mais clara na borda
+      const k = hash2(x * 0.37, y * 0.91)
+      ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x + h * 30, y + 6); ctx.lineTo(x + 30 + k * 26, y + tile * 0.5); ctx.lineTo(x + 18 + k * 30, y + tile - 6); ctx.moveTo(x + 30 + k * 26, y + tile * 0.5); ctx.lineTo(x + tile - 8, y + tile * 0.62); ctx.stroke()
+      ctx.strokeStyle = 'rgba(255,255,255,.06)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x + h * 30 + 2, y + 6); ctx.lineTo(x + 32 + k * 26, y + tile * 0.5); ctx.stroke()
+    }
+    if (h < 0.1) ruin(ctx, x, y, tile, hash2(y / tile, x / tile)) // lajes soltas e muros caídos, com contraste baixo
   }
   ctx.strokeStyle = 'rgba(0,0,0,.45)'
   for (let x = x0; x <= x1; x += tile) { ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke() }
@@ -55,6 +60,45 @@ function ground(ctx: CanvasRenderingContext2D, g: Game, v: View) {
   ctx.strokeStyle = 'rgba(255,140,60,.35)'; ctx.lineWidth = 3; ctx.strokeRect(0, 0, g.w, g.h)
 }
 
+// Entulho de ruína: pedaços de muro caído (pedra mais clara, face de cima e lateral) e cascalho ao redor.
+function ruin(ctx: CanvasRenderingContext2D, x: number, y: number, tile: number, k: number) {
+  const w = 34 + k * 26, h = 14 + k * 8, ox = x + 10 + k * 20, oy = y + 28 + k * 16
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(ox + 4, oy + h, w, 6)
+  ctx.fillStyle = '#23242b'; ctx.fillRect(ox, oy, w, h)
+  ctx.fillStyle = '#2f3038'; ctx.fillRect(ox, oy, w, 4)
+  ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 1; ctx.strokeRect(ox, oy, w, h)
+  ctx.beginPath(); ctx.moveTo(ox + w * 0.4, oy); ctx.lineTo(ox + w * 0.4 + 3, oy + h); ctx.moveTo(ox + w * 0.75, oy); ctx.lineTo(ox + w * 0.75 - 2, oy + h); ctx.stroke()
+  ctx.fillStyle = '#1b1c21'
+  for (let i = 0; i < 4; i++) { const a = hash2(k * 9 + i, i * 3.1), b = hash2(i * 7.7, k * 5); ctx.beginPath(); ctx.moveTo(x + a * tile, y + b * tile); ctx.lineTo(x + a * tile + 6, y + b * tile + 2); ctx.lineTo(x + a * tile + 3, y + b * tile + 7); ctx.closePath(); ctx.fill() }
+}
+
+// Sombras projetadas: cada pilar perto do Portador joga uma sombra para longe da luz dele; a sombra esmaece com a distância.
+function castShadows(ctx: CanvasRenderingContext2D, g: Game) {
+  const p = g.player
+  for (const o of g.obstacles) {
+    const dx = o.x - p.x, dy = o.y - p.y, d = Math.hypot(dx, dy)
+    if (d < 8 || d > 520) continue
+    const ux = dx / d, uy = dy / d, nx = -uy, ny = ux, len = 150 + (520 - d) * 0.45
+    const grad = ctx.createLinearGradient(o.x, o.y, o.x + ux * len, o.y + uy * len)
+    const a = 0.62 * (1 - d / 560); grad.addColorStop(0, `rgba(0,0,0,${a})`); grad.addColorStop(1, 'rgba(0,0,0,0)')
+    ctx.fillStyle = grad; ctx.beginPath()
+    ctx.moveTo(o.x + nx * o.r, o.y + ny * o.r); ctx.lineTo(o.x + nx * o.r * 1.25 + ux * len, o.y + ny * o.r * 1.25 + uy * len)
+    ctx.lineTo(o.x - nx * o.r * 1.25 + ux * len, o.y - ny * o.r * 1.25 + uy * len); ctx.lineTo(o.x - nx * o.r, o.y - ny * o.r); ctx.closePath(); ctx.fill()
+  }
+}
+
+// O pilar bloqueia a linha de visão entre o Portador e o alvo?
+function behindPillar(g: Game, x: number, y: number) {
+  const p = g.player, vx = x - p.x, vy = y - p.y, L2 = vx * vx + vy * vy
+  if (L2 < 1) return false
+  for (const o of g.obstacles) {
+    const t = Math.max(0, Math.min(1, ((o.x - p.x) * vx + (o.y - p.y) * vy) / L2))
+    if (t <= 0 || t >= 1) continue
+    if (Math.hypot(p.x + vx * t - o.x, p.y + vy * t - o.y) < o.r * 0.9 && Math.hypot(o.x - p.x, o.y - p.y) < Math.sqrt(L2)) return true
+  }
+  return false
+}
+
 // Luz quente do Portador sobre a pedra: sobe um pouco a claridade ao redor dele.
 function playerLight(ctx: CanvasRenderingContext2D, g: Game) {
   const p = g.player, r = 230 + Math.sin(g.time * 3) * 8
@@ -63,24 +107,31 @@ function playerLight(ctx: CanvasRenderingContext2D, g: Game) {
   ctx.fillStyle = l; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 7); ctx.fill(); ctx.restore()
 }
 
-function pillar(ctx: CanvasRenderingContext2D, x: number, y: number, r: number) {
-  ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.beginPath(); ctx.ellipse(x + 8, y + 10, r, r * 0.82, 0, 0, 7); ctx.fill()
-  const grad = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, 2, x, y, r)
-  grad.addColorStop(0, '#6b5f55'); grad.addColorStop(1, '#2c2622')
+// Coluna de pedra vista de cima: base escura, tambor com o lado voltado para a luz do Portador mais claro, anéis de junta, rachaduras e uma lasca quebrada.
+function pillar(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, light: { x: number; y: number }) {
+  const dx = light.x - x, dy = light.y - y, d = Math.max(1, Math.hypot(dx, dy)), lx = dx / d, ly = dy / d, near = Math.max(0, 1 - d / 380)
+  ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.beginPath(); ctx.ellipse(x + 8, y + 10, r * 1.08, r * 0.9, 0, 0, 7); ctx.fill()
+  ctx.fillStyle = '#17181d'; ctx.beginPath(); ctx.arc(x, y, r * 1.06, 0, 7); ctx.fill()
+  const grad = ctx.createRadialGradient(x + lx * r * 0.45, y + ly * r * 0.45, 2, x, y, r)
+  grad.addColorStop(0, near > 0 ? `rgb(${95 + near * 90},${86 + near * 55},${78 + near * 30})` : '#5a5d66'); grad.addColorStop(1, '#25262d')
   ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill()
-  ctx.strokeStyle = 'rgba(255,170,100,.25)'; ctx.lineWidth = 2; ctx.stroke()
+  ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r * 0.66, 0, 7); ctx.stroke()
+  const k = hash2(x * 0.013, y * 0.017)
+  ctx.beginPath(); ctx.moveTo(x - r * 0.2, y - r * 0.95 * (0.6 + k * 0.3)); ctx.lineTo(x + r * 0.05, y - r * 0.2); ctx.lineTo(x - r * 0.3, y + r * 0.55); ctx.stroke()
+  ctx.fillStyle = '#0D0E11'; ctx.beginPath(); ctx.moveTo(x + r * 0.55, y + r * 0.7); ctx.lineTo(x + r * 0.95, y + r * 0.25); ctx.lineTo(x + r * 0.9, y + r * 0.75); ctx.closePath(); ctx.fill()
+  ctx.strokeStyle = `rgba(255,${150 + near * 40},100,${0.12 + near * 0.35})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r, Math.atan2(ly, lx) - 1.1, Math.atan2(ly, lx) + 1.1); ctx.stroke()
 }
 
 function enemy(ctx: CanvasRenderingContext2D, g: Game, e: Enemy) {
   const vis = isVisible(g, e)
-  const alpha = vis ? (e.kind === 'clone' ? 0.8 : 1) : 0.16
+  const alpha = (vis ? (e.kind === 'clone' ? 0.8 : 1) : 0.16) * (e.boss || !behindPillar(g, e.x, e.y) ? 1 : 0.4)
   ctx.save(); ctx.globalAlpha = alpha; ctx.translate(e.x, e.y)
   const toward = Math.atan2(g.player.y - e.y, g.player.x - e.x)
   const wob = Math.sin(e.wob) * 2
   ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.beginPath(); ctx.ellipse(4, e.r * 0.7, e.r, e.r * 0.5, 0, 0, 7); ctx.fill()
   const body = e.boss ? bossColor[e.boss.id] : e.kind === 'clone' ? '#3b2a52' : e.kind === 'brutamontes' ? '#2a1330' : e.kind === 'fantasma' ? '#241a33' : e.kind === 'dardo' ? '#2b1a2a' : '#211724'
   // arte 3D: Dragão e Acusador (chefes) e a sombra encapuzada (inimigos comuns); sem o arquivo, volta ao círculo
-  const sprite = e.boss?.id === 'dragao' ? arenaArt('dragao') : e.boss?.id === 'acusador' ? arenaArt('acusador') : !e.boss && (e.kind === 'sombra' || e.kind === 'fantasma' || e.kind === 'clone') ? arenaArt('sombra') : null
+  const sprite = e.boss?.id === 'dragao' ? arenaArt('boss-dragao') : e.boss?.id === 'acusador' ? arenaArt('inimigo-acusador') : e.boss?.id === 'sentinela' ? arenaArt('inimigo-sentinela') : !e.boss && (e.kind === 'sombra' || e.kind === 'fantasma' || e.kind === 'clone') ? arenaArt('inimigo-sombra') : null
   if (sprite) {
     const size = e.r * (e.boss ? 5.4 : 4.2)
     ctx.drawImage(sprite, -size / 2, -size / 2 - e.r * 0.25 + wob * 0.4, size, size)
@@ -242,9 +293,10 @@ export function render(ctx: CanvasRenderingContext2D, g: Game, v: View, fogLayer
   ctx.setTransform(v.scale, 0, 0, v.scale, -v.camX * v.scale, -v.camY * v.scale)
   ground(ctx, g, v)
   playerLight(ctx, g)
+  castShadows(ctx, g)
   altar(ctx, g)
   storyLayer(ctx, g)
-  for (const o of g.obstacles) pillar(ctx, o.x, o.y, o.r)
+  for (const o of g.obstacles) pillar(ctx, o.x, o.y, o.r, g.player)
   // ondas do Pulso e do Consumado
   if (g.pulse) { const k = g.pulse.t / tuning.pulseTime; ctx.strokeStyle = `rgba(255,214,160,${1 - k})`; ctx.lineWidth = 6 * (1 - k) + 1; ctx.beginPath(); ctx.arc(g.pulse.x, g.pulse.y, tuning.pulseRadius * k, 0, 7); ctx.stroke() }
   for (const e of g.enemies) enemy(ctx, g, e)

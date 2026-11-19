@@ -10,7 +10,8 @@ import { Art3D } from './Art3D'
 import { bindDesktop, bindJoystick, type Joystick } from './input'
 
 type Saver = {
-  finishRun: (report: { mode: LogosMode; wave: number; kills: number; seconds: number; won: boolean }) => Promise<LogosState & { reward: RunReward }>
+  startSession: (mode: LogosMode | 'historia', phase?: number) => Promise<string>
+  finishRun: (report: { sessionId: string; wave: number; kills: number; seconds: number; won: boolean }) => Promise<LogosState & { reward: RunReward }>
   finishPhase?: (report: PhaseReport) => Promise<PhaseResult>
 }
 export type LogosGameProps = {
@@ -109,16 +110,25 @@ export function LogosGame({ mode, armadura, repo, touch, onExit, onSaved, onAgai
     return () => { cancelAnimationFrame(raf); observer?.disconnect(); window.removeEventListener('resize', resize); unbindDesktop(); unbindStick() }
   }, [game, touch])
 
+  // a partida é aberta no servidor assim que o jogo monta; o fim de partida usa essa sessão
+  const session = useRef<Promise<string> | null>(null)
+  useEffect(() => {
+    const opened = repo.startSession(mode, story?.id)
+    opened.catch(() => undefined)
+    session.current = opened
+  }, [repo, mode, story])
+
   // fim de partida: salva o resultado uma única vez
   useEffect(() => {
     if ((phase !== 'won' && phase !== 'lost') || !game.result) return
     let active = true
     const r = game.result
     if (story && repo.finishPhase) {
-      repo.finishPhase({ phase: story.id, won: r.won, kills: r.kills, seconds: r.seconds }).then(res => { if (active) { setSavedPhase(res); setSaved(res.reward); callbacks.current.onSaved?.(res); callbacks.current.onPhaseSaved?.(res) } })
+      const finish = repo.finishPhase
+      ;(session.current ?? Promise.reject(Error('Não foi possível abrir a partida agora.'))).then(id => finish({ sessionId: id, won: r.won, kills: r.kills, seconds: r.seconds })).then(res => { if (active) { setSavedPhase(res); setSaved(res.reward); callbacks.current.onSaved?.(res); callbacks.current.onPhaseSaved?.(res) } })
         .catch((error: Error) => { if (active) setSaveError(error.message) })
     } else if (r.mode !== 'historia') {
-      repo.finishRun({ ...r, mode: r.mode }).then(state => { if (active) { setSaved(state.reward); callbacks.current.onSaved?.(state) } })
+      ;(session.current ?? Promise.reject(Error('Não foi possível abrir a partida agora.'))).then(id => repo.finishRun({ sessionId: id, wave: r.wave, kills: r.kills, seconds: r.seconds, won: r.won })).then(state => { if (active) { setSaved(state.reward); callbacks.current.onSaved?.(state) } })
         .catch((error: Error) => { if (active) setSaveError(error.message) })
     }
     return () => { active = false }

@@ -11,10 +11,11 @@ function fakeRepo(initial: LogosState = state(), fragments: Fragment[] = []) {
   let current = initial
   const lobby = vi.fn(async () => current)
   const upgrade = vi.fn(async (piece: string) => { current = { ...current, sparks: current.sparks - 100 * (current.armadura as Record<string, number>)[piece], armadura: { ...current.armadura, [piece]: (current.armadura as Record<string, number>)[piece] + 1 } }; return current })
+  const startSession = vi.fn(async (_mode: string, _phase?: number) => '0b8c1a52-7e5a-4c53-9d63-3f5d2f6a9b10')
   const finishRun = vi.fn(async () => ({ ...current, reward: { sparks: 120, xp: 60 } }))
   const campaign = vi.fn(async () => fragments)
   const finishPhase = vi.fn(async (r: { phase: number; won: boolean }) => ({ ...current, reward: { sparks: 100, xp: 70 }, fragment: r.won ? { phase: r.phase, reference: 'Mateus 4:4', is_new: true } : null }))
-  return { repo: { lobby, upgrade, finishRun, campaign, finishPhase } as unknown as LogosRepository, lobby, upgrade, finishRun, campaign, finishPhase }
+  return { repo: { lobby, upgrade, startSession, finishRun, campaign, finishPhase } as unknown as LogosRepository, lobby, upgrade, startSession, finishRun, campaign, finishPhase }
 }
 
 beforeEach(() => { vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null) })
@@ -135,12 +136,12 @@ describe('CORAM // LOGOS: partida', () => {
     expect(within(dialog).getByText('A VIGÍLIA TERMINOU')).toBeVisible()
     await waitFor(() => expect(within(dialog).getByText('+120 Centelhas · +60 XP')).toBeVisible())
     expect(finishRun).toHaveBeenCalledTimes(1)
-    expect(finishRun).toHaveBeenCalledWith(expect.objectContaining({ mode: 'vigilia', won: false, kills: 0 }))
+    expect(finishRun).toHaveBeenCalledWith(expect.objectContaining({ sessionId: '0b8c1a52-7e5a-4c53-9d63-3f5d2f6a9b10', won: false, kills: 0 }))
     await user.click(within(dialog).getByRole('button', { name: 'Voltar ao lobby' }))
     expect(await screen.findByRole('button', { name: 'Jogar Vigília na Arena' })).toBeVisible()
   })
   it('o Farol abre com a névoa e o objetivo; "Jogar de novo" recomeça', async () => {
-    const { repo, finishRun } = fakeRepo()
+    const { repo, finishRun, startSession } = fakeRepo()
     const user = userEvent.setup()
     render(<LogosPage repo={repo} />)
     await user.click(await screen.findByRole('radio', { name: /Protocolo Farol/ }))
@@ -150,7 +151,8 @@ describe('CORAM // LOGOS: partida', () => {
     await user.click(await screen.findByRole('button', { name: 'Jogar de novo' }))
     expect(screen.getByRole('button', { name: 'Desistir' })).toBeEnabled()
     expect(screen.queryByRole('dialog', { name: 'Resultado da partida' })).toBeNull()
-    expect(finishRun).toHaveBeenCalledWith(expect.objectContaining({ mode: 'farol' }))
+    expect(startSession).toHaveBeenCalledWith('farol', undefined)
+    expect(finishRun).toHaveBeenCalledWith(expect.objectContaining({ sessionId: '0b8c1a52-7e5a-4c53-9d63-3f5d2f6a9b10' }))
   })
   it('se não der para salvar, mostra o aviso e deixa voltar', async () => {
     const { repo, finishRun } = fakeRepo()
@@ -185,6 +187,15 @@ describe('CORAM // LOGOS: repositório', () => {
     await expect(createLogosRepository(rpc({ ...full, armadura: { ...emptyArmadura(), espada: 9 } }) as never).lobby()).rejects.toThrow('Resposta inválida')
     await expect(createLogosRepository(rpc(null) as never).lobby()).rejects.toThrow('Resposta inválida')
   })
+  it('abre a sessão da partida no servidor e valida a resposta', async () => {
+    const client = rpc({ session_id: '0b8c1a52-7e5a-4c53-9d63-3f5d2f6a9b10', seed: 7, started_at: 'x' })
+    expect(await createLogosRepository(client as never).startSession('vigilia')).toBe('0b8c1a52-7e5a-4c53-9d63-3f5d2f6a9b10')
+    expect(client.rpc).toHaveBeenCalledWith('logos_session_start', { p_mode: 'vigilia', p_phase: null })
+    await createLogosRepository(client as never).startSession('historia', 3)
+    expect(client.rpc).toHaveBeenCalledWith('logos_session_start', { p_mode: 'historia', p_phase: 3 })
+    await expect(createLogosRepository(rpc({ session_id: 'nao-e-uuid' }) as never).startSession('farol')).rejects.toThrow('Resposta inválida')
+    await expect(createLogosRepository(rpc(null, { message: 'Esta fase ainda está bloqueada' }) as never).startSession('historia', 2)).rejects.toThrow('Esta fase ainda está bloqueada')
+  })
   it('só repassa mensagens conhecidas; o resto vira texto genérico', async () => {
     await expect(createLogosRepository(rpc(null, { message: 'Centelhas insuficientes' }) as never).upgrade('espada')).rejects.toThrow('Centelhas insuficientes')
     await expect(createLogosRepository(rpc(null, { message: 'duplicate key value violates constraint x' }) as never).upgrade('espada')).rejects.toThrow('Não foi possível aprimorar a peça agora. Tente de novo.')
@@ -192,9 +203,10 @@ describe('CORAM // LOGOS: repositório', () => {
   })
   it('envia o resultado da partida dentro dos limites do servidor', async () => {
     const client = rpc({ ...full, reward: { sparks: 100, xp: 40 } })
-    const out = await createLogosRepository(client as never).finishRun({ mode: 'vigilia', wave: 4.8, kills: 9999, seconds: 2.2, won: false })
-    expect(client.rpc).toHaveBeenCalledWith('logos_run_finish', { p_mode: 'vigilia', p_wave: 4, p_kills: 25, p_seconds: 5, p_won: false })
+    const out = await createLogosRepository(client as never).finishRun({ sessionId: '0b8c1a52-7e5a-4c53-9d63-3f5d2f6a9b10', wave: 4.8, kills: 9999, seconds: 2.2, won: false })
+    expect(client.rpc).toHaveBeenCalledWith('logos_run_finish', { p_session: '0b8c1a52-7e5a-4c53-9d63-3f5d2f6a9b10', p_wave: 4, p_kills: 25, p_seconds: 5, p_won: false })
     expect(out.reward).toEqual({ sparks: 100, xp: 40 })
-    await expect(createLogosRepository(rpc(full) as never).finishRun({ mode: 'farol', wave: 0, kills: 1, seconds: 60, won: true })).rejects.toThrow('Resposta inválida')
+    await expect(createLogosRepository(rpc(full) as never).finishRun({ sessionId: '0b8c1a52-7e5a-4c53-9d63-3f5d2f6a9b10', wave: 0, kills: 1, seconds: 60, won: true })).rejects.toThrow('Resposta inválida')
+    await expect(createLogosRepository(rpc(full) as never).finishRun({ sessionId: 'x', wave: 0, kills: 1, seconds: 60, won: true })).rejects.toThrow('Partida inválida ou expirada.')
   })
 })

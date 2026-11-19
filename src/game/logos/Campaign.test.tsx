@@ -13,8 +13,10 @@ const state = (): LogosState => ({ sparks: 500, xp: 600, level: 3, vigilia_best_
 const frag = (phase: number): Fragment => ({ phase, reference: phases[phase - 1].reference, obtained_at: '2026-11-20T10:00:00Z', clears: 2, best_seconds: 75 })
 function fakeRepo(fragments: Fragment[] = []) {
   const campaign = vi.fn(async () => fragments)
-  const finishPhase = vi.fn(async (r: { phase: number; won: boolean }) => ({ ...state(), reward: { sparks: 100, xp: 70 }, fragment: r.won ? { phase: r.phase, reference: phases[r.phase - 1].reference, is_new: true } : null }))
-  return { repo: { lobby: vi.fn(async () => state()), upgrade: vi.fn(), finishRun: vi.fn(), campaign, finishPhase } as unknown as LogosRepository, campaign, finishPhase }
+  const started = { phase: 1 }
+  const startSession = vi.fn(async (_mode: string, phase?: number) => { started.phase = phase ?? 1; return '0b8c1a52-7e5a-4c53-9d63-3f5d2f6a9b10' })
+  const finishPhase = vi.fn(async (r: { won: boolean }) => ({ ...state(), reward: { sparks: 100, xp: 70 }, fragment: r.won ? { phase: started.phase, reference: phases[started.phase - 1].reference, is_new: true } : null }))
+  return { repo: { lobby: vi.fn(async () => state()), upgrade: vi.fn(), finishRun: vi.fn(), startSession, campaign, finishPhase } as unknown as LogosRepository, campaign, finishPhase, startSession }
 }
 beforeEach(() => { vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null) })
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals() })
@@ -52,7 +54,7 @@ describe('LOGOS: Campanha', () => {
     expect(screen.getByText('+30')).toBeVisible()
   })
   it('entra na fase, mostra o HUD da história e, ao desistir, salva a derrota e deixa tentar de novo', async () => {
-    const { repo, finishPhase } = fakeRepo()
+    const { repo, finishPhase, startSession } = fakeRepo()
     const user = userEvent.setup()
     render(<LogosPage repo={repo} />)
     await user.click(await screen.findByRole('button', { name: 'Campanha' }))
@@ -62,9 +64,10 @@ describe('LOGOS: Campanha', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Resultado da fase' })
     expect(within(dialog).getByText('AS TREVAS RESISTIRAM')).toBeVisible()
     expect(within(dialog).queryByLabelText('Fragmento desbloqueado')).toBeNull()
-    await waitFor(() => expect(finishPhase).toHaveBeenCalledWith(expect.objectContaining({ phase: 1, won: false })))
+    await waitFor(() => expect(finishPhase).toHaveBeenCalledWith(expect.objectContaining({ sessionId: '0b8c1a52-7e5a-4c53-9d63-3f5d2f6a9b10', won: false })))
     await waitFor(() => expect(within(dialog).queryByText('Salvando…')).toBeNull())
     expect(finishPhase).toHaveBeenCalledTimes(1)
+    expect(startSession).toHaveBeenCalledWith('historia', 1)
     await user.click(within(dialog).getByRole('button', { name: 'Voltar à campanha' }))
     expect(await screen.findByRole('group', { name: 'Mapa da campanha' })).toBeVisible()
   })
@@ -156,12 +159,28 @@ describe('LOGOS: repositório da campanha', () => {
   })
   it('envia o resultado da fase e exige o fragmento quando vence', async () => {
     const client = rpc({ ...full, reward: { sparks: 100, xp: 70 }, fragment: { phase: 1, reference: 'Mateus 4:4', is_new: true } })
-    const out = await createLogosRepository(client as never).finishPhase({ phase: 1, won: true, kills: 9999, seconds: 2 })
-    expect(client.rpc).toHaveBeenCalledWith('logos_phase_finish', { p_phase: 1, p_won: true, p_kills: 25, p_seconds: 5 })
+    const out = await createLogosRepository(client as never).finishPhase({ sessionId: '0b8c1a52-7e5a-4c53-9d63-3f5d2f6a9b10', won: true, kills: 9999, seconds: 2 })
+    expect(client.rpc).toHaveBeenCalledWith('logos_phase_finish', { p_session: '0b8c1a52-7e5a-4c53-9d63-3f5d2f6a9b10', p_won: true, p_kills: 25, p_seconds: 5 })
     expect(out.fragment).toEqual({ phase: 1, reference: 'Mateus 4:4', is_new: true })
-    await expect(createLogosRepository(rpc({ ...full, reward: { sparks: 1, xp: 1 }, fragment: null }) as never).finishPhase({ phase: 1, won: true, kills: 1, seconds: 60 })).rejects.toThrow('Resposta inválida')
-    expect((await createLogosRepository(rpc({ ...full, reward: { sparks: 3, xp: 10 }, fragment: null }) as never).finishPhase({ phase: 1, won: false, kills: 3, seconds: 60 })).fragment).toBeNull()
-    await expect(createLogosRepository(rpc(full) as never).finishPhase({ phase: 17, won: true, kills: 1, seconds: 60 })).rejects.toThrow('Fase inválida.')
-    await expect(createLogosRepository(rpc(null, { message: 'Esta fase ainda está bloqueada' }) as never).finishPhase({ phase: 2, won: true, kills: 1, seconds: 60 })).rejects.toThrow('Esta fase ainda está bloqueada')
+    await expect(createLogosRepository(rpc({ ...full, reward: { sparks: 1, xp: 1 }, fragment: null }) as never).finishPhase({ sessionId: '0b8c1a52-7e5a-4c53-9d63-3f5d2f6a9b10', won: true, kills: 1, seconds: 60 })).rejects.toThrow('Resposta inválida')
+    expect((await createLogosRepository(rpc({ ...full, reward: { sparks: 3, xp: 10 }, fragment: null }) as never).finishPhase({ sessionId: '0b8c1a52-7e5a-4c53-9d63-3f5d2f6a9b10', won: false, kills: 3, seconds: 60 })).fragment).toBeNull()
+    await expect(createLogosRepository(rpc(full) as never).finishPhase({ sessionId: 'x', won: true, kills: 1, seconds: 60 })).rejects.toThrow('Partida inválida ou expirada.')
+    await expect(createLogosRepository(rpc(null, { message: 'Esta fase ainda está bloqueada' }) as never).finishPhase({ sessionId: '0b8c1a52-7e5a-4c53-9d63-3f5d2f6a9b10', won: true, kills: 1, seconds: 60 })).rejects.toThrow('Esta fase ainda está bloqueada')
+  })
+})
+
+describe('LOGOS: pintura do mapa', () => {
+  it('mostra a pintura só quando ela carrega; sem o arquivo, fica o desenho em SVG', async () => {
+    const { Campaign } = await import('./CampaignMap')
+    const { fireEvent } = await import('@testing-library/react')
+    const { container } = render(<Campaign fragments={[]} onPlay={() => undefined} />)
+    const map = container.querySelector('.lg-map') as HTMLElement, img = container.querySelector('.lg-map-bg') as HTMLImageElement
+    expect(img.getAttribute('src')).toBe('/assets/3d/logos/mapa-campanha.webp')
+    expect(map.dataset.art).toBe('false')
+    fireEvent.load(img)
+    expect(map.dataset.art).toBe('true')
+    fireEvent.error(img)
+    expect(map.dataset.art).toBe('false')
+    expect(container.querySelectorAll('.lg-node').length).toBe(16)
   })
 })

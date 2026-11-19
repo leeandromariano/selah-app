@@ -233,3 +233,12 @@
 
 /* Sprint 3: arte 3D no fragmento da Vitória */
 .lg-fragment-card .lg-fragment-art { width: min(190px, 52vw); height: auto; margin: -6px 0; filter: drop-shadow(0 0 22px rgba(255, 122, 46, .55)); }
+
+/* Sprint 4: pintura atmosférica opcional no mapa da campanha */
+.lg-map-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+.lg-map[data-art='true'] .lg-map-bg { display: block; }
+.lg-map[data-art='true'] .lg-map-terrain { display: none; }
+.lg-map[data-art='true']::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% 50%, transparent 40%, rgba(8, 6, 8, .55)); }
+.lg-map[data-art='true'] .lg-map-svg { z-index: 1; } .lg-map[data-art='true'] .lg-node, .lg-map[data-art='true'] .lg-act-label { z-index: 2; }
+.lg-map[data-art='true'] { aspect-ratio: 16 / 9; }
+.lg-map[data-art='true'] .lg-act-label[data-act='1'] { left: 2%; bottom: 3%; } .lg-map[data-art='true'] .lg-act-label[data-act='2'] { left: 30%; bottom: 3%; } .lg-map[data-art='true'] .lg-act-label[data-act='3'] { left: 10%; top: 8%; bottom: auto; } .lg-map[data-art='true'] .lg-act-label[data-act='4'] { left: auto; right: 6%; top: 8%; bottom: auto; text-align: right; }

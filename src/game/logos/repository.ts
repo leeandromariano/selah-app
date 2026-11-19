@@ -7,17 +7,18 @@ export type LogosState = {
   vigilia_best_wave: number; vigilia_runs: number; farol_runs: number; farol_wins: number; kills_total: number
   armadura: Armadura
 }
-export type RunReport = { mode: LogosMode; wave: number; kills: number; seconds: number; won: boolean }
+export type RunReport = { sessionId: string; wave: number; kills: number; seconds: number; won: boolean }
 export type RunReward = { sparks: number; xp: number }
 export type Fragment = { phase: number; reference: string; obtained_at: string; clears: number; best_seconds: number }
-export type PhaseReport = { phase: number; won: boolean; kills: number; seconds: number }
+export type PhaseReport = { sessionId: string; won: boolean; kills: number; seconds: number }
 export type PhaseResult = LogosState & { reward: RunReward; fragment: { phase: number; reference: string; is_new: boolean } | null }
 
 const count = (value: unknown): value is number => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
 type Rpc = Pick<SupabaseClient, 'rpc'>
+const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 // Mensagens do servidor que valem mostrar como estão (já em português).
-const friendly = ['Esta fase ainda está bloqueada', 'Centelhas insuficientes', 'Esta peça já está no nível máximo', 'Você jogou muitas partidas seguidas']
+const friendly = ['Esta fase ainda está bloqueada', 'Centelhas insuficientes', 'Esta peça já está no nível máximo', 'Você jogou muitas partidas seguidas', 'Partida inválida ou expirada', 'Resultado de partida inválido']
 
 function parseState(value: unknown): LogosState {
   const v = value as Partial<LogosState> | null
@@ -51,10 +52,16 @@ export function createLogosRepository(client: Rpc) {
       return data.fragments.flatMap((f: Partial<Fragment> | null) => (f && count(f.phase) && f.phase >= 1 && f.phase <= 16 && typeof f.reference === 'string' && typeof f.obtained_at === 'string' && count(f.clears) && count(f.best_seconds)
         ? [{ phase: f.phase, reference: f.reference, obtained_at: f.obtained_at, clears: f.clears, best_seconds: f.best_seconds }] : []))
     },
+    // Abre a partida no servidor (que marca a hora de início) e devolve o id da sessão. Cada sessão vale um único fim de partida.
+    async startSession(mode: LogosMode | 'historia', phase?: number): Promise<string> {
+      const data = await call('logos_session_start', { p_mode: mode, p_phase: mode === 'historia' ? phase ?? null : null }, 'Não foi possível abrir a partida agora.') as { session_id?: unknown } | null
+      if (!data || typeof data.session_id !== 'string' || !uuid.test(data.session_id)) throw Error('Resposta inválida do servidor.')
+      return data.session_id
+    },
     async finishPhase(report: PhaseReport): Promise<PhaseResult> {
       const seconds = Math.max(5, Math.min(3600, Math.round(report.seconds)))
-      const body = { p_phase: Math.floor(report.phase), p_won: report.won, p_kills: Math.min(Math.max(0, Math.floor(report.kills)), 2000, seconds * 5), p_seconds: seconds }
-      if (!(body.p_phase >= 1 && body.p_phase <= 16)) throw Error('Fase inválida.')
+      const body = { p_session: report.sessionId, p_won: report.won, p_kills: Math.min(Math.max(0, Math.floor(report.kills)), 2000, seconds * 5), p_seconds: seconds }
+      if (!uuid.test(report.sessionId)) throw Error('Partida inválida ou expirada.')
       const data = await call('logos_phase_finish', body, 'Não foi possível salvar a fase agora.') as { reward?: Partial<RunReward>; fragment?: { phase?: unknown; reference?: unknown; is_new?: unknown } | null } | null
       if (!data || !data.reward || !count(data.reward.sparks) || !count(data.reward.xp)) throw Error('Resposta inválida do servidor.')
       const f = data.fragment
@@ -64,10 +71,11 @@ export function createLogosRepository(client: Rpc) {
     },
     async finishRun(report: RunReport): Promise<LogosState & { reward: RunReward }> {
       const body = {
-        p_mode: report.mode, p_wave: Math.max(0, Math.min(200, Math.floor(report.wave))), p_kills: Math.max(0, Math.floor(report.kills)),
+        p_session: report.sessionId, p_wave: Math.max(0, Math.min(200, Math.floor(report.wave))), p_kills: Math.max(0, Math.floor(report.kills)),
         p_seconds: Math.max(5, Math.min(3600, Math.round(report.seconds))), p_won: report.won,
       }
       body.p_kills = Math.min(body.p_kills, 2000, body.p_seconds * 5)
+      if (!uuid.test(report.sessionId)) throw Error('Partida inválida ou expirada.')
       const data = await call('logos_run_finish', body, 'Não foi possível salvar a partida agora.') as { reward?: Partial<RunReward> } | null
       if (!data || !data.reward || !count(data.reward.sparks) || !count(data.reward.xp)) throw Error('Resposta inválida do servidor.')
       return { ...parseState(data), reward: { sparks: data.reward.sparks, xp: data.reward.xp } }
