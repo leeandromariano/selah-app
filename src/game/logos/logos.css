@@ -155,7 +155,7 @@
 .lg-art { display: block; object-fit: contain; pointer-events: none; user-select: none; }
 .lg-hero .lg-art { height: min(440px, 62vh); width: auto; max-width: 100%; filter: drop-shadow(0 10px 30px rgba(255, 122, 46, .28)); }
 .lg-arsenal-figure .lg-art { width: 100%; height: auto; max-height: min(430px, 60vh); }
-.lg-wallet .lg-art { width: 28px; height: 28px; }
+.lg-wallet .lg-art { width: 28px; height: 28px; object-fit: contain; }
 .lg-piece .lg-art { width: 56px; height: 56px; }
 .lg-detail-art { flex: none; width: 72px; height: 72px; }
 .lg-skill .lg-art { width: 46px; height: 46px; position: relative; z-index: 0; }
