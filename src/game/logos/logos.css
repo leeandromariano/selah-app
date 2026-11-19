@@ -85,7 +85,7 @@
 .lg-row { display: flex; align-items: center; gap: 8px; font-size: 11px; font-variant-numeric: tabular-nums; } .lg-row span { min-width: 54px; }
 .lg-portrait { width: 48px; height: 48px; border-radius: 10px; background: radial-gradient(circle at 50% 35%, #ffd9a8 0 18%, #d8cbb0 19% 40%, #3a2a1c 41% 56%, transparent 57%), linear-gradient(160deg, #6b3a1a, #1a1210); border: 1px solid var(--lg-line); }
 .lg-game[data-hurt='true'] .lg-vitals { border-color: #ff4a3a; }
-.lg-skills { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); display: flex; gap: 10px; align-items: flex-end; }
+.lg-skills { position: absolute; left: 50%; bottom: 16px; padding-bottom: 28px; transform: translateX(-50%); display: flex; gap: 10px; align-items: flex-end; }
 .lg-skill { position: relative; width: 66px; height: 66px; border: 1px solid var(--lg-line); border-radius: 12px; background: rgba(20, 16, 18, .82); display: grid; place-items: center; overflow: visible; padding: 0; -webkit-tap-highlight-color: transparent; }
 .lg-skill::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: rgba(0, 0, 0, .55); transform-origin: bottom; transform: scaleY(var(--cd, 0)); pointer-events: none; }
 .lg-skill kbd { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font: 700 11px/1 'JetBrains Mono', monospace; border: 1px solid var(--lg-line); border-radius: 4px; padding: 2px 6px; background: rgba(20, 16, 18, .9); }
@@ -230,3 +230,6 @@
   .lg-game[data-touch='true'] .lg-boss { top: 90px; width: min(300px, 56vw); }
 }
 @media (prefers-reduced-motion: reduce) { .lg-node[data-state='open'] { animation: none; } }
+
+/* Sprint 3: arte 3D no fragmento da Vitória */
+.lg-fragment-card .lg-fragment-art { width: min(190px, 52vw); height: auto; margin: -6px 0; filter: drop-shadow(0 0 22px rgba(255, 122, 46, .55)); }

@@ -1,3 +1,4 @@
+import { Art3D } from './Art3D'
 import { useState } from 'react'
 import { BibleReference } from '../../components/BibleReference'
 import type { PhaseDef } from './campaign'
@@ -35,7 +36,7 @@ export function StoryResult({ phase, won, kills, seconds, saved, error, nextPhas
     <div className="lg-story-body">
       {won && <article className="lg-fragment-card" aria-label="Fragmento desbloqueado">
         <small>{isNew || !saved ? 'FRAGMENTO DESBLOQUEADO' : 'FRAGMENTO JÁ COLETADO'}</small>
-        <span className="lg-fragment-mark" aria-hidden="true">†</span>
+        <Art3D name="fragmento" className="lg-fragment-art" fallback={<span className="lg-fragment-mark" aria-hidden="true">†</span>} />
         <strong>{phase.reference}</strong>
         <p>{phase.theme}</p>
         <span className="lg-fragment-read"><BibleReference reference={phase.reference} /></span>

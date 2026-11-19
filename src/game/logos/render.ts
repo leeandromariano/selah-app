@@ -16,18 +16,51 @@ export function makeView(g: Game, w: number, h: number): View {
 }
 export const toWorld = (v: View, sx: number, sy: number) => ({ x: sx / v.scale + v.camX, y: sy / v.scale + v.camY })
 
+// Arte 3D da arena (public/assets/3d/logos): carrega uma vez e só entrega quando está pronta. Se o arquivo faltar, devolve null e o desenho de reserva é usado.
+const artCache = new Map<string, HTMLImageElement | null>()
+export function arenaArt(name: string): HTMLImageElement | null {
+  if (typeof Image === 'undefined') return null
+  let img = artCache.get(name)
+  if (img === undefined) {
+    const el = new Image()
+    el.decoding = 'async'
+    el.onerror = () => { artCache.set(name, null) }
+    el.src = `/assets/3d/logos/${name}.webp`
+    artCache.set(name, el); img = el
+  }
+  return img && img.complete && img.naturalWidth > 0 ? img : null
+}
+
+// Piso de pedra escura (#0D0E11): lajes irregulares com variação de tom determinística, juntas finas e vinheta radial sobre a arena inteira.
+const hash2 = (x: number, y: number) => { const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return n - Math.floor(n) }
 function ground(ctx: CanvasRenderingContext2D, g: Game, v: View) {
-  ctx.fillStyle = '#15110f'; ctx.fillRect(0, 0, g.w, g.h)
+  ctx.fillStyle = '#0D0E11'; ctx.fillRect(0, 0, g.w, g.h)
   const tile = 80
   const x0 = Math.max(0, Math.floor(v.camX / tile) * tile), y0 = Math.max(0, Math.floor(v.camY / tile) * tile)
   const x1 = Math.min(g.w, v.camX + v.w / v.scale + tile), y1 = Math.min(g.h, v.camY + v.h / v.scale + tile)
   ctx.lineWidth = 1
   for (let x = x0; x <= x1; x += tile) for (let y = y0; y <= y1; y += tile) {
-    const shade = ((x / tile + y / tile) & 1) ? 'rgba(255,255,255,.028)' : 'rgba(0,0,0,.16)'
-    ctx.fillStyle = shade; ctx.fillRect(x, y, tile, tile)
+    const h = hash2(x / tile, y / tile)
+    ctx.fillStyle = h > 0.5 ? `rgba(255,255,255,${0.012 + (h - 0.5) * 0.05})` : `rgba(0,0,0,${0.06 + (0.5 - h) * 0.3})`
+    ctx.fillRect(x, y, tile, tile)
+    if (h > 0.82) { ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.beginPath(); ctx.moveTo(x + h * 30, y + 8); ctx.lineTo(x + 40 + h * 20, y + tile * 0.55); ctx.lineTo(x + 30, y + tile - 6); ctx.stroke() }
   }
+  ctx.strokeStyle = 'rgba(0,0,0,.45)'
+  for (let x = x0; x <= x1; x += tile) { ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke() }
+  for (let y = y0; y <= y1; y += tile) { ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke() }
+  const vg = ctx.createRadialGradient(g.w / 2, g.h / 2, Math.min(g.w, g.h) * 0.25, g.w / 2, g.h / 2, Math.hypot(g.w, g.h) * 0.52)
+  vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.6)')
+  ctx.fillStyle = vg; ctx.fillRect(0, 0, g.w, g.h)
   ctx.strokeStyle = 'rgba(255,140,60,.07)'; ctx.strokeRect(1, 1, g.w - 2, g.h - 2)
   ctx.strokeStyle = 'rgba(255,140,60,.35)'; ctx.lineWidth = 3; ctx.strokeRect(0, 0, g.w, g.h)
+}
+
+// Luz quente do Portador sobre a pedra: sobe um pouco a claridade ao redor dele.
+function playerLight(ctx: CanvasRenderingContext2D, g: Game) {
+  const p = g.player, r = 230 + Math.sin(g.time * 3) * 8
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'
+  const l = ctx.createRadialGradient(p.x, p.y, 8, p.x, p.y, r); l.addColorStop(0, 'rgba(255,140,60,.22)'); l.addColorStop(1, 'rgba(255,120,40,0)')
+  ctx.fillStyle = l; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 7); ctx.fill(); ctx.restore()
 }
 
 function pillar(ctx: CanvasRenderingContext2D, x: number, y: number, r: number) {
@@ -46,19 +79,27 @@ function enemy(ctx: CanvasRenderingContext2D, g: Game, e: Enemy) {
   const wob = Math.sin(e.wob) * 2
   ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.beginPath(); ctx.ellipse(4, e.r * 0.7, e.r, e.r * 0.5, 0, 0, 7); ctx.fill()
   const body = e.boss ? bossColor[e.boss.id] : e.kind === 'clone' ? '#3b2a52' : e.kind === 'brutamontes' ? '#2a1330' : e.kind === 'fantasma' ? '#241a33' : e.kind === 'dardo' ? '#2b1a2a' : '#211724'
-  const grad = ctx.createRadialGradient(-e.r * 0.3, -e.r * 0.3, 2, 0, 0, e.r + 4)
-  grad.addColorStop(0, e.hit > 0 ? '#ffe1c2' : '#4a2e55'); grad.addColorStop(1, e.hit > 0 ? '#ff9d5c' : body)
-  ctx.fillStyle = grad
-  ctx.beginPath(); ctx.arc(0, wob * 0.3, e.r + wob * 0.3, 0, 7); ctx.fill()
+  // arte 3D: Dragão e Acusador (chefes) e a sombra encapuzada (inimigos comuns); sem o arquivo, volta ao círculo
+  const sprite = e.boss?.id === 'dragao' ? arenaArt('dragao') : e.boss?.id === 'acusador' ? arenaArt('acusador') : !e.boss && (e.kind === 'sombra' || e.kind === 'fantasma' || e.kind === 'clone') ? arenaArt('sombra') : null
+  if (sprite) {
+    const size = e.r * (e.boss ? 5.4 : 4.2)
+    ctx.drawImage(sprite, -size / 2, -size / 2 - e.r * 0.25 + wob * 0.4, size, size)
+    if (e.hit > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(255,170,100,.45)'; ctx.beginPath(); ctx.arc(0, 0, e.r, 0, 7); ctx.fill(); ctx.globalCompositeOperation = 'source-over' }
+  } else {
+    const grad = ctx.createRadialGradient(-e.r * 0.3, -e.r * 0.3, 2, 0, 0, e.r + 4)
+    grad.addColorStop(0, e.hit > 0 ? '#ffe1c2' : '#4a2e55'); grad.addColorStop(1, e.hit > 0 ? '#ff9d5c' : body)
+    ctx.fillStyle = grad
+    ctx.beginPath(); ctx.arc(0, wob * 0.3, e.r + wob * 0.3, 0, 7); ctx.fill()
+  }
   if (e.boss?.dash && (e.boss.state === 'aim' || e.boss.state === 'strike') && e.boss.t < 0.85) { ctx.strokeStyle = 'rgba(255,70,50,.55)'; ctx.lineWidth = 6; ctx.setLineDash([14, 10]); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(e.boss.dash.dx * 520, e.boss.dash.dy * 520); ctx.stroke(); ctx.setLineDash([]) }
-  if (e.boss || e.kind === 'brutamontes' || e.kind === 'dardo') { // chifres
+  if (!sprite && (e.boss || e.kind === 'brutamontes' || e.kind === 'dardo')) { // chifres
     ctx.strokeStyle = '#120a16'; ctx.lineWidth = 4; ctx.lineCap = 'round'
     for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(s * e.r * 0.5, -e.r * 0.7); ctx.lineTo(s * e.r * 0.95, -e.r * 1.35); ctx.stroke() }
   }
   if (e.armor > 0) { ctx.strokeStyle = 'rgba(255,170,90,.8)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0, 0, e.r + 5, 0, (e.armor / e.maxArmor) * Math.PI * 2); ctx.stroke() }
   ctx.fillStyle = '#ff3a2a'; ctx.shadowColor = '#ff3a2a'; ctx.shadowBlur = 8
   const ex = Math.cos(toward) * e.r * 0.25, ey = Math.sin(toward) * e.r * 0.25
-  ctx.beginPath(); ctx.arc(ex - e.r * 0.3, ey - e.r * 0.15, 2.4, 0, 7); ctx.arc(ex + e.r * 0.3, ey - e.r * 0.15, 2.4, 0, 7); ctx.fill()
+  if (!sprite) { ctx.beginPath(); ctx.arc(ex - e.r * 0.3, ey - e.r * 0.15, 2.4, 0, 7); ctx.arc(ex + e.r * 0.3, ey - e.r * 0.15, 2.4, 0, 7); ctx.fill() }
   ctx.restore()
   if (vis && e.hp < e.maxHp && e.hp > 0) { const w = e.r * 2; ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(e.x - w / 2, e.y - e.r - 14, w, 4); ctx.fillStyle = '#ff5a3a'; ctx.fillRect(e.x - w / 2, e.y - e.r - 14, w * (e.hp / e.maxHp), 4) }
 }
@@ -68,8 +109,10 @@ function player(ctx: CanvasRenderingContext2D, g: Game) {
   ctx.save(); ctx.translate(p.x, p.y)
   if (p.dashT > 0) { ctx.strokeStyle = 'rgba(255,190,120,.5)'; ctx.lineWidth = p.r * 1.4; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-p.dashDx * 0.07, -p.dashDy * 0.07); ctx.stroke() }
   ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.beginPath(); ctx.ellipse(4, p.r * 0.75, p.r, p.r * 0.5, 0, 0, 7); ctx.fill()
-  const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, p.r * 2.6); glow.addColorStop(0, 'rgba(255,160,70,.35)'); glow.addColorStop(1, 'rgba(255,160,70,0)')
-  ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(0, 0, p.r * 2.6, 0, 7); ctx.fill()
+  const pulse = 1 + Math.sin(g.time * 4) * 0.08, aura = p.r * 3.6 * pulse
+  const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, aura); glow.addColorStop(0, 'rgba(255,170,80,.55)'); glow.addColorStop(0.45, 'rgba(255,130,50,.22)'); glow.addColorStop(1, 'rgba(255,120,40,0)')
+  ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(0, 0, aura, 0, 7); ctx.fill()
+  ctx.strokeStyle = 'rgba(255,170,90,.35)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, p.r * 1.55 * pulse, 0, 7); ctx.stroke()
   ctx.rotate(p.aim)
   // espada em brasa
   ctx.strokeStyle = ember; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.shadowColor = ember; ctx.shadowBlur = 14
@@ -119,14 +162,26 @@ function altar(ctx: CanvasRenderingContext2D, g: Game) {
   ctx.save(); ctx.translate(x, y)
   ctx.strokeStyle = f.stage === 'advance' ? 'rgba(255,140,60,.55)' : 'rgba(255,214,150,.9)'; ctx.lineWidth = 3; ctx.setLineDash([10, 8]); ctx.lineDashOffset = -t * 20
   ctx.beginPath(); ctx.arc(0, 0, 95, 0, 7); ctx.stroke(); ctx.setLineDash([])
-  ctx.fillStyle = '#2d2520'; ctx.beginPath(); ctx.rect(-34, -12, 68, 40); ctx.fill(); ctx.strokeStyle = 'rgba(255,170,100,.4)'; ctx.lineWidth = 2; ctx.stroke()
+  const tower = arenaArt('farol'), lit = f.stage === 'defend' ? f.hp / tuning.farol.beaconHp : f.stage === 'plant' ? 0.45 : 0.25
+  if (tower) {
+    // aura luminosa atrás do Farol: mais forte quando ele está cravado
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'
+    const ar = 150 + Math.sin(t * 3) * 8, aura = ctx.createRadialGradient(0, -40, 10, 0, -40, ar); aura.addColorStop(0, `rgba(255,170,80,${0.15 + 0.4 * lit})`); aura.addColorStop(1, 'rgba(255,120,40,0)')
+    ctx.fillStyle = aura; ctx.beginPath(); ctx.arc(0, -40, ar, 0, 7); ctx.fill(); ctx.restore()
+    ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.beginPath(); ctx.ellipse(6, 26, 46, 14, 0, 0, 7); ctx.fill()
+    ctx.globalAlpha = f.stage === 'advance' ? 0.72 : 1; { const th = 170, tw = th * tower.naturalWidth / tower.naturalHeight; ctx.drawImage(tower, -tw / 2, -th + 14, tw, th) }; ctx.globalAlpha = 1
+  } else {
+    ctx.fillStyle = '#2d2520'; ctx.beginPath(); ctx.rect(-34, -12, 68, 40); ctx.fill(); ctx.strokeStyle = 'rgba(255,170,100,.4)'; ctx.lineWidth = 2; ctx.stroke()
+  }
   if (f.stage === 'plant') { ctx.strokeStyle = gold; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(0, 0, 80, -Math.PI / 2, -Math.PI / 2 + (f.plant / tuning.farol.plant) * Math.PI * 2); ctx.stroke() }
   if (f.stage === 'defend') {
     const hp = f.hp / tuning.farol.beaconHp
     const glow = ctx.createRadialGradient(0, -34, 4, 0, -34, 120); glow.addColorStop(0, `rgba(255,220,150,${0.55 * hp + 0.2})`); glow.addColorStop(1, 'rgba(255,160,70,0)')
     ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(0, -34, 120, 0, 7); ctx.fill()
-    ctx.fillStyle = gold; ctx.shadowColor = ember; ctx.shadowBlur = 24
-    ctx.beginPath(); ctx.moveTo(0, -78 + Math.sin(t * 6) * 2); ctx.lineTo(14, -34); ctx.lineTo(0, -12); ctx.lineTo(-14, -34); ctx.closePath(); ctx.fill(); ctx.shadowBlur = 0
+    if (!tower) {
+      ctx.fillStyle = gold; ctx.shadowColor = ember; ctx.shadowBlur = 24
+      ctx.beginPath(); ctx.moveTo(0, -78 + Math.sin(t * 6) * 2); ctx.lineTo(14, -34); ctx.lineTo(0, -12); ctx.lineTo(-14, -34); ctx.closePath(); ctx.fill(); ctx.shadowBlur = 0
+    }
     ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(-40, 38, 80, 6); ctx.fillStyle = hp > 0.35 ? '#ffc067' : '#ff5a3a'; ctx.fillRect(-40, 38, 80 * hp, 6)
   }
   ctx.restore()
@@ -186,6 +241,7 @@ export function render(ctx: CanvasRenderingContext2D, g: Game, v: View, fogLayer
   ctx.fillStyle = '#0c0a0d'; ctx.fillRect(0, 0, v.w, v.h)
   ctx.setTransform(v.scale, 0, 0, v.scale, -v.camX * v.scale, -v.camY * v.scale)
   ground(ctx, g, v)
+  playerLight(ctx, g)
   altar(ctx, g)
   storyLayer(ctx, g)
   for (const o of g.obstacles) pillar(ctx, o.x, o.y, o.r)
@@ -198,6 +254,13 @@ export function render(ctx: CanvasRenderingContext2D, g: Game, v: View, fogLayer
     const friendly = b.from === 'player'
     ctx.strokeStyle = friendly ? (b.crit || b.reflected ? '#fff0c8' : gold) : '#ff5a3a'; ctx.lineWidth = friendly ? 4 : 3; ctx.lineCap = 'round'; ctx.shadowColor = friendly ? ember : '#ff3a2a'; ctx.shadowBlur = 10
     ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x - b.vx * 0.022, b.y - b.vy * 0.022); ctx.stroke()
+    // trilha de partículas: pontos que encolhem e esmaecem atrás do projétil, com leve tremor
+    ctx.shadowBlur = 0; ctx.fillStyle = friendly ? (b.crit || b.reflected ? '#fff0c8' : '#ffc27a') : '#ff7a5a'
+    for (let i = 1; i <= 5; i++) {
+      const k = i / 5, j = hash2(i + Math.floor(g.time * 30), b.x * 0.01 + b.y * 0.013)
+      ctx.globalAlpha = 0.7 * (1 - k); ctx.beginPath(); ctx.arc(b.x - b.vx * 0.022 * (1 + k * 2.4) + (j - 0.5) * 5, b.y - b.vy * 0.022 * (1 + k * 2.4) + (j - 0.5) * 5, 2.6 * (1 - k * 0.7), 0, 7); ctx.fill()
+    }
+    ctx.globalAlpha = 1; ctx.shadowBlur = 10
   }
   ctx.shadowBlur = 0
   player(ctx, g)
