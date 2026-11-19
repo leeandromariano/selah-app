@@ -14,6 +14,10 @@ export type Projectile = { x: number; y: number; vx: number; vy: number; r: numb
 export type Particle = { x: number; y: number; vx: number; vy: number; life: number; max: number; size: number; color: string }
 export type FloatText = { x: number; y: number; text: string; life: number; color: string }
 export type Obstacle = { x: number; y: number; r: number }
+// Só desenho e sensação de jogo (tremor, arcos de corte, clarões de rebote); nunca entra nas contas de física, colisão ou dano.
+export type Slash = { x: number; y: number; a: number; t: number; max: number; heavy: boolean }
+export type Flash = { x: number; y: number; a: number; t: number; max: number }
+export type Fx = { shake: number; slashes: Slash[]; flashes: Flash[] }
 
 export type Input = { moveX: number; moveY: number; aimX: number; aimY: number; fire: boolean; assist: boolean }
 export type Want = { c: boolean; q: boolean; e: boolean; x: boolean }
@@ -65,7 +69,7 @@ export type Game = {
   result: { mode: Mode; wave: number; kills: number; seconds: number; won: boolean; phase?: number } | null
   hook: ((g: Game, dt: number) => void) | null; story: StoryState | null
   fogRadius: number; fogTone: 'dark' | 'sand'; lights: { x: number; y: number; r: number }[]; ultLocked: boolean; blocked: boolean; wind: { x: number; y: number }
-  lastCrit: number; blessingEco: boolean
+  lastCrit: number; blessingEco: boolean; fx: Fx
 }
 
 const dist = (ax: number, ay: number, bx: number, by: number) => Math.hypot(ax - bx, ay - by)
@@ -105,7 +109,7 @@ export function createGame(mode: Mode, armadura: Armadura, rng: Rng = Math.rando
     enemies: [], projectiles: [], particles: [], floats: [], pulse: null, nova: null, fogClear: 0, nextId: 1,
     wave: 0, queue: [], spawnCd: 0, breather: 1.2, offer: [],
     farol: { stage: 'advance', timeLeft: tuning.farol.limit, altar, plant: 0, hp: tuning.farol.beaconHp, defendLeft: tuning.farol.defend, detonation: 0 },
-    result: null, lastCrit: 0, blessingEco: false,
+    result: null, lastCrit: 0, blessingEco: false, fx: { shake: 0, slashes: [], flashes: [] },
     hook: null, story: null, fogRadius: mode === 'farol' ? tuning.farol.vision : 0, fogTone: 'dark', lights: [], ultLocked: false, blocked: false, wind: { x: 0, y: 0 },
   }
   return g
@@ -113,7 +117,7 @@ export function createGame(mode: Mode, armadura: Armadura, rng: Rng = Math.rando
 
 // ---------- utilitários ----------
 export function burst(g: Game, x: number, y: number, n: number, color: string, speed = 160, life = 0.5, size = 2.4) {
-  for (let i = 0; i < n && g.particles.length < 420; i++) {
+  for (let i = 0; i < n && g.particles.length < 250; i++) {
     const a = g.rng() * Math.PI * 2, s = speed * (0.3 + g.rng() * 0.9)
     g.particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: life * (0.6 + g.rng() * 0.6), max: life, size: size * (0.6 + g.rng()), color })
   }
@@ -152,7 +156,7 @@ export function hurtPlayer(g: Game, amount: number) {
   const p = g.player
   if (p.invuln > 0 || g.phase !== 'playing' || amount <= 0) return
   const toAp = Math.min(p.ap, amount); p.ap -= toAp
-  p.hp = Math.max(0, p.hp - (amount - toAp)); p.flash = 0.18
+  p.hp = Math.max(0, p.hp - (amount - toAp)); p.flash = 0.18; g.fx.shake = Math.max(g.fx.shake, 3)
 }
 
 function chargeUlt(g: Game, amount: number) { g.player.ult = Math.min(tuning.ultMax, g.player.ult + amount * g.player.ultScale) }
@@ -165,12 +169,15 @@ export function damageEnemy(g: Game, e: Enemy, amount: number, crit = false): bo
   e.hp -= dmg; e.hit = 0.12
   if (e.boss && e.hp < e.boss.minHp) e.hp = e.boss.minHp
   chargeUlt(g, dmg * 0.025)
-  if (crit) { g.lastCrit = g.time; float(g, e.x, e.y, '+' + Math.round(dmg) + ' CRÍTICO', '#ffb347') }
+  if (crit) { g.lastCrit = g.time; float(g, e.x, e.y, '-' + Math.round(dmg) + ' CRÍTICO', '#ff6a1f'); g.fx.shake = Math.max(g.fx.shake, 1.5) }
+  else if (g.floats.length < 24) float(g, e.x, e.y, '-' + Math.round(dmg), '#ff8a3d')
   if (e.hp > 0) return false
   if (e.kind === 'clone') { burst(g, e.x, e.y, 10, '#d8b6ff', 200, 0.4); return true }
   g.kills++; g.score += e.kind === 'brutamontes' ? 150 : 25
+  g.fx.shake = Math.max(g.fx.shake, e.boss ? 4 : e.kind === 'brutamontes' ? 3 : 2)
   chargeUlt(g, e.kind === 'brutamontes' ? 25 : 6)
-  burst(g, e.x, e.y, e.kind === 'brutamontes' ? 34 : 14, '#ffcf8a', 220, 0.6)
+  burst(g, e.x, e.y, e.kind === 'brutamontes' ? 26 : 10, '#ffcf8a', 220, 0.6)
+  burst(g, e.x, e.y, e.kind === 'brutamontes' ? 14 : 6, '#ff6a1f', 150, 0.8, 3)
   if (g.mode === 'vigilia') float(g, e.x, e.y, '+25 PURIFICAÇÃO', '#ffe9c4')
   return true
 }
@@ -202,6 +209,7 @@ function castDash(g: Game) {
   const speed = (tuning.dashDistance * g.perks.dashSpeed) / tuning.dashTime
   p.dashT = tuning.dashTime; p.dashDx = Math.cos(dir) * speed; p.dashDy = Math.sin(dir) * speed; p.dashHit.clear(); p.invuln = Math.max(p.invuln, tuning.dashTime + 0.05)
   burst(g, p.x, p.y, 10, '#ffbf7a', 200, 0.3)
+  g.fx.slashes.push({ x: p.x, y: p.y, a: dir, t: 0, max: 0.3, heavy: true })
 }
 
 function castNova(g: Game) {
@@ -215,6 +223,7 @@ function castNova(g: Game) {
     damageEnemy(g, e, tuning.novaDamage * g.perks.damage, false)
   }
   burst(g, p.x, p.y, 70, '#ffd27a', 420, 0.9, 3)
+  g.fx.shake = 4
   float(g, p.x, p.y - 20, 'CONSUMADO', '#ffe08a')
 }
 
@@ -373,6 +382,7 @@ function step(g: Game, dt: number) {
     p.fireCd = 1 / tuning.fireRate
     const crit = g.rng() < tuning.critChance, v = aimVector(g)
     g.projectiles.push({ x: p.x + v.x * 18, y: p.y + v.y * 18, vx: v.x * tuning.beamSpeed, vy: v.y * tuning.beamSpeed, r: 5, dmg: p.damage * (crit ? tuning.critMult : 1), from: 'player', life: tuning.beamRange / tuning.beamSpeed, crit, reflected: false })
+    if (g.fx.slashes.length < 5) g.fx.slashes.push({ x: p.x, y: p.y, a: p.aim, t: 0, max: 0.16, heavy: crit })
   }
 
   if (g.mode === 'vigilia') updateWaves(g, dt); else if (g.mode === 'farol') updateFarol(g, dt); else g.hook?.(g, dt)
@@ -384,6 +394,10 @@ function step(g: Game, dt: number) {
   for (const q of g.particles) { q.x += q.vx * dt; q.y += q.vy * dt; q.vx *= 0.94; q.vy *= 0.94; q.life -= dt }
   g.particles = g.particles.filter(q => q.life > 0)
   for (const f of g.floats) { f.y -= 26 * dt; f.life -= dt }
+  g.fx.shake = Math.max(0, g.fx.shake - dt * 16)
+  for (const s of g.fx.slashes) s.t += dt
+  for (const f of g.fx.flashes) f.t += dt
+  g.fx.slashes = g.fx.slashes.filter(s => s.t < s.max); g.fx.flashes = g.fx.flashes.filter(f => f.t < f.max)
   g.floats = g.floats.filter(f => f.life > 0)
   if (p.hp <= 0) finish(g, false)
 }
@@ -443,7 +457,9 @@ function updateProjectiles(g: Game, dt: number) {
     if (b.from === 'enemy') {
       if (p.shield > 0 && inShieldArc(g, b.x, b.y, tuning.shieldRadius + 6) && dist(b.x, b.y, p.x, p.y) > tuning.shieldRadius - 14) {
         b.from = 'player'; b.reflected = true; b.vx *= -1.25; b.vy *= -1.25; b.dmg *= 2.2; b.life = 1.6
-        burst(g, b.x, b.y, 6, '#ffd9a8', 140, 0.3); chargeUlt(g, 3); continue
+        burst(g, b.x, b.y, 8, '#ffd9a8', 180, 0.35); chargeUlt(g, 3)
+        if (g.fx.flashes.length < 6) g.fx.flashes.push({ x: b.x, y: b.y, a: Math.atan2(b.vy, b.vx), t: 0, max: 0.3 })
+        continue
       }
       if (dist(b.x, b.y, p.x, p.y) < b.r + p.r) { hurtPlayer(g, b.dmg); b.life = 0; burst(g, b.x, b.y, 5, '#ff8a5c', 120, 0.3) }
       else if (beacon && dist(b.x, b.y, f.altar.x, f.altar.y) < b.r + 34) { f.hp = Math.max(0, f.hp - b.dmg * 0.6); b.life = 0 }
