@@ -1,12 +1,15 @@
 // CORAM // LOGOS: a simulação da arena. TypeScript puro, sem React e sem canvas: roda a 60 fps e é testável passo a passo.
 import { perksFor, type Armadura, type Perks } from './rules'
+import type { StoryState } from './story'
 
-export type Mode = 'vigilia' | 'farol'
+export type Mode = 'vigilia' | 'farol' | 'historia'
 export type Phase = 'playing' | 'blessing' | 'won' | 'lost'
-export type EnemyKind = 'sombra' | 'dardo' | 'fantasma' | 'brutamontes'
+export type EnemyKind = 'sombra' | 'dardo' | 'fantasma' | 'brutamontes' | 'clone' | 'chefe'
 export type Rng = () => number
 
-export type Enemy = { id: number; kind: EnemyKind; x: number; y: number; vx: number; vy: number; hp: number; maxHp: number; r: number; speed: number; cd: number; armor: number; maxArmor: number; revealed: number; hit: number; wob: number }
+// Máquina de estados de um chefe (a lógica de cada Ato fica em story.ts).
+export type BossState = { id: 'tentador' | 'sentinela' | 'acusador' | 'dragao'; name: string; state: string; t: number; phase: number; invuln: boolean; minHp: number; finisher: boolean; cycle: number; dash: { dx: number; dy: number; t: number } | null; hidden: boolean }
+export type Enemy = { boss?: BossState; id: number; kind: EnemyKind; x: number; y: number; vx: number; vy: number; hp: number; maxHp: number; r: number; speed: number; cd: number; armor: number; maxArmor: number; revealed: number; hit: number; wob: number }
 export type Projectile = { x: number; y: number; vx: number; vy: number; r: number; dmg: number; from: 'player' | 'enemy'; life: number; crit: boolean; reflected: boolean }
 export type Particle = { x: number; y: number; vx: number; vy: number; life: number; max: number; size: number; color: string }
 export type FloatText = { x: number; y: number; text: string; life: number; color: string }
@@ -31,6 +34,7 @@ export const tuning = {
   pulseRadius: 250, pulseTime: 0.45, shieldRadius: 64, shieldArc: 1.05, dashDistance: 290, dashTime: 0.18, dashDamage: 46,
   novaRadius: 480, novaTime: 0.9, novaDamage: 140,
   vigilia: { w: 1600, h: 1000, breather: 3, blessingEvery: 3 },
+  historia: { w: 2000, h: 1200 },
   farol: { w: 2600, h: 1100, limit: 90, plant: 3, defend: 35, beaconHp: 100, vision: 270, wideVision: 720 },
 }
 
@@ -39,6 +43,8 @@ export const enemyKinds: Record<EnemyKind, { hp: number; r: number; speed: numbe
   dardo: { hp: 22, r: 13, speed: 80, armor: 0 },
   fantasma: { hp: 26, r: 13, speed: 150, armor: 0 },
   brutamontes: { hp: 220, r: 26, speed: 66, armor: 120 },
+  clone: { hp: 10, r: 14, speed: 78, armor: 0 },
+  chefe: { hp: 300, r: 28, speed: 0, armor: 0 },
 }
 
 export type Game = {
@@ -56,7 +62,9 @@ export type Game = {
   nextId: number
   wave: number; queue: EnemyKind[]; spawnCd: number; breather: number; offer: BlessingId[]
   farol: { stage: 'advance' | 'plant' | 'defend'; timeLeft: number; altar: { x: number; y: number }; plant: number; hp: number; defendLeft: number; detonation: number }
-  result: { mode: Mode; wave: number; kills: number; seconds: number; won: boolean } | null
+  result: { mode: Mode; wave: number; kills: number; seconds: number; won: boolean; phase?: number } | null
+  hook: ((g: Game, dt: number) => void) | null; story: StoryState | null
+  fogRadius: number; fogTone: 'dark' | 'sand'; lights: { x: number; y: number; r: number }[]; ultLocked: boolean; blocked: boolean; wind: { x: number; y: number }
   lastCrit: number; blessingEco: boolean
 }
 
@@ -70,7 +78,7 @@ export function mulberry32(seed: number): Rng {
 
 function makeObstacles(mode: Mode, w: number, h: number, rng: Rng, keepClear: { x: number; y: number }[]): Obstacle[] {
   const list: Obstacle[] = []
-  const wanted = mode === 'vigilia' ? 9 : 22
+  const wanted = mode === 'vigilia' ? 9 : mode === 'farol' ? 22 : 14
   for (let tries = 0; tries < 400 && list.length < wanted; tries++) {
     const o = { x: 90 + rng() * (w - 180), y: 90 + rng() * (h - 180), r: 26 + rng() * 22 }
     if (keepClear.some(p => dist(p.x, p.y, o.x, o.y) < 210) || list.some(p => dist(p.x, p.y, o.x, o.y) < p.r + o.r + 70)) continue
@@ -81,12 +89,12 @@ function makeObstacles(mode: Mode, w: number, h: number, rng: Rng, keepClear: { 
 
 export function createGame(mode: Mode, armadura: Armadura, rng: Rng = Math.random): Game {
   const perks = perksFor(armadura)
-  const cfg = mode === 'vigilia' ? tuning.vigilia : tuning.farol
+  const cfg = mode === 'vigilia' ? tuning.vigilia : mode === 'farol' ? tuning.farol : tuning.historia
   const start = mode === 'vigilia' ? { x: cfg.w / 2, y: cfg.h / 2 } : { x: 190, y: cfg.h / 2 }
   const altar = { x: cfg.w - 240, y: cfg.h / 2 }
   const g: Game = {
     mode, phase: 'playing', rng, perks, w: cfg.w, h: cfg.h,
-    obstacles: makeObstacles(mode, cfg.w, cfg.h, rng, mode === 'vigilia' ? [start] : [start, altar]),
+    obstacles: makeObstacles(mode, cfg.w, cfg.h, rng, mode === 'farol' ? [start, altar] : [start]),
     time: 0, kills: 0, score: 0,
     player: {
       x: start.x, y: start.y, r: tuning.playerRadius, hp: perks.maxHp, maxHp: perks.maxHp, ap: perks.maxAp, maxAp: perks.maxAp, aim: 0, lastMove: 0, fireCd: 0, invuln: 0, flash: 0,
@@ -98,20 +106,21 @@ export function createGame(mode: Mode, armadura: Armadura, rng: Rng = Math.rando
     wave: 0, queue: [], spawnCd: 0, breather: 1.2, offer: [],
     farol: { stage: 'advance', timeLeft: tuning.farol.limit, altar, plant: 0, hp: tuning.farol.beaconHp, defendLeft: tuning.farol.defend, detonation: 0 },
     result: null, lastCrit: 0, blessingEco: false,
+    hook: null, story: null, fogRadius: mode === 'farol' ? tuning.farol.vision : 0, fogTone: 'dark', lights: [], ultLocked: false, blocked: false, wind: { x: 0, y: 0 },
   }
   return g
 }
 
 // ---------- utilitários ----------
-function burst(g: Game, x: number, y: number, n: number, color: string, speed = 160, life = 0.5, size = 2.4) {
+export function burst(g: Game, x: number, y: number, n: number, color: string, speed = 160, life = 0.5, size = 2.4) {
   for (let i = 0; i < n && g.particles.length < 420; i++) {
     const a = g.rng() * Math.PI * 2, s = speed * (0.3 + g.rng() * 0.9)
     g.particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: life * (0.6 + g.rng() * 0.6), max: life, size: size * (0.6 + g.rng()), color })
   }
 }
-const float = (g: Game, x: number, y: number, text: string, color = '#ffd9a8') => { if (g.floats.length < 40) g.floats.push({ x, y: y - 18, text, life: 0.9, color }) }
+export const float = (g: Game, x: number, y: number, text: string, color = '#ffd9a8') => { if (g.floats.length < 40) g.floats.push({ x, y: y - 18, text, life: 0.9, color }) }
 
-function pushOut(g: Game, e: { x: number; y: number }, r: number) {
+export function pushOut(g: Game, e: { x: number; y: number }, r: number) {
   for (const o of g.obstacles) {
     const d = dist(e.x, e.y, o.x, o.y), min = o.r + r
     if (d < min && d > 0.001) { e.x = o.x + ((e.x - o.x) / d) * min; e.y = o.y + ((e.y - o.y) / d) * min }
@@ -119,15 +128,15 @@ function pushOut(g: Game, e: { x: number; y: number }, r: number) {
   e.x = clamp(e.x, r, g.w - r); e.y = clamp(e.y, r, g.h - r)
 }
 
-export const isVisible = (g: Game, e: Enemy) => e.kind !== 'fantasma' || e.revealed > 0 || dist(e.x, e.y, g.player.x, g.player.y) < 120
+export const isVisible = (g: Game, e: Enemy) => (e.boss ? e.boss.hidden : e.kind === 'fantasma') ? e.revealed > 0 || dist(e.x, e.y, g.player.x, g.player.y) < 120 : true
 
-function spawnEnemy(g: Game, kind: EnemyKind, x: number, y: number) {
+export function spawnEnemy(g: Game, kind: EnemyKind, x: number, y: number) {
   const k = enemyKinds[kind]
   const scale = g.mode === 'vigilia' ? 1 + Math.min(g.wave, 30) * 0.04 : 1
   g.enemies.push({ id: g.nextId++, kind, x, y, vx: 0, vy: 0, hp: k.hp * scale, maxHp: k.hp * scale, r: k.r, speed: k.speed * (0.9 + g.rng() * 0.2), cd: 0.6 + g.rng() * 1.2, armor: k.armor, maxArmor: k.armor, revealed: 0, hit: 0, wob: g.rng() * 6 })
 }
 
-function edgePoint(g: Game, minFromPlayer: number, area?: { x0: number; x1: number }) {
+export function edgePoint(g: Game, minFromPlayer: number, area?: { x0: number; x1: number }) {
   for (let i = 0; i < 12; i++) {
     const side = Math.floor(g.rng() * 4)
     let x = side === 0 ? 30 : side === 1 ? g.w - 30 : 30 + g.rng() * (g.w - 60)
@@ -150,12 +159,15 @@ function chargeUlt(g: Game, amount: number) { g.player.ult = Math.min(tuning.ult
 
 export function damageEnemy(g: Game, e: Enemy, amount: number, crit = false): boolean {
   if (e.hp <= 0) return false
+  if (e.boss?.invuln) { if (e.hit <= 0) { e.hit = 0.25; float(g, e.x, e.y, 'IMUNE', '#c9c0d8') } return false }
   let dmg = amount
   if (e.armor > 0) { e.armor = Math.max(0, e.armor - amount); dmg = amount * 0.25 }
   e.hp -= dmg; e.hit = 0.12
+  if (e.boss && e.hp < e.boss.minHp) e.hp = e.boss.minHp
   chargeUlt(g, dmg * 0.025)
   if (crit) { g.lastCrit = g.time; float(g, e.x, e.y, '+' + Math.round(dmg) + ' CRÍTICO', '#ffb347') }
   if (e.hp > 0) return false
+  if (e.kind === 'clone') { burst(g, e.x, e.y, 10, '#d8b6ff', 200, 0.4); return true }
   g.kills++; g.score += e.kind === 'brutamontes' ? 150 : 25
   chargeUlt(g, e.kind === 'brutamontes' ? 25 : 6)
   burst(g, e.x, e.y, e.kind === 'brutamontes' ? 34 : 14, '#ffcf8a', 220, 0.6)
@@ -199,6 +211,7 @@ function castNova(g: Game) {
   for (const e of g.enemies) {
     if (dist(e.x, e.y, p.x, p.y) > tuning.novaRadius + e.r) continue
     e.armor = 0; e.revealed = 3
+    if (e.boss?.finisher) { e.boss.minHp = 0; e.hp = Math.min(e.hp, 1) }
     damageEnemy(g, e, tuning.novaDamage * g.perks.damage, false)
   }
   burst(g, p.x, p.y, 70, '#ffd27a', 420, 0.9, 3)
@@ -207,6 +220,8 @@ function castNova(g: Game) {
 
 function tryAbilities(g: Game) {
   const p = g.player, w = g.want
+  if (g.blocked && (w.c || w.q || w.e || w.x)) { float(g, p.x, p.y - 28, 'SILÊNCIO', '#c9a8ff'); w.c = w.q = w.e = w.x = false; return }
+  if (w.x && g.ultLocked && p.ult >= tuning.ultMax) { float(g, p.x, p.y - 28, 'SELADO', '#c9c0d8'); w.x = false }
   if (w.c && p.cd.c <= 0) { p.cd.c = p.cdMax.c * p.cdScale.c; castPulse(g) }
   if (w.q && p.cd.q <= 0) { p.cd.q = p.cdMax.q * p.cdScale.q; castShield(g) }
   if (w.e && p.cd.e <= 0 && p.dashT <= 0) { p.cd.e = p.cdMax.e * p.cdScale.e; castDash(g) }
@@ -273,6 +288,7 @@ export function applyBlessing(g: Game, id: BlessingId) {
 
 function updateFarol(g: Game, dt: number) {
   const f = g.farol, p = g.player
+  g.lights = f.stage === 'defend' ? [{ x: f.altar.x, y: f.altar.y, r: 360 }] : []
   const aliveCap = f.stage === 'defend' ? 24 : 13
   const rate = f.stage === 'defend' ? 0.7 : 1.7
   g.spawnCd -= dt
@@ -296,10 +312,10 @@ function updateFarol(g: Game, dt: number) {
   }
 }
 
-function finish(g: Game, won: boolean) {
+export function finish(g: Game, won: boolean) {
   if (g.phase === 'won' || g.phase === 'lost') return
   g.phase = won ? 'won' : 'lost'
-  g.result = { mode: g.mode, wave: g.mode === 'vigilia' ? Math.max(0, g.wave - (won ? 0 : 1)) : 0, kills: g.kills, seconds: g.time, won }
+  g.result = { mode: g.mode, wave: g.mode === 'vigilia' ? Math.max(0, g.wave - (won ? 0 : 1)) : 0, kills: g.kills, seconds: g.time, won, phase: g.story?.phase.id }
 }
 
 // Pede uma habilidade para o próximo passo da simulação (teclado ou botão na tela).
@@ -347,6 +363,7 @@ function step(g: Game, dt: number) {
     const s = p.speed * Math.min(1, mv) / mv
     p.x += g.input.moveX * s * dt; p.y += g.input.moveY * s * dt
   }
+  if (g.wind.x || g.wind.y) { p.x += g.wind.x * dt; p.y += g.wind.y * dt }
   pushOut(g, p, p.r)
 
   // disparo
@@ -358,7 +375,7 @@ function step(g: Game, dt: number) {
     g.projectiles.push({ x: p.x + v.x * 18, y: p.y + v.y * 18, vx: v.x * tuning.beamSpeed, vy: v.y * tuning.beamSpeed, r: 5, dmg: p.damage * (crit ? tuning.critMult : 1), from: 'player', life: tuning.beamRange / tuning.beamSpeed, crit, reflected: false })
   }
 
-  if (g.mode === 'vigilia') updateWaves(g, dt); else updateFarol(g, dt)
+  if (g.mode === 'vigilia') updateWaves(g, dt); else if (g.mode === 'farol') updateFarol(g, dt); else g.hook?.(g, dt)
   if (g.phase !== 'playing') return
 
   updateEnemies(g, dt)
@@ -376,6 +393,7 @@ function updateEnemies(g: Game, dt: number) {
   const beacon = g.mode === 'farol' && f.stage === 'defend' && f.hp > 0 ? f.altar : null
   for (const e of g.enemies) {
     e.hit = Math.max(0, e.hit - dt); e.revealed = Math.max(0, e.revealed - dt); e.cd -= dt; e.wob += dt * 4
+    if (e.boss) continue
     // alvo: o Farol, se estiver perto, senão o jogador
     const toBeacon = beacon ? dist(e.x, e.y, beacon.x, beacon.y) : Infinity
     const toPlayer = dist(e.x, e.y, p.x, p.y)
@@ -399,7 +417,7 @@ function updateEnemies(g: Game, dt: number) {
     // contato
     const reach = e.r + (tgt === p ? p.r : 34)
     if (e.kind !== 'dardo' && dist(e.x, e.y, tgt.x, tgt.y) < reach + 2) {
-      const dps = e.kind === 'brutamontes' ? 24 : e.kind === 'fantasma' ? 12 : 9
+      const dps = e.kind === 'brutamontes' ? 24 : e.kind === 'fantasma' ? 12 : e.kind === 'clone' ? 4 : 9
       if (tgt === p) {
         if (p.shield > 0 && inShieldArc(g, e.x, e.y, tuning.shieldRadius + e.r)) { e.vx -= (dx / d) * 260; e.vy -= (dy / d) * 260 } else hurtPlayer(g, dps * dt)
       } else f.hp = Math.max(0, f.hp - dps * 0.5 * dt)
@@ -443,6 +461,7 @@ function updateProjectiles(g: Game, dt: number) {
 export type Hud = {
   hp: number; maxHp: number; ap: number; maxAp: number; time: number; kills: number; score: number; wave: number
   cd: { c: number; q: number; e: number }; cdMax: { c: number; q: number; e: number }; ult: number; shield: number
+  story: { label: string; objective: string; boss: { name: string; hp: number; max: number } | null; ultLocked: boolean } | null
   mode: Mode; stage: 'advance' | 'plant' | 'defend' | null; timeLeft: number; plant: number; beaconHp: number; defendLeft: number; enemies: number; hurt: boolean
 }
 export function hudSnapshot(g: Game): Hud {
@@ -450,6 +469,6 @@ export function hudSnapshot(g: Game): Hud {
   return {
     hp: Math.ceil(p.hp), maxHp: p.maxHp, ap: Math.ceil(p.ap), maxAp: p.maxAp, time: g.time, kills: g.kills, score: g.score, wave: g.wave,
     cd: { ...p.cd }, cdMax: { c: p.cdMax.c * p.cdScale.c, q: p.cdMax.q * p.cdScale.q, e: p.cdMax.e * p.cdScale.e }, ult: Math.floor(p.ult), shield: p.shield,
-    mode: g.mode, stage: g.mode === 'farol' ? f.stage : null, timeLeft: Math.max(0, f.timeLeft), plant: f.plant, beaconHp: Math.ceil(f.hp), defendLeft: Math.max(0, f.defendLeft), enemies: g.enemies.length + g.queue.length, hurt: p.flash > 0,
+    story: g.story?.hud ?? null, mode: g.mode, stage: g.mode === 'farol' ? f.stage : null, timeLeft: Math.max(0, f.timeLeft), plant: f.plant, beaconHp: Math.ceil(f.hp), defendLeft: Math.max(0, f.defendLeft), enemies: g.enemies.length + g.queue.length, hurt: p.flash > 0,
   }
 }

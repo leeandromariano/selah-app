@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import { createLogosRepository, type LogosMode, type LogosState } from './repository'
+import { createLogosRepository, type Fragment, type LogosMode, type LogosState } from './repository'
+import { Campaign } from './CampaignMap'
+import { FragmentsGrid } from './Fragments'
+import { acts, nextPhase, phaseById, phases, type PhaseDef } from './campaign'
 import { LogosGame } from './LogosGame'
 import { Art3D } from './Art3D'
 import { levelFromXp, maxPieceLevel, pieceIds, pieces, rankName, statValue, upgradeCost, xpPerLevel, type Piece, type PieceId } from './rules'
@@ -9,7 +12,7 @@ import './logos.css'
 const defaultRepository = createLogosRepository(supabase)
 export type LogosRepository = typeof defaultRepository
 
-type Screen = 'lobby' | 'armadura' | 'jogo'
+type Screen = 'lobby' | 'armadura' | 'campanha' | 'fragmentos' | 'jogo'
 const modes: { id: LogosMode; name: string; short: string; description: string; detail: string }[] = [
   { id: 'vigilia', name: 'Vigília na Arena', short: 'Ondas', description: 'Ondas progressivas de inimigos. A cada 3 ondas, escolha uma bênção para a partida.', detail: 'Sobreviva o máximo que puder.' },
   { id: 'farol', name: 'Protocolo Farol', short: '90 segundos', description: 'Avance na névoa, crave o Farol de Luz no altar e defenda por 35 segundos até a detonação purificadora.', detail: 'Partida de 90s para plantar.' },
@@ -47,13 +50,15 @@ function Bearer({ sword = true }: { sword?: boolean }) {
 
 function useLogos(repo: LogosRepository) {
   const [state, setState] = useState<LogosState | null>(null)
+  const [fragments, setFragments] = useState<Fragment[]>([])
   const [error, setError] = useState('')
   useEffect(() => {
     let active = true
     repo.lobby().then(s => { if (active) setState(s) }).catch((e: Error) => { if (active) setError(e.message) })
+    Promise.resolve().then(() => repo.campaign()).then(list => { if (active) setFragments(list) }).catch(() => undefined)
     return () => { active = false }
   }, [repo])
-  return { state, setState, error }
+  return { state, setState, fragments, setFragments, error }
 }
 
 function Arsenal({ state, repo, onChange }: { state: LogosState; repo: LogosRepository; onChange: (s: LogosState) => void }) {
@@ -88,8 +93,9 @@ function Arsenal({ state, repo, onChange }: { state: LogosState; repo: LogosRepo
 }
 
 export default function LogosPage({ repo = defaultRepository }: { repo?: LogosRepository }) {
-  const { state, setState, error } = useLogos(repo)
+  const { state, setState, fragments, setFragments, error } = useLogos(repo)
   const [screen, setScreen] = useState<Screen>('lobby')
+  const [story, setStory] = useState<PhaseDef | null>(null)
   const [mode, setMode] = useState<LogosMode>('vigilia')
   const [round, setRound] = useState(0)
   const [touch] = useState(coarse)
@@ -98,28 +104,39 @@ export default function LogosPage({ repo = defaultRepository }: { repo?: LogosRe
   if (!state) return <div className="lg-page"><p role="status">Abrindo o CORAM // LOGOS…</p></div>
   const level = levelFromXp(state.xp), xpInLevel = state.xp % xpPerLevel, current = modes.find(m => m.id === mode) ?? modes[0]
 
-  if (screen === 'jogo') return <LogosGame key={round} mode={mode} armadura={state.armadura} repo={repo} touch={touch} onSaved={setState} onExit={() => setScreen('lobby')} onAgain={() => setRound(r => r + 1)} />
+  const refreshFragments = () => { repo.campaign().then(setFragments).catch(() => undefined) }
+  const play = (phase: PhaseDef | null) => { setStory(phase); setRound(r => r + 1); setScreen('jogo') }
+  const cleared = fragments.map(f => f.phase), upNext = nextPhase(cleared)
+  if (screen === 'jogo') return <LogosGame key={round} mode={story ? 'historia' : mode} story={story ?? undefined} nextPhase={story ? phaseById(story.id + 1) ?? null : null} armadura={state.armadura} repo={repo} touch={touch}
+    onSaved={setState} onPhaseSaved={refreshFragments} onNext={() => { const next = story ? phaseById(story.id + 1) : null; if (next) play(next) }} onExit={() => setScreen(story ? 'campanha' : 'lobby')} onAgain={() => setRound(r => r + 1)} />
 
   return <div className="lg-page">
     <header className="lg-header">
-      <div className="lg-title"><b>CORAM // LOGOS</b><small>{screen === 'armadura' ? 'Armadura & Arsenal // Equipamento' : 'The Spiritual Warfare Tactical Arena'}</small></div>
+      <div className="lg-title"><b>CORAM // LOGOS</b><small>{screen === 'armadura' ? 'Armadura & Arsenal // Equipamento' : screen === 'campanha' ? 'Modo História // Campanha' : screen === 'fragmentos' ? 'Fragmentos Bíblicos' : 'The Spiritual Warfare Tactical Arena'}</small></div>
       <nav className="lg-tabs" aria-label="Seções do LOGOS">
         <button type="button" aria-current={screen === 'lobby' ? 'page' : undefined} onClick={() => setScreen('lobby')}>Lobby</button>
-        <button type="button" disabled title="Chega no próximo sprint">Campanha</button>
+        <button type="button" aria-current={screen === 'campanha' ? 'page' : undefined} onClick={() => setScreen('campanha')}>Campanha</button>
         <button type="button" aria-current={screen === 'armadura' ? 'page' : undefined} onClick={() => setScreen('armadura')}>Armadura</button>
       </nav>
       <div className="lg-wallet"><Art3D name="centelha" fallback={<span className="lg-spark" aria-hidden="true" />} /><b>{state.sparks.toLocaleString('pt-BR')}</b><small>Centelhas</small></div>
     </header>
 
-    {screen === 'armadura' ? <>
+    {screen === 'campanha' ? <>
+      <p className="lg-back"><button type="button" onClick={() => setScreen('lobby')}>← Voltar ao lobby</button></p>
+      <Campaign fragments={fragments} onPlay={play} />
+    </> : screen === 'fragmentos' ? <>
+      <p className="lg-back"><button type="button" onClick={() => setScreen('lobby')}>← Voltar ao lobby</button></p>
+      <h2 className="lg-section-title">Fragmentos Bíblicos <small>{fragments.length} de {phases.length}</small></h2>
+      <FragmentsGrid fragments={fragments} />
+    </> : screen === 'armadura' ? <>
       <p className="lg-back"><button type="button" onClick={() => setScreen('lobby')}>← Voltar ao lobby</button></p>
       <Arsenal state={state} repo={repo} onChange={setState} />
     </> : <section className="lg-lobby" aria-label="Lobby">
       <nav className="lg-menu" aria-label="Menu do lobby">
-        <button type="button" disabled className="lg-menu-item"><span>Modo História</span><small>Em breve</small></button>
+        <button type="button" className="lg-menu-item" onClick={() => setScreen('campanha')}>Modo História</button>
         <button type="button" className="lg-menu-item" data-active="true">Arena Rápida</button>
         <button type="button" className="lg-menu-item" onClick={() => setScreen('armadura')}>Armadura &amp; Arsenal</button>
-        <button type="button" disabled className="lg-menu-item"><span>Fragmentos</span><small>Em breve</small></button>
+        <button type="button" className="lg-menu-item" onClick={() => setScreen('fragmentos')}>Fragmentos</button>
         <a className="lg-menu-back" href="#bereia">← Voltar ao Bereia</a>
       </nav>
       <div className="lg-hero"><Art3D name="portador-luz" alt="O Portador da Luz, de capuz e armadura, com a espada em brasa" fallback={<Bearer />} /><span className="lg-hero-tag">Portador da Luz · Pronto</span></div>
@@ -129,12 +146,19 @@ export default function LogosPage({ repo = defaultRepository }: { repo?: LogosRe
           <i className="lg-meter" style={{ ['--fill' as string]: xpInLevel / xpPerLevel }} aria-label={`${xpInLevel} de ${xpPerLevel} de experiência`} />
           <p className="lg-balance"><b>{state.sparks.toLocaleString('pt-BR')}</b> Centelhas</p>
         </div>
+        <div className="lg-card lg-story-card">
+          <small>MODO HISTÓRIA</small>
+          <b>{upNext ? `Ato ${['I', 'II', 'III', 'IV'][upNext.act - 1]}: ${acts[upNext.act - 1].name}` : 'Campanha concluída'}</b>
+          <span>{upNext ? `Fase ${upNext.index}: ${upNext.name}` : 'Os 16 fragmentos são seus.'}</span>
+          <i className="lg-meter" style={{ ['--fill' as string]: fragments.length / phases.length }} aria-label={`${fragments.length} de ${phases.length} fases concluídas`} />
+          <button type="button" className="lg-secondary" onClick={() => setScreen('campanha')}>{fragments.length ? 'Continuar a campanha' : 'Começar a campanha'}</button>
+        </div>
         <div className="lg-card lg-modes" role="radiogroup" aria-label="Modo de jogo">
           {modes.map(m => <button type="button" key={m.id} role="radio" aria-checked={m.id === mode} data-active={m.id === mode} onClick={() => setMode(m.id)}><strong>{m.name}</strong><small>{m.short}</small></button>)}
           <p>{current.description}</p>
           <p className="lg-record">{mode === 'vigilia' ? `Melhor onda: ${state.vigilia_best_wave} · Partidas: ${state.vigilia_runs}` : `Vitórias: ${state.farol_wins} de ${state.farol_runs}`}</p>
         </div>
-        <button type="button" className="lg-play" aria-label={`Jogar ${current.name}`} onClick={() => { setRound(r => r + 1); setScreen('jogo') }}><strong>JOGAR</strong><small>{current.name}</small></button>
+        <button type="button" className="lg-play" aria-label={`Jogar ${current.name}`} onClick={() => play(null)}><strong>JOGAR</strong><small>{current.name}</small></button>
         <p className="lg-hint">{touch ? 'Analógico à esquerda, habilidades à direita. A mira é assistida.' : 'WASD move · mouse mira · clique atira · C, Q, E e X são as habilidades.'}</p>
       </aside>
     </section>}

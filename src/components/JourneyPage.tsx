@@ -4,6 +4,7 @@ import { JourneyRewards } from './JourneyRewards'
 import { JourneyLastOpening } from './JourneyLastOpening'
 import { PrayerMural } from './PrayerMural'
 import { ReaderLibrary } from './ReaderLibrary'
+import { JourneyLogos } from '../game/logos/Fragments'
 
 export function JourneyPage() {
   const { session, loading, recovery } = useAuth()
@@ -14,6 +15,7 @@ export function JourneyPage() {
     <ConsistencySection userId={session.user.id} showHistory />
     <JourneyLastOpening key={session.user.id} userId={session.user.id} />
     <JourneyRewards userId={session.user.id} />
+    <JourneyLogos />
     <PrayerMural />
     <ReaderLibrary page="minhas-leituras" embedded />
     <div className="actions journey-links"><a className="text-link" href="#historico">Escolher um devocional →</a></div>

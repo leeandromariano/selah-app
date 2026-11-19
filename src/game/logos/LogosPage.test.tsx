@@ -2,17 +2,19 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import LogosPage, { type LogosRepository } from './LogosPage'
-import { createLogosRepository, type LogosState } from './repository'
+import { createLogosRepository, type Fragment, type LogosState } from './repository'
 import { emptyArmadura } from './rules'
 
 const state = (patch: Partial<LogosState> = {}): LogosState => ({ sparks: 1450, xp: 600, level: 3, vigilia_best_wave: 4, vigilia_runs: 5, farol_runs: 2, farol_wins: 1, kills_total: 90, armadura: emptyArmadura(), ...patch })
 
-function fakeRepo(initial: LogosState = state()) {
+function fakeRepo(initial: LogosState = state(), fragments: Fragment[] = []) {
   let current = initial
   const lobby = vi.fn(async () => current)
   const upgrade = vi.fn(async (piece: string) => { current = { ...current, sparks: current.sparks - 100 * (current.armadura as Record<string, number>)[piece], armadura: { ...current.armadura, [piece]: (current.armadura as Record<string, number>)[piece] + 1 } }; return current })
   const finishRun = vi.fn(async () => ({ ...current, reward: { sparks: 120, xp: 60 } }))
-  return { repo: { lobby, upgrade, finishRun } as unknown as LogosRepository, lobby, upgrade, finishRun }
+  const campaign = vi.fn(async () => fragments)
+  const finishPhase = vi.fn(async (r: { phase: number; won: boolean }) => ({ ...current, reward: { sparks: 100, xp: 70 }, fragment: r.won ? { phase: r.phase, reference: 'Mateus 4:4', is_new: true } : null }))
+  return { repo: { lobby, upgrade, finishRun, campaign, finishPhase } as unknown as LogosRepository, lobby, upgrade, finishRun, campaign, finishPhase }
 }
 
 beforeEach(() => { vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null) })
@@ -30,7 +32,7 @@ describe('CORAM // LOGOS: lobby', () => {
     await userEvent.setup().click(screen.getByRole('radio', { name: /Protocolo Farol/ }))
     expect(screen.getByText('Vitórias: 1 de 2')).toBeVisible()
     expect(screen.getByRole('button', { name: 'Jogar Protocolo Farol' })).toBeVisible()
-    expect(screen.getByRole('button', { name: 'Campanha' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Campanha' })).toBeEnabled()
     expect(screen.getByRole('link', { name: /Voltar ao Bereia/ })).toHaveAttribute('href', '#bereia')
   })
   it('falha ao abrir mostra a mensagem do servidor', async () => {

@@ -161,3 +161,72 @@
 .lg-skill .lg-art { width: 46px; height: 46px; position: relative; z-index: 0; }
 .lg-game[data-touch='true'] .lg-skill .lg-art { width: 42px; height: 42px; }
 @media (max-width: 900px) { .lg-hero .lg-art { height: 220px; } }
+
+/* ---------- Modo História ---------- */
+.lg-story-card { gap: 6px; } .lg-story-card small { color: var(--lg-ember); font-weight: 800; letter-spacing: .08em; font-size: 11px; } .lg-story-card b { font-size: 17px; } .lg-story-card span { color: var(--lg-mute); font-size: 13px; }
+.lg-story-card .lg-secondary { padding: 10px 14px; font-size: 14px; margin-top: 4px; }
+.lg-section-title { margin: 0; font-size: 22px; } .lg-section-title small { color: var(--lg-mute); font-size: 13px; font-weight: 600; margin-left: 8px; }
+
+.lg-campaign { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 380px); gap: 18px; align-items: start; }
+.lg-map { position: relative; aspect-ratio: 1000 / 620; border: 1px solid var(--lg-line); border-radius: 18px; overflow: hidden; background: radial-gradient(circle at 50% 40%, #1d1613, #0c0a0d); }
+.lg-map-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.lg-act-label { position: absolute; display: grid; font-weight: 800; font-size: clamp(8px, 1.25vw, 14px); max-width: 30%; text-transform: uppercase; letter-spacing: .02em; text-shadow: 0 2px 10px #000; pointer-events: none; }
+.lg-act-label small { color: var(--lg-ember); font-size: .75em; letter-spacing: .08em; } .lg-act-label em { font-style: normal; color: var(--lg-gold); font-weight: 600; text-transform: none; }
+.lg-act-label[data-act='1'] { left: 3%; bottom: 4%; } .lg-act-label[data-act='2'] { left: 36%; bottom: 3%; } .lg-act-label[data-act='3'] { left: 28%; top: 4%; } .lg-act-label[data-act='4'] { right: 3%; bottom: 6%; text-align: right; }
+.lg-node { position: absolute; transform: translate(-50%, -50%); width: clamp(26px, 4.4vw, 40px); height: clamp(26px, 4.4vw, 40px); border-radius: 50%; border: 2px solid rgba(255, 150, 80, .5); background: rgba(20, 16, 18, .88); font-weight: 800; font-size: clamp(11px, 1.6vw, 15px); padding: 0; display: grid; place-items: center; color: var(--lg-text); }
+.lg-node[data-state='done'] { background: rgba(255, 122, 46, .85); border-color: #ffd9a8; color: #1a0e06; }
+.lg-node[data-state='open'] { border-color: var(--lg-ember); box-shadow: 0 0 14px rgba(255, 122, 46, .5); animation: lg-node-pulse 1.8s ease-in-out infinite; }
+.lg-node[data-state='locked'] { color: var(--lg-mute); border-color: rgba(255, 255, 255, .14); }
+.lg-node[data-boss='true'] { border-radius: 10px; }
+.lg-node[data-selected='true'] { outline: 3px solid var(--lg-gold); outline-offset: 3px; }
+@keyframes lg-node-pulse { 50% { box-shadow: 0 0 24px rgba(255, 150, 70, .9); } }
+.lg-phase-card { border: 1px solid var(--lg-line); border-radius: 18px; background: var(--lg-panel); padding: 18px; display: grid; gap: 10px; box-shadow: 0 0 0 1px rgba(255, 122, 46, .08) inset; }
+.lg-phase-card header { display: grid; gap: 8px; } .lg-phase-card h2 { margin: 0; font-size: clamp(16px, 2vw, 20px); line-height: 1.2; }
+.lg-chip { justify-self: start; border: 1px solid var(--lg-ember); color: var(--lg-ember); border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 800; letter-spacing: .05em; }
+.lg-phase-card h3 { margin: 6px 0 0; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--lg-mute); border-bottom: 1px solid var(--lg-line); padding-bottom: 4px; }
+.lg-phase-card p { margin: 0; color: var(--lg-mute); font-size: 13px; line-height: 1.5; } .lg-phase-mechanic b { color: var(--lg-gold); }
+.lg-objectives { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 14px; } .lg-objectives span { color: var(--lg-ember); margin-right: 8px; } .lg-objectives li[data-done='true'] { color: var(--lg-gold); }
+.lg-drop { margin: 0; padding: 10px 12px; border-left: 3px solid var(--lg-ember); border-radius: 0 10px 10px 0; background: rgba(255, 122, 46, .08); display: grid; gap: 4px; }
+.lg-drop strong { font-size: 18px; } .lg-drop strong a { color: var(--lg-gold); } .lg-drop span { font-family: Literata, Georgia, serif; font-style: italic; color: var(--lg-text); } .lg-drop small { color: var(--lg-mute); }
+.lg-phase-card .lg-rewards { color: var(--lg-text); } .lg-rewards b { color: var(--lg-gold); font-size: 18px; margin-left: 6px; } .lg-rewards b:first-child { margin-left: 0; }
+.lg-enter { margin-top: 6px; }
+
+/* HUD da história: chefe e selo do CONSUMADO */
+.lg-boss { position: absolute; top: 74px; left: 50%; transform: translateX(-50%); width: min(420px, 64vw); display: grid; gap: 4px; justify-items: center; pointer-events: none; z-index: 3; }
+.lg-boss b { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: #ffd9a8; text-shadow: 0 2px 8px #000; } .lg-boss[hidden] { display: none; }
+.lg-boss-bar { width: 100%; height: 10px; } .lg-boss-bar::after { background: linear-gradient(90deg, #b3261e, #ff6a3a); }
+.lg-skill[data-locked='true']::before { content: 'SELADO'; position: absolute; inset: auto 0 -2px 0; z-index: 2; background: #5a1a12; color: #ffd9a8; font: 700 9px/1.4 'Plus Jakarta Sans', sans-serif; text-align: center; border-radius: 0 0 11px 11px; }
+
+/* Vitória da fase */
+.lg-story-result { gap: 10px; align-content: center; }
+.lg-story-eyebrow { margin: 0; color: var(--lg-ember); font-weight: 800; letter-spacing: .06em; }
+.lg-story-result h2 em { font-style: normal; color: var(--lg-ember); }
+.lg-story-body { display: grid; grid-template-columns: minmax(220px, 300px) minmax(260px, 340px); gap: 22px; align-items: center; justify-content: center; }
+.lg-story-body:has(> dl:only-child) { grid-template-columns: minmax(260px, 340px); }
+.lg-fragment-card { transform: rotate(-3deg); border: 2px solid var(--lg-ember); border-radius: 16px; padding: 18px 16px 14px; background: linear-gradient(160deg, #1d1411, #0d0a0b); box-shadow: 0 0 40px rgba(255, 122, 46, .45), inset 0 0 30px rgba(255, 122, 46, .12); display: grid; gap: 8px; justify-items: center; text-align: center; }
+.lg-fragment-card small { color: var(--lg-ember); font-weight: 800; letter-spacing: .08em; font-size: 11px; } .lg-fragment-mark { font-size: 44px; color: var(--lg-ember); text-shadow: 0 0 18px rgba(255, 122, 46, .8); line-height: 1; }
+.lg-fragment-card strong { font-size: 24px; color: #fff; } .lg-fragment-card p { margin: 0; font-family: Literata, Georgia, serif; font-style: italic; color: var(--lg-gold); font-size: 15px; line-height: 1.4; }
+.lg-fragment-read a { color: var(--lg-gold); font-size: 13px; } .lg-fragment-card footer { margin-top: 4px; padding: 6px 10px; border: 1px solid var(--lg-line); border-radius: 6px; font: 600 10px/1.4 'JetBrains Mono', monospace; color: var(--lg-mute); background: rgba(255, 255, 255, .04); }
+.lg-story-stats { margin: 0; display: grid; gap: 8px; text-align: left; }
+.lg-story-stats div { display: flex; justify-content: space-between; gap: 14px; border: 1px solid var(--lg-line); background: var(--lg-panel); border-radius: 12px; padding: 10px 14px; font-size: 14px; }
+.lg-story-stats dt { color: var(--lg-mute); } .lg-story-stats dd { margin: 0; font-weight: 800; text-align: right; } .lg-story-stats .lg-reward dd { color: var(--lg-gold); }
+.lg-story-result .lg-note { color: var(--lg-gold); margin: 0; font-size: 14px; }
+
+/* Fragmentos Bíblicos */
+.lg-fragments { display: grid; gap: 18px; } .lg-fragments h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .08em; color: var(--lg-ember); }
+.lg-fragments ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.lg-fragments li { border: 1px solid var(--lg-line); border-radius: 14px; background: var(--lg-panel); padding: 12px 14px; display: grid; gap: 4px; align-content: start; }
+.lg-fragments li[data-got='true'] { border-color: rgba(255, 122, 46, .55); box-shadow: 0 0 24px rgba(255, 122, 46, .12); }
+.lg-fragments li[data-got='false'] { opacity: .55; }
+.lg-fragments small { color: var(--lg-mute); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; } .lg-fragments strong { font-size: 18px; color: var(--lg-text); } .lg-fragments strong a { color: var(--lg-gold); }
+.lg-fragments span { font-size: 13px; color: var(--lg-mute); font-family: Literata, Georgia, serif; font-style: italic; }
+.journey-logos { display: grid; gap: 12px; padding: clamp(16px, 2.4vw, 24px); margin-block: 18px; border-radius: 22px; border: 1px solid rgba(255, 122, 46, .35); background: radial-gradient(520px 220px at 90% 0, rgba(255, 122, 46, .16), transparent 70%), #130f10; color: #f3ebe0; }
+.journey-logos-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; } .journey-logos h2 { margin: 0; } .journey-logos-head span { color: #a89c90; font-size: 13px; }
+.journey-logos .muted { color: #c9bcae; }
+.journey-logos .lg-fragments { --lg-ember: #ff7a2e; --lg-line: rgba(255, 150, 80, .22); --lg-panel: rgba(28, 23, 26, .86); --lg-text: #f3ebe0; --lg-mute: #a89c90; --lg-gold: #ffd9a8; }
+
+@media (max-width: 900px) {
+  .lg-campaign { grid-template-columns: minmax(0, 1fr); } .lg-story-body { grid-template-columns: minmax(0, 1fr); } .lg-fragment-card { transform: none; }
+  .lg-game[data-touch='true'] .lg-boss { top: 90px; width: min(300px, 56vw); }
+}
+@media (prefers-reduced-motion: reduce) { .lg-node[data-state='open'] { animation: none; } }

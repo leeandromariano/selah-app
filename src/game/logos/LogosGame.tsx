@@ -1,13 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Armadura } from './rules'
-import type { LogosMode, LogosState, RunReward } from './repository'
+import type { LogosMode, LogosState, PhaseReport, PhaseResult, RunReward } from './repository'
+import type { PhaseDef } from './campaign'
+import { createStoryGame } from './story'
+import { StoryResult } from './StoryResult'
 import { applyBlessing, blessings, createGame, forfeit, hudSnapshot, queueAbility, update, type BlessingId, type Hud, type Phase } from './sim'
 import { makeView, render, renderMinimap, type View } from './render'
 import { Art3D } from './Art3D'
 import { bindDesktop, bindJoystick, type Joystick } from './input'
 
-type Saver = { finishRun: (report: { mode: LogosMode; wave: number; kills: number; seconds: number; won: boolean }) => Promise<LogosState & { reward: RunReward }> }
-export type LogosGameProps = { mode: LogosMode; armadura: Armadura; repo: Saver; touch: boolean; onExit: () => void; onSaved?: (state: LogosState) => void; onAgain?: () => void }
+type Saver = {
+  finishRun: (report: { mode: LogosMode; wave: number; kills: number; seconds: number; won: boolean }) => Promise<LogosState & { reward: RunReward }>
+  finishPhase?: (report: PhaseReport) => Promise<PhaseResult>
+}
+export type LogosGameProps = {
+  mode: LogosMode | 'historia'; armadura: Armadura; repo: Saver; touch: boolean; onExit: () => void; onSaved?: (state: LogosState) => void; onAgain?: () => void
+  story?: PhaseDef; nextPhase?: PhaseDef | null; onNext?: () => void; onPhaseSaved?: (result: PhaseResult) => void
+}
 
 const clock = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 const skills = [
@@ -31,7 +40,12 @@ function paintHud(els: Map<string, HTMLElement>, h: Hud) {
   const x = els.get('skill-x'); if (x) { x.style.setProperty('--cd', String(1 - h.ult / 100)); x.dataset.ready = h.ult >= 100 ? 'true' : 'false' }
   set('cd-x', `${h.ult}%`)
   set('timer', h.mode === 'farol' ? clock(h.stage === 'defend' ? h.defendLeft : h.timeLeft) : clock(h.time))
-  if (h.mode === 'vigilia') { set('left', `ONDA ${Math.max(1, h.wave)}`); set('right', `${h.kills} ABATES`); set('objective', h.enemies > 0 ? `${h.enemies} sombras restantes` : 'Respire. A próxima onda vem aí.') }
+  if (h.story) {
+    set('left', h.story.label); set('right', `${h.kills} ABATES`); set('objective', h.story.objective)
+    const boss = els.get('boss'); if (boss) boss.hidden = !h.story.boss
+    if (h.story.boss) { set('boss-name', h.story.boss.name); bar('boss-bar', h.story.boss.hp / h.story.boss.max) }
+    if (x) x.dataset.locked = h.story.ultLocked ? 'true' : 'false'
+  } else if (h.mode === 'vigilia') { set('left', `ONDA ${Math.max(1, h.wave)}`); set('right', `${h.kills} ABATES`); set('objective', h.enemies > 0 ? `${h.enemies} sombras restantes` : 'Respire. A próxima onda vem aí.') }
   else {
     set('left', h.stage === 'defend' ? 'FAROL' : 'AVANCE'); set('right', `${h.kills} ABATES`)
     set('objective', h.stage === 'advance' ? 'Atravesse a névoa até o altar' : h.stage === 'plant' ? `Cravando o Farol… ${Math.min(100, Math.round((h.plant / 3) * 100))}%` : `Defenda o Farol · integridade ${h.beaconHp}%`)
@@ -40,8 +54,9 @@ function paintHud(els: Map<string, HTMLElement>, h: Hud) {
   const root = els.get('root'); if (root) { root.dataset.hurt = h.hurt ? 'true' : 'false'; root.dataset.stage = h.stage ?? '' }
 }
 
-export function LogosGame({ mode, armadura, repo, touch, onExit, onSaved, onAgain }: LogosGameProps) {
-  const [game] = useState(() => createGame(mode, armadura))
+export function LogosGame({ mode, armadura, repo, touch, onExit, onSaved, onAgain, story, nextPhase = null, onNext, onPhaseSaved }: LogosGameProps) {
+  const [game] = useState(() => (story ? createStoryGame(story, armadura) : createGame(mode, armadura)))
+  const [savedPhase, setSavedPhase] = useState<PhaseResult | null>(null)
   const [phase, setPhase] = useState<Phase>('playing')
   const [saved, setSaved] = useState<RunReward | null>(null)
   const [saveError, setSaveError] = useState('')
@@ -51,6 +66,9 @@ export function LogosGame({ mode, armadura, repo, touch, onExit, onSaved, onAgai
   const zoneRef = useRef<HTMLDivElement>(null)
   const knobRef = useRef<HTMLDivElement>(null)
   const baseRef = useRef<HTMLDivElement>(null)
+  // os avisos de "salvo" mudam de identidade a cada render da página; guardados aqui para não refazer o envio do resultado
+  const callbacks = useRef({ onSaved, onPhaseSaved })
+  useEffect(() => { callbacks.current = { onSaved, onPhaseSaved } })
   const viewRef = useRef<View>({ w: 1, h: 1, scale: 1, camX: 0, camY: 0 })
 
   // loop principal: simulação + desenho + HUD, tudo fora do React
@@ -95,10 +113,16 @@ export function LogosGame({ mode, armadura, repo, touch, onExit, onSaved, onAgai
   useEffect(() => {
     if ((phase !== 'won' && phase !== 'lost') || !game.result) return
     let active = true
-    repo.finishRun(game.result).then(state => { if (active) { setSaved(state.reward); onSaved?.(state) } })
-      .catch((error: Error) => { if (active) setSaveError(error.message) })
+    const r = game.result
+    if (story && repo.finishPhase) {
+      repo.finishPhase({ phase: story.id, won: r.won, kills: r.kills, seconds: r.seconds }).then(res => { if (active) { setSavedPhase(res); setSaved(res.reward); callbacks.current.onSaved?.(res); callbacks.current.onPhaseSaved?.(res) } })
+        .catch((error: Error) => { if (active) setSaveError(error.message) })
+    } else if (r.mode !== 'historia') {
+      repo.finishRun({ ...r, mode: r.mode }).then(state => { if (active) { setSaved(state.reward); callbacks.current.onSaved?.(state) } })
+        .catch((error: Error) => { if (active) setSaveError(error.message) })
+    }
     return () => { active = false }
-  }, [phase, game, repo, onSaved])
+  }, [phase, game, repo, story])
 
   // bênçãos também pelas teclas 1, 2 e 3
   useEffect(() => {
@@ -115,7 +139,7 @@ export function LogosGame({ mode, armadura, repo, touch, onExit, onSaved, onAgai
 
   return <div className="lg-game" ref={rootRef} data-touch={touch ? 'true' : 'false'} data-mode={mode} data-hurt="false">
     <canvas ref={canvasRef} className="lg-canvas" aria-label="Arena do CORAM // LOGOS" role="img" />
-    <div className="lg-brand"><b>CORAM // LOGOS</b><small>{mode === 'vigilia' ? 'Vigília na Arena' : 'Protocolo Farol'}</small></div>
+    <div className="lg-brand"><b>CORAM // LOGOS</b><small>{story ? story.name : mode === 'vigilia' ? 'Vigília na Arena' : 'Protocolo Farol'}</small></div>
     <button type="button" className="lg-quit" onClick={() => { forfeit(game); setPhase(game.phase) }} disabled={phase !== 'playing'}>Desistir</button>
     <div className="lg-top" aria-live="off">
       <span className="lg-top-side" data-k="left" />
@@ -123,6 +147,7 @@ export function LogosGame({ mode, armadura, repo, touch, onExit, onSaved, onAgai
       <span className="lg-top-side" data-k="right" />
       {mode === 'farol' && <i className="lg-bar lg-beacon" data-k="beacon-bar" aria-hidden="true" />}
     </div>
+    {story?.boss && <div className="lg-boss" data-k="boss" hidden><b data-k="boss-name" /><i className="lg-bar lg-boss-bar" data-k="boss-bar" /></div>}
     <div className="lg-vitals">
       <span className="lg-portrait" aria-hidden="true" />
       <div><b>Portador da Luz</b>
@@ -133,7 +158,7 @@ export function LogosGame({ mode, armadura, repo, touch, onExit, onSaved, onAgai
       {skills.map(s => <button type="button" key={s.key} className="lg-skill" data-skill={s.key} data-k={`skill-${s.key}`} data-ready="true" aria-label={`${s.name} (${s.label})`} onPointerDown={e => { e.preventDefault(); press(s.key) }} onClick={e => { if (e.detail === 0) press(s.key) }}>
         <kbd>{s.label}</kbd>{s.key === 'q' || s.key === 'e' ? <Art3D name={s.key === 'q' ? 'armadura-escudo' : 'armadura-espada'} fallback={<span className="lg-skill-icon" aria-hidden="true" />} /> : <span className="lg-skill-icon" aria-hidden="true" />}<em data-k={`cd-${s.key}`} /><small>{s.name}</small></button>)}
     </div>
-    <div className="lg-minimap"><canvas ref={miniRef} width={150} height={110} aria-hidden="true" /><small>{mode === 'vigilia' ? 'ARENA' : 'PROTOCOLO LUZ'}</small></div>
+    <div className="lg-minimap"><canvas ref={miniRef} width={150} height={110} aria-hidden="true" /><small>{story ? 'MAPA DA FASE' : mode === 'vigilia' ? 'ARENA' : 'PROTOCOLO LUZ'}</small></div>
     {touch && <div className="lg-stick-zone" ref={zoneRef}><div className="lg-stick-base" ref={baseRef} /><div className="lg-stick-knob" ref={knobRef} /></div>}
 
     {phase === 'blessing' && <div className="lg-overlay" role="dialog" aria-modal="true" aria-label="Escolha uma bênção">
@@ -141,7 +166,8 @@ export function LogosGame({ mode, armadura, repo, touch, onExit, onSaved, onAgai
       <div className="lg-blessings">{game.offer.map((id, i) => { const b = blessings.find(item => item.id === id)!; return <button type="button" key={id} onClick={() => choose(id)}><kbd>{i + 1}</kbd><strong>{b.name}</strong><span>{b.description}</span></button> })}</div>
     </div>}
 
-    {(phase === 'won' || phase === 'lost') && result && <div className="lg-overlay lg-result" role="dialog" aria-modal="true" aria-label="Resultado da partida" data-won={phase === 'won' ? 'true' : 'false'}>
+    {(phase === 'won' || phase === 'lost') && result && story && <StoryResult phase={story} won={phase === 'won'} kills={result.kills} seconds={result.seconds} saved={savedPhase} error={saveError} nextPhase={nextPhase} onNext={() => onNext?.()} onAgain={() => onAgain?.()} onExit={onExit} />}
+    {(phase === 'won' || phase === 'lost') && result && !story && <div className="lg-overlay lg-result" role="dialog" aria-modal="true" aria-label="Resultado da partida" data-won={phase === 'won' ? 'true' : 'false'}>
       <h2>{title}</h2>
       <dl>
         <div><dt>Tempo</dt><dd>{clock(result.seconds)}</dd></div>

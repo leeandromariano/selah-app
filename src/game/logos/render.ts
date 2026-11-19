@@ -1,6 +1,8 @@
 // CORAM // LOGOS: desenho da arena no canvas. Só lê o estado da simulação; nada aqui passa pelo React.
 import { isVisible, tuning, type Enemy, type Game } from './sim'
 
+const bossColor = { tentador: '#4a2c6a', sentinela: '#1d2233', acusador: '#4a2222', dragao: '#5a1a12' } as const
+
 const ember = '#ff7a2e', gold = '#ffd9a8', cream = '#f5e6c8'
 
 export type View = { w: number; h: number; scale: number; camX: number; camY: number }
@@ -38,17 +40,18 @@ function pillar(ctx: CanvasRenderingContext2D, x: number, y: number, r: number) 
 
 function enemy(ctx: CanvasRenderingContext2D, g: Game, e: Enemy) {
   const vis = isVisible(g, e)
-  const alpha = vis ? 1 : 0.16
+  const alpha = vis ? (e.kind === 'clone' ? 0.8 : 1) : 0.16
   ctx.save(); ctx.globalAlpha = alpha; ctx.translate(e.x, e.y)
   const toward = Math.atan2(g.player.y - e.y, g.player.x - e.x)
   const wob = Math.sin(e.wob) * 2
   ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.beginPath(); ctx.ellipse(4, e.r * 0.7, e.r, e.r * 0.5, 0, 0, 7); ctx.fill()
-  const body = e.kind === 'brutamontes' ? '#2a1330' : e.kind === 'fantasma' ? '#241a33' : e.kind === 'dardo' ? '#2b1a2a' : '#211724'
+  const body = e.boss ? bossColor[e.boss.id] : e.kind === 'clone' ? '#3b2a52' : e.kind === 'brutamontes' ? '#2a1330' : e.kind === 'fantasma' ? '#241a33' : e.kind === 'dardo' ? '#2b1a2a' : '#211724'
   const grad = ctx.createRadialGradient(-e.r * 0.3, -e.r * 0.3, 2, 0, 0, e.r + 4)
   grad.addColorStop(0, e.hit > 0 ? '#ffe1c2' : '#4a2e55'); grad.addColorStop(1, e.hit > 0 ? '#ff9d5c' : body)
   ctx.fillStyle = grad
   ctx.beginPath(); ctx.arc(0, wob * 0.3, e.r + wob * 0.3, 0, 7); ctx.fill()
-  if (e.kind === 'brutamontes' || e.kind === 'dardo') { // chifres
+  if (e.boss?.dash && (e.boss.state === 'aim' || e.boss.state === 'strike') && e.boss.t < 0.85) { ctx.strokeStyle = 'rgba(255,70,50,.55)'; ctx.lineWidth = 6; ctx.setLineDash([14, 10]); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(e.boss.dash.dx * 520, e.boss.dash.dy * 520); ctx.stroke(); ctx.setLineDash([]) }
+  if (e.boss || e.kind === 'brutamontes' || e.kind === 'dardo') { // chifres
     ctx.strokeStyle = '#120a16'; ctx.lineWidth = 4; ctx.lineCap = 'round'
     for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(s * e.r * 0.5, -e.r * 0.7); ctx.lineTo(s * e.r * 0.95, -e.r * 1.35); ctx.stroke() }
   }
@@ -93,19 +96,19 @@ function shieldArc(ctx: CanvasRenderingContext2D, g: Game) {
 }
 
 function fog(g: Game, v: View, layer: HTMLCanvasElement | OffscreenCanvas, ctx: CanvasRenderingContext2D) {
-  if (g.mode !== 'farol') return
+  if (g.fogRadius <= 0) return
   const f = layer.getContext('2d') as CanvasRenderingContext2D | null
   if (!f) return
-  const clear = g.fogClear > 0 ? tuning.farol.wideVision * Math.min(1, g.fogClear / 0.5 + 0.0) : tuning.farol.vision
-  const radius = Math.max(tuning.farol.vision, clear) * v.scale
+  const clear = g.fogClear > 0 ? tuning.farol.wideVision * Math.min(1, g.fogClear / 0.5) : 0
+  const radius = Math.max(g.fogRadius, clear) * v.scale
   f.clearRect(0, 0, layer.width, layer.height)
-  f.fillStyle = 'rgba(12,8,18,0.93)'; f.fillRect(0, 0, v.w, v.h)
+  f.fillStyle = g.fogTone === 'sand' ? 'rgba(122,88,50,0.9)' : 'rgba(12,8,18,0.93)'; f.fillRect(0, 0, v.w, v.h)
   f.globalCompositeOperation = 'destination-out'
   const px = (g.player.x - v.camX) * v.scale, py = (g.player.y - v.camY) * v.scale
   const grad = f.createRadialGradient(px, py, radius * 0.35, px, py, radius); grad.addColorStop(0, 'rgba(0,0,0,1)'); grad.addColorStop(1, 'rgba(0,0,0,0)')
   f.fillStyle = grad; f.beginPath(); f.arc(px, py, radius, 0, 7); f.fill()
-  // o Farol cravado ilumina a própria área
-  if (g.farol.stage === 'defend') { const ax = (g.farol.altar.x - v.camX) * v.scale, ay = (g.farol.altar.y - v.camY) * v.scale, ar = 360 * v.scale; const lg = f.createRadialGradient(ax, ay, ar * 0.2, ax, ay, ar); lg.addColorStop(0, 'rgba(0,0,0,1)'); lg.addColorStop(1, 'rgba(0,0,0,0)'); f.fillStyle = lg; f.beginPath(); f.arc(ax, ay, ar, 0, 7); f.fill() }
+  // faróis acesos (e o Farol cravado) iluminam a própria área
+  for (const l of g.lights) { const lx = (l.x - v.camX) * v.scale, ly = (l.y - v.camY) * v.scale, lr = l.r * v.scale; const lg = f.createRadialGradient(lx, ly, lr * 0.2, lx, ly, lr); lg.addColorStop(0, 'rgba(0,0,0,1)'); lg.addColorStop(1, 'rgba(0,0,0,0)'); f.fillStyle = lg; f.beginPath(); f.arc(lx, ly, lr, 0, 7); f.fill() }
   f.globalCompositeOperation = 'source-over'
   ctx.drawImage(layer as CanvasImageSource, 0, 0, v.w, v.h)
 }
@@ -129,12 +132,62 @@ function altar(ctx: CanvasRenderingContext2D, g: Game) {
   ctx.restore()
 }
 
+// O próximo objetivo da fase com lugar no mapa: Farol da vez, torre ou selo mais perto.
+export function storyTarget(g: Game): { x: number; y: number } | null {
+  const st = g.story
+  if (!st) return null
+  const beacon = st.phase.objectives.some(o => o.kind === 'beacons') ? st.beacons.find(b => !b.lit) : undefined
+  if (beacon) return beacon
+  const list = [...st.towers.filter(t => !t.down), ...st.seals.filter(s => !s.broken)]
+  const p = g.player
+  return list.sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))[0] ?? null
+}
+
+function storyLayer(ctx: CanvasRenderingContext2D, g: Game) {
+  const st = g.story
+  if (!st) return
+  const t = g.time
+  for (const z of st.zones) {
+    ctx.save(); ctx.translate(z.x, z.y)
+    ctx.fillStyle = z.warm > 0 ? 'rgba(150,100,230,.08)' : 'rgba(130,70,220,.2)'; ctx.beginPath(); ctx.arc(0, 0, z.r, 0, 7); ctx.fill()
+    ctx.strokeStyle = z.warm > 0 ? 'rgba(200,170,255,.5)' : 'rgba(190,150,255,.75)'; ctx.lineWidth = 3; ctx.setLineDash([12, 10]); ctx.lineDashOffset = -t * 18; ctx.beginPath(); ctx.arc(0, 0, z.r, 0, 7); ctx.stroke(); ctx.setLineDash([])
+    ctx.fillStyle = 'rgba(210,180,255,.8)'; ctx.font = '700 12px "Plus Jakarta Sans", Inter, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('SILÊNCIO', 0, 4)
+    ctx.restore()
+  }
+  const next = st.beacons.find(b => !b.lit)
+  for (const b of st.beacons) {
+    ctx.save(); ctx.translate(b.x, b.y)
+    ctx.fillStyle = '#2d2520'; ctx.beginPath(); ctx.arc(0, 8, 22, 0, 7); ctx.fill()
+    if (b.lit) { const gl = ctx.createRadialGradient(0, -14, 2, 0, -14, 90); gl.addColorStop(0, 'rgba(255,225,160,.8)'); gl.addColorStop(1, 'rgba(255,150,60,0)'); ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(0, -14, 90, 0, 7); ctx.fill(); ctx.fillStyle = '#ffd9a8'; ctx.beginPath(); ctx.moveTo(0, -42 + Math.sin(t * 7) * 2); ctx.lineTo(10, -14); ctx.lineTo(0, 2); ctx.lineTo(-10, -14); ctx.closePath(); ctx.fill() }
+    else { ctx.strokeStyle = b === next ? `rgba(255,190,120,${0.5 + 0.4 * Math.sin(t * 5)})` : 'rgba(150,130,120,.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, 80, 0, 7); ctx.stroke(); ctx.fillStyle = 'rgba(120,100,90,.8)'; ctx.fillRect(-6, -22, 12, 26)
+      if (b.progress > 0) { ctx.strokeStyle = '#ffd9a8'; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(0, 0, 66, -Math.PI / 2, -Math.PI / 2 + (b.progress / 2) * Math.PI * 2); ctx.stroke() } }
+    ctx.restore()
+  }
+  for (const tw of st.towers) {
+    ctx.save(); ctx.translate(tw.x, tw.y)
+    ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.beginPath(); ctx.ellipse(8, 14, 30, 16, 0, 0, 7); ctx.fill()
+    ctx.fillStyle = tw.down ? '#3a332e' : '#4a3f38'; ctx.fillRect(-20, -30, 40, 46)
+    if (!tw.down) { ctx.fillStyle = '#ff7a2e'; ctx.shadowColor = '#ff7a2e'; ctx.shadowBlur = 14; ctx.beginPath(); ctx.arc(0, -34, 9 + Math.sin(t * 6), 0, 7); ctx.fill(); ctx.shadowBlur = 0
+      ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(-22, 22, 44, 5); ctx.fillStyle = '#ff5a3a'; ctx.fillRect(-22, 22, 44 * (tw.hp / tw.maxHp), 5) }
+    ctx.restore()
+  }
+  for (const sl of st.seals) {
+    ctx.save(); ctx.translate(sl.x, sl.y)
+    ctx.strokeStyle = sl.broken ? 'rgba(160,140,130,.3)' : '#ffb36b'; ctx.lineWidth = sl.broken ? 2 : 4; ctx.shadowColor = '#ff8a3a'; ctx.shadowBlur = sl.broken ? 0 : 16
+    ctx.beginPath(); ctx.arc(0, 0, 30, 0, 7); ctx.stroke(); ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(18, 0); ctx.moveTo(0, -18); ctx.lineTo(0, 18); ctx.stroke(); ctx.shadowBlur = 0
+    if (!sl.broken) { ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(-24, 38, 48, 5); ctx.fillStyle = '#ffb36b'; ctx.fillRect(-24, 38, 48 * (sl.hp / sl.maxHp), 5) }
+    ctx.restore()
+  }
+  for (const tg of st.telegraphs) { const k = 1 - tg.t / tg.max; ctx.fillStyle = `rgba(255,70,40,${0.12 + 0.2 * k})`; ctx.beginPath(); ctx.arc(tg.x, tg.y, tg.r, 0, 7); ctx.fill(); ctx.strokeStyle = 'rgba(255,110,70,.8)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(tg.x, tg.y, tg.r * k, 0, 7); ctx.stroke() }
+}
+
 export function render(ctx: CanvasRenderingContext2D, g: Game, v: View, fogLayer?: HTMLCanvasElement | OffscreenCanvas) {
   ctx.setTransform(1, 0, 0, 1, 0, 0)
   ctx.fillStyle = '#0c0a0d'; ctx.fillRect(0, 0, v.w, v.h)
   ctx.setTransform(v.scale, 0, 0, v.scale, -v.camX * v.scale, -v.camY * v.scale)
   ground(ctx, g, v)
   altar(ctx, g)
+  storyLayer(ctx, g)
   for (const o of g.obstacles) pillar(ctx, o.x, o.y, o.r)
   // ondas do Pulso e do Consumado
   if (g.pulse) { const k = g.pulse.t / tuning.pulseTime; ctx.strokeStyle = `rgba(255,214,160,${1 - k})`; ctx.lineWidth = 6 * (1 - k) + 1; ctx.beginPath(); ctx.arc(g.pulse.x, g.pulse.y, tuning.pulseRadius * k, 0, 7); ctx.stroke() }
@@ -159,6 +212,17 @@ export function render(ctx: CanvasRenderingContext2D, g: Game, v: View, fogLayer
   ctx.globalAlpha = 1
   ctx.setTransform(1, 0, 0, 1, 0, 0)
   if (fogLayer) fog(g, v, fogLayer, ctx)
+  if (g.story?.storm?.on) { ctx.strokeStyle = 'rgba(255,225,170,.16)'; ctx.lineWidth = 2; const a = g.story.storm.dir; for (let i = 0; i < 46; i++) { const x = ((i * 137 + g.time * 420 * Math.cos(a)) % v.w + v.w) % v.w, y = ((i * 91 + g.time * 420 * Math.sin(a)) % v.h + v.h) % v.h; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * 46, y + Math.sin(a) * 46); ctx.stroke() } }
+  const target = storyTarget(g)
+  if (target) {
+    const px = (g.player.x - v.camX) * v.scale, py = (g.player.y - v.camY) * v.scale, d = Math.hypot(target.x - g.player.x, target.y - g.player.y)
+    if (d > 140) {
+      const a = Math.atan2(target.y - g.player.y, target.x - g.player.x), r = 64 * v.scale
+      ctx.save(); ctx.translate(px + Math.cos(a) * r, py + Math.sin(a) * r); ctx.rotate(a)
+      ctx.fillStyle = `rgba(255,190,120,${0.6 + 0.3 * Math.sin(g.time * 5)})`; ctx.shadowColor = '#ff7a2e'; ctx.shadowBlur = 10
+      ctx.beginPath(); ctx.moveTo(12 * v.scale, 0); ctx.lineTo(-8 * v.scale, 8 * v.scale); ctx.lineTo(-3 * v.scale, 0); ctx.lineTo(-8 * v.scale, -8 * v.scale); ctx.closePath(); ctx.fill(); ctx.restore()
+    }
+  }
   // vinheta e alerta de dano
   const vg = ctx.createRadialGradient(v.w / 2, v.h / 2, Math.min(v.w, v.h) * 0.35, v.w / 2, v.h / 2, Math.max(v.w, v.h) * 0.75); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, g.player.flash > 0 ? 'rgba(160,20,10,.5)' : 'rgba(0,0,0,.55)')
   ctx.fillStyle = vg; ctx.fillRect(0, 0, v.w, v.h)
@@ -171,6 +235,12 @@ export function renderMinimap(ctx: CanvasRenderingContext2D, g: Game, w: number,
   ctx.fillStyle = 'rgba(14,11,14,.85)'; ctx.fillRect(ox, oy, g.w * s, g.h * s)
   ctx.fillStyle = 'rgba(120,100,90,.7)'; for (const o of g.obstacles) { ctx.beginPath(); ctx.arc(ox + o.x * s, oy + o.y * s, Math.max(1.5, o.r * s), 0, 7); ctx.fill() }
   if (g.mode === 'farol') { ctx.fillStyle = g.farol.stage === 'defend' ? '#ffd9a8' : ember; ctx.beginPath(); ctx.arc(ox + g.farol.altar.x * s, oy + g.farol.altar.y * s, 4, 0, 7); ctx.fill() }
+  if (g.story) {
+    for (const b of g.story.beacons) { ctx.fillStyle = b.lit ? '#ffd9a8' : ember; ctx.beginPath(); ctx.arc(ox + b.x * s, oy + b.y * s, b.lit ? 4 : 3, 0, 7); ctx.fill() }
+    ctx.fillStyle = '#ff9a52'; for (const t of g.story.towers) if (!t.down) ctx.fillRect(ox + t.x * s - 3, oy + t.y * s - 3, 6, 6)
+    ctx.strokeStyle = '#ffb36b'; for (const sl of g.story.seals) if (!sl.broken) { ctx.beginPath(); ctx.arc(ox + sl.x * s, oy + sl.y * s, 4, 0, 7); ctx.stroke() }
+    ctx.fillStyle = 'rgba(160,100,230,.45)'; for (const z of g.story.zones) { ctx.beginPath(); ctx.arc(ox + z.x * s, oy + z.y * s, z.r * s, 0, 7); ctx.fill() }
+  }
   ctx.fillStyle = '#ff4a3a'; for (const e of g.enemies) if (isVisible(g, e) || e.revealed > 0) ctx.fillRect(ox + e.x * s - 1.5, oy + e.y * s - 1.5, 3, 3)
   ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ox + g.player.x * s, oy + g.player.y * s, 3.2, 0, 7); ctx.fill()
 }
