@@ -6,6 +6,7 @@ import { FragmentsGrid } from './Fragments'
 import { acts, nextPhase, phaseById, phases, type PhaseDef } from './campaign'
 import { LogosGame } from './LogosGame'
 import { Art3D } from './Art3D'
+import { LobbyBearer } from './LobbyBearer'
 import { levelFromXp, maxPieceLevel, pieceIds, pieces, rankName, statValue, upgradeCost, xpPerLevel, type Piece, type PieceId } from './rules'
 import './logos.css'
 
@@ -139,7 +140,7 @@ export default function LogosPage({ repo = defaultRepository }: { repo?: LogosRe
         <button type="button" className="lg-menu-item" onClick={() => setScreen('armadura')}>Armadura &amp; Arsenal</button>
         <button type="button" className="lg-menu-item" onClick={() => setScreen('fragmentos')}>Fragmentos</button>
       </nav>
-      <div className="lg-hero"><Art3D name="portador-luz" alt="O Portador da Luz, de capuz e armadura, com a espada em brasa" fallback={<Bearer />} /><span className="lg-hero-tag">Portador da Luz · Pronto</span></div>
+      <div className="lg-hero"><LobbyBearer fallback={<Bearer />} /><span className="lg-hero-tag">Portador da Luz · Pronto</span></div>
       <aside className="lg-side">
         <div className="lg-card lg-rank">
           <div><b>{rankName(level)}</b><small>Nível {level}</small></div>
