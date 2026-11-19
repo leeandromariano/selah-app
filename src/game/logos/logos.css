@@ -355,3 +355,50 @@
   .lg-top-side { font-size: 9px; letter-spacing: .05em; padding: 2px 4px; }
   .lg-top-center { padding: 0 8px; } .lg-top-center strong { font-size: 17px; } .lg-top-center span { font-size: 9px; margin-top: 0; }
 }
+
+/* ---- Lobby no estilo da nova referência: câmara de pedra com feixe de luz, ícones de linha, cartões de vidro e pedestal com anel de runas ---- */
+.lg-page { background: radial-gradient(560px 720px at 50% -6%, rgba(255, 236, 200, .13), transparent 70%), radial-gradient(900px 520px at 50% 62%, rgba(255, 85, 0, .1), transparent 72%), repeating-linear-gradient(90deg, rgba(255, 255, 255, .014) 0 2px, transparent 2px 132px), linear-gradient(180deg, #15110f, #0a090c); }
+.lg-exit { display: inline-flex; align-items: center; gap: 10px; border-radius: 12px; padding: 12px 20px; font-weight: 700; border-color: rgba(255, 140, 70, .35); background: linear-gradient(180deg, rgba(44, 34, 30, .75), rgba(20, 16, 16, .8)); box-shadow: 0 8px 24px rgba(255, 85, 0, .16), inset 0 -2px 0 rgba(255, 85, 0, .65); }
+.lg-exit svg, .lg-menu-item svg { width: 22px; height: 22px; flex: none; fill: none; stroke: #ff7a2e; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 5px rgba(255, 85, 0, .55)); }
+.lg-title b { font-size: clamp(24px, 3.4vw, 36px); }
+.lg-tabs { border-radius: 14px; padding: 4px; gap: 2px; border-color: rgba(255, 255, 255, .12); }
+.lg-tabs button { border-radius: 10px; padding: 12px 22px; }
+.lg-tabs button[aria-current='page'] { background: linear-gradient(180deg, rgba(255, 122, 46, .3), rgba(255, 85, 0, .14)); box-shadow: inset 0 -2px 0 var(--brasa, #ff5500); }
+.lg-wallet b { font-size: 28px; } .lg-wallet small { font-size: 15px; }
+
+.lg-lobby { position: relative; gap: 22px; }
+.lg-lobby > * { position: relative; z-index: 1; }
+/* feixe de luz que desce do alto sobre o Portador */
+.lg-lobby::before { content: ''; position: absolute; z-index: 0; left: 50%; top: -24px; width: min(560px, 62%); height: 74%; transform: translateX(-50%); background: linear-gradient(180deg, rgba(255, 232, 190, .2), rgba(255, 200, 140, .06) 62%, transparent); clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%); filter: blur(10px); pointer-events: none; }
+.lg-menu { gap: 14px; }
+.lg-menu-item { justify-content: flex-start; gap: 14px; padding: 18px 20px; border-radius: 12px; font-size: 15px; letter-spacing: .03em; }
+.lg-menu-item[data-active='true'] { background: linear-gradient(100deg, rgba(255, 85, 0, .3), rgba(255, 122, 46, .08)); }
+
+/* palco do Portador: raios dourados, anel de runas no chão e brasas */
+.lg-hero { min-height: min(640px, 76vh); overflow: visible; }
+.lg-hero::before { content: ''; position: absolute; z-index: 0; left: 50%; top: 46%; width: min(640px, 96%); aspect-ratio: 1; transform: translate(-50%, -50%); background: repeating-conic-gradient(from 0deg, rgba(255, 160, 70, .17) 0 3deg, transparent 3deg 13deg); -webkit-mask-image: radial-gradient(closest-side, #000 18%, transparent 74%); mask-image: radial-gradient(closest-side, #000 18%, transparent 74%); animation: lg-rays 90s linear infinite; pointer-events: none; }
+.lg-hero::after { content: ''; position: absolute; z-index: 0; left: 50%; bottom: 7%; width: 96%; height: 24%; transform: translateX(-50%); border: 2px dashed rgba(255, 130, 50, .5); border-radius: 50%; box-shadow: 0 0 26px rgba(255, 85, 0, .32), inset 0 0 28px rgba(255, 85, 0, .22); pointer-events: none; }
+.lg-hero > canvas, .lg-hero > img, .lg-hero > svg { position: relative; z-index: 1; }
+.lg-hero-tag { z-index: 2; padding: 10px 20px; border-radius: 10px; font-weight: 700; letter-spacing: .06em; }
+@keyframes lg-rays { to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+/* cartões laterais */
+.lg-card { border-radius: 14px; padding: 18px 20px; border-color: rgba(255, 255, 255, .1); }
+.lg-rank > div { justify-content: flex-start; align-items: baseline; gap: 8px; } .lg-rank b { font-size: 22px; } .lg-rank small { font-size: 22px; color: #fff; font-weight: 800; } .lg-rank small::before { content: '· '; }
+.lg-rank .lg-meter { height: 10px; border-radius: 6px; } .lg-rank .lg-meter::after { background: linear-gradient(90deg, #ff5500, #ffb347); box-shadow: 0 0 12px rgba(255, 122, 46, .5); }
+.lg-balance { display: flex; align-items: center; gap: 10px; font-size: 18px; }
+.lg-balance::before { content: ''; width: 24px; height: 32px; background: linear-gradient(160deg, #ffd9a8, #ff7a2e 60%, #b8420f); clip-path: polygon(50% 0, 100% 40%, 62% 100%, 38% 100%, 0 40%); filter: drop-shadow(0 0 7px rgba(255, 122, 46, .7)); }
+.lg-balance b { font-size: 34px; color: #fff; }
+.lg-story-card small { color: #ff7a2e; font-weight: 800; letter-spacing: .06em; } .lg-story-card > b { font-size: 24px; } .lg-story-card > span { color: var(--lg-mute); font-size: 16px; }
+.lg-story-card .lg-secondary { position: relative; border-radius: 10px; padding: 14px 18px; background: linear-gradient(180deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .04)); font-size: 17px; font-weight: 700; }
+.lg-story-card .lg-secondary::before, .lg-story-card .lg-secondary::after { content: '❯'; position: absolute; top: 50%; transform: translateY(-50%); color: rgba(255, 150, 80, .55); font-size: 18px; }
+.lg-story-card .lg-secondary::before { left: 12px; transform: translateY(-50%) scaleX(-1); } .lg-story-card .lg-secondary::after { right: 12px; }
+.lg-modes button { border-radius: 10px; padding: 14px 16px; font-size: 17px; } .lg-modes button[data-active='true'] { border-color: #ff7a2e; background: rgba(255, 85, 0, .12); box-shadow: 0 0 14px rgba(255, 85, 0, .2); }
+.lg-modes button strong { font-weight: 700; }
+.lg-play { position: relative; overflow: hidden; border-radius: 14px; padding: 22px 18px; background: radial-gradient(circle at 18% 120%, rgba(255, 220, 150, .5), transparent 40%), radial-gradient(circle at 88% -20%, rgba(255, 200, 120, .35), transparent 42%), linear-gradient(180deg, #ff8a3d, #e0561a 55%, #c2410c); box-shadow: 0 14px 38px rgba(255, 85, 0, .42), inset 0 1px 0 rgba(255, 255, 255, .35); }
+.lg-play strong { font-size: 40px; letter-spacing: .05em; text-shadow: 0 2px 10px rgba(120, 30, 0, .45); } .lg-play small { font-size: 15px; font-weight: 700; opacity: .95; }
+.lg-play::before { content: ''; position: absolute; inset: 0; background-image: radial-gradient(circle, rgba(255, 240, 200, .85) 0 1.2px, transparent 1.6px), radial-gradient(circle, rgba(255, 220, 150, .6) 0 1px, transparent 1.4px); background-size: 46px 38px, 71px 59px; background-position: 6px 10px, 30px 4px; opacity: .45; pointer-events: none; }
+.lg-play > * { position: relative; }
+.lg-hint { font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .lg-hero::before { animation: none; } }
+@media (max-width: 900px) { .lg-lobby::before { display: none; } .lg-hero { min-height: 300px; } .lg-menu-item { padding: 12px; } .lg-title b { font-size: 22px; } .lg-play strong { font-size: 30px; } }

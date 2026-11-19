@@ -7,6 +7,7 @@ import { acts, nextPhase, phaseById, phases, type PhaseDef } from './campaign'
 import { LogosGame } from './LogosGame'
 import { Art3D } from './Art3D'
 import { LobbyBearer } from './LobbyBearer'
+import { IconArrow, IconBook, IconGem, IconShield, IconSwords } from './LobbyIcons'
 import { levelFromXp, maxPieceLevel, pieceIds, pieces, rankName, statValue, upgradeCost, xpPerLevel, type Piece, type PieceId } from './rules'
 import './logos.css'
 
@@ -113,7 +114,7 @@ export default function LogosPage({ repo = defaultRepository }: { repo?: LogosRe
 
   return <div className="lg-page">
     <header className="lg-header">
-      <a className="lg-exit" href="#bereia">← Voltar ao Bereia</a>
+      <a className="lg-exit" href="#bereia"><IconArrow />Voltar ao Bereia</a>
       <div className="lg-title"><b>CORAM // LOGOS</b><small>{screen === 'armadura' ? 'Armadura & Arsenal // Equipamento' : screen === 'campanha' ? 'Modo História // Campanha' : screen === 'fragmentos' ? 'Fragmentos Bíblicos' : 'The Spiritual Warfare Tactical Arena'}</small></div>
       <nav className="lg-tabs" aria-label="Seções do LOGOS">
         <button type="button" aria-current={screen === 'lobby' ? 'page' : undefined} onClick={() => setScreen('lobby')}>Lobby</button>
@@ -135,10 +136,10 @@ export default function LogosPage({ repo = defaultRepository }: { repo?: LogosRe
       <Arsenal state={state} repo={repo} onChange={setState} />
     </> : <section className="lg-lobby" aria-label="Lobby">
       <nav className="lg-menu" aria-label="Menu do lobby">
-        <button type="button" className="lg-menu-item" onClick={() => setScreen('campanha')}>Modo História</button>
-        <button type="button" className="lg-menu-item" data-active="true">Arena Rápida</button>
-        <button type="button" className="lg-menu-item" onClick={() => setScreen('armadura')}>Armadura &amp; Arsenal</button>
-        <button type="button" className="lg-menu-item" onClick={() => setScreen('fragmentos')}>Fragmentos</button>
+        <button type="button" className="lg-menu-item" onClick={() => setScreen('campanha')}><IconBook />Modo História</button>
+        <button type="button" className="lg-menu-item" data-active="true"><IconSwords />Arena Rápida</button>
+        <button type="button" className="lg-menu-item" onClick={() => setScreen('armadura')}><IconShield />Armadura &amp; Arsenal</button>
+        <button type="button" className="lg-menu-item" onClick={() => setScreen('fragmentos')}><IconGem />Fragmentos</button>
       </nav>
       <div className="lg-hero"><LobbyBearer fallback={<Bearer />} /><span className="lg-hero-tag">Portador da Luz · Pronto</span></div>
       <aside className="lg-side">
