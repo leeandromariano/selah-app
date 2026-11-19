@@ -9,7 +9,7 @@ export type Rng = () => number
 
 // Máquina de estados de um chefe (a lógica de cada Ato fica em story.ts).
 export type BossState = { id: 'tentador' | 'sentinela' | 'acusador' | 'dragao'; name: string; state: string; t: number; phase: number; invuln: boolean; minHp: number; finisher: boolean; cycle: number; dash: { dx: number; dy: number; t: number } | null; hidden: boolean }
-export type Enemy = { boss?: BossState; id: number; kind: EnemyKind; x: number; y: number; vx: number; vy: number; hp: number; maxHp: number; r: number; speed: number; cd: number; armor: number; maxArmor: number; revealed: number; hit: number; wob: number; lunge?: number }
+export type Enemy = { boss?: BossState; id: number; kind: EnemyKind; x: number; y: number; vx: number; vy: number; hp: number; maxHp: number; r: number; speed: number; cd: number; armor: number; maxArmor: number; revealed: number; hit: number; wob: number; lunge?: number; walking?: boolean }
 export type Projectile = { x: number; y: number; vx: number; vy: number; r: number; dmg: number; from: 'player' | 'enemy'; life: number; crit: boolean; reflected: boolean }
 export type Particle = { x: number; y: number; vx: number; vy: number; life: number; max: number; size: number; color: string }
 export type FloatText = { x: number; y: number; text: string; life: number; color: string }
@@ -500,6 +500,7 @@ function updateEnemies(g: Game, dt: number) {
         for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2 + e.wob; g.projectiles.push({ x: e.x, y: e.y, vx: Math.cos(a) * 250, vy: Math.sin(a) * 250, r: 6, dmg: 8, from: 'enemy', life: 2.2, crit: false, reflected: false }) }
       }
     }
+    e.walking = mx !== 0 || my !== 0
     e.x += (mx * e.speed + e.vx) * dt; e.y += (my * e.speed + e.vy) * dt
     e.vx *= 0.9; e.vy *= 0.9
     pushOut(g, e, e.r)

@@ -354,6 +354,8 @@ function enemy(ctx: CanvasRenderingContext2D, g: Game, e: Enemy) {
   const toward = Math.atan2(g.player.y - e.y, g.player.x - e.x)
   const wob = Math.sin(e.wob) * 2
   const sprite = enemySprite(e)
+  const sheet = !e.boss && (e.kind === 'sombra' || e.kind === 'fantasma' || e.kind === 'clone') ? arenaSheet('sombra-walk-sheet', 1.35) : null
+  const pose = sheet ? { row: rowFor(Math.cos(toward), Math.sin(toward)), col: e.walking ? Math.floor(e.wob * 2.5) % 4 : 0 } : null
   const outlined = e.revealed > 0 && g.fogClear > 0
   ctx.save(); ctx.globalAlpha = alpha
   // sombra de contato no piso (no plano do chão, já achatada pela projeção)
@@ -365,7 +367,18 @@ function enemy(ctx: CanvasRenderingContext2D, g: Game, e: Enemy) {
   const feet = e.y + e.r * 0.5
   stand(ctx, e.x, feet, () => {
     let top: number
-    if (sprite) {
+    if (sheet && pose) {
+      // folha de animação: corre voltado para o Portador, parado fica no quadro neutro
+      const hh = e.r * 6.4, ww = (hh * sheet.cw) / sheet.uh
+      top = hh + 6
+      ctx.save(); ctx.translate(0, wob * 0.2)
+      const rim = rimOf({ src: sheet.frames[pose.row][pose.col], w: sheet.cw, h: sheet.ch })
+      if (rim) { const kk = ww / sheet.cw, yy = -hh - (sheet.y0 + rim.pad) * kk; ctx.save(); ctx.globalAlpha = alpha * 0.9; for (let i = 0; i < 2; i++) ctx.drawImage(rim.cv, -ww / 2 - rim.pad * kk, yy, rim.cv.width * kk, rim.cv.height * kk); ctx.restore() }
+      if (outlined) { ctx.shadowColor = '#ff7a2e'; ctx.shadowBlur = 16 }
+      drawFrame(ctx, sheet, pose.row, pose.col, hh)
+      if (e.hit > 0) { ctx.shadowBlur = 0; ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = alpha * 0.55; drawFrame(ctx, sheet, pose.row, pose.col, hh) }
+      ctx.restore()
+    } else if (sprite) {
       const hh = e.r * (e.boss ? 6.6 : e.kind === 'brutamontes' ? 5.8 : 6.4), ww = hh * sprite.w / sprite.h
       top = hh + 6
       ctx.save(); ctx.translate(0, wob * 0.4)
@@ -399,6 +412,10 @@ function enemy(ctx: CanvasRenderingContext2D, g: Game, e: Enemy) {
 function player(ctx: CanvasRenderingContext2D, g: Game) {
   const p = g.player, r = p.r
   const sprite = arenaSprite('portador-luz', PLAYER_OPTS)
+  const sheet = arenaSheet('portador-walk-sheet', 1.25, 1.08)
+  // linha pela direção do movimento (ou da mira, parado, golpeando ou no dash); quadro de corrida só enquanto anda, neutro parado
+  const moving = p.walk > 0.05, face = p.dashT > 0 ? Math.atan2(p.dashDy, p.dashDx) : moving && p.atk > 0.5 ? p.lastMove : p.aim
+  const pose = sheet ? { row: rowFor(Math.cos(face), Math.sin(face)), col: moving ? Math.floor((p.stride * 10) / 13) % 4 : 0 } : null
   const pulse = 1 + Math.sin(g.time * 4) * 0.08, aura = r * 4 * pulse
   const flip = Math.cos(p.aim) > 0
   const dir = { x: Math.cos(p.aim), y: Math.sin(p.aim) * TILT }, dl = Math.hypot(dir.x, dir.y) || 1
@@ -414,7 +431,7 @@ function player(ctx: CanvasRenderingContext2D, g: Game) {
     const dn = Math.hypot(p.dashDx, p.dashDy) || 1, ux = p.dashDx / dn, uy = p.dashDy / dn
     for (let k = 5; k >= 1; k--) {
       const hh = r * 8.2, ww = hh * sprite.w / sprite.h
-      stand(ctx, p.x - ux * 22 * k, p.y + r * 0.6 - uy * 22 * k, () => { ctx.globalAlpha = 0.36 / k; if (flip) ctx.scale(-1, 1); ctx.drawImage(sprite.src, -ww / 2, -hh, ww, hh) })
+      stand(ctx, p.x - ux * 22 * k, p.y + r * 0.6 - uy * 22 * k, () => { ctx.globalAlpha = 0.36 / k; if (sheet && pose) drawFrame(ctx, sheet, pose.row, pose.col, hh); else { if (flip) ctx.scale(-1, 1); ctx.drawImage(sprite.src, -ww / 2, -hh, ww, hh) } })
     }
     ctx.save(); ctx.lineCap = 'round'
     for (let i = 0; i < 9; i++) {
@@ -427,7 +444,14 @@ function player(ctx: CanvasRenderingContext2D, g: Game) {
   }
   stand(ctx, p.x, p.y + r * 0.6, () => {
     const hh = r * 8.2
-    if (sprite) {
+    if (sheet && pose) {
+      const atkK = p.atk < 0.28 ? Math.sin((p.atk / 0.28) * Math.PI) : 0, dashing = p.dashT > 0, aimx = Math.cos(p.aim)
+      const bob = -Math.abs(Math.sin(p.stride)) * 2.5 * p.walk + Math.sin(g.time * 2.1) * 0.8 * (1 - p.walk)
+      ctx.save(); ctx.translate(aimx * (atkK * 12 + (dashing ? 8 : 0)), bob + Math.sin(p.aim) * atkK * 7); ctx.rotate(aimx * (atkK * 0.12 + (dashing ? 0.2 : 0)) - (p.flash > 0 ? aimx * 0.08 : 0))
+      drawFrame(ctx, sheet, pose.row, pose.col, hh)
+      if (p.flash > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.5; drawFrame(ctx, sheet, pose.row, pose.col, hh) }
+      ctx.restore()
+    } else if (sprite) {
       // animação procedural do render: respiração parada, passos com balanço do corpo, inclinação para o lado do movimento,
       // avanço e giro do tronco ao golpear, mergulho no dash e recuo ao apanhar; troca de lado com giro suave
       const w = p.walk, st = p.stride, t = g.time, mvx = Math.cos(p.lastMove), aimx = Math.cos(p.aim)
@@ -765,12 +789,62 @@ function lightPillars(ctx: CanvasRenderingContext2D, g: Game) {
   }
 }
 
+// ---------- folhas de animação 4x4 (Portador e Sombra) ----------
+// Cada folha tem 4 linhas de direção (0 baixo, 1 esquerda, 2 direita, 3 cima) e 4 quadros de corrida por linha. No carregamento cada célula é
+// recortada para um canvas fora da tela, com o fundo escuro ligado às bordas removido e o brilho ajustado; o loop só desenha o quadro certo.
+export type Sheet = { frames: HTMLCanvasElement[][]; cw: number; ch: number; y0: number; uh: number }
+const sheetCache = new Map<string, Sheet | null>()
+export const rowFor = (dx: number, dy: number) => (dy > Math.abs(dx) ? 0 : dx < -Math.abs(dy) ? 1 : dx > Math.abs(dy) ? 2 : 3)
+export function arenaSheet(name: string, gain = 1, contrast = 1): Sheet | null {
+  const cached = sheetCache.get(name)
+  if (cached !== undefined) return cached
+  const img = arenaArt(name)
+  if (!img) return null
+  let out: Sheet | null = null
+  try {
+    const sw = img.naturalWidth / 4, sh = img.naturalHeight / 4, k = Math.min(1, 320 / sw), cw = Math.round(sw * k), ch = Math.round(sh * k)
+    let top = ch, bottom = 0
+    const frames: HTMLCanvasElement[][] = []
+    for (let row = 0; row < 4; row++) {
+      frames.push([])
+      for (let col = 0; col < 4; col++) {
+        const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch
+        const c = cv.getContext('2d', { willReadFrequently: true })
+        if (!c) throw new Error('canvas')
+        c.drawImage(img, col * sw, row * sh, sw, sh, 0, 0, cw, ch)
+        const data = c.getImageData(0, 0, cw, ch)
+        floodKey(data.data, cw, ch)
+        if (gain !== 1 || contrast !== 1) lift(data.data, gain, contrast)
+        for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x += 2) if (data.data[(y * cw + x) * 4 + 3] > 40) { if (y < top) top = y; if (y > bottom) bottom = y; break }
+        c.putImageData(data, 0, 0); frames[row].push(cv)
+      }
+    }
+    if (bottom <= top) throw new Error('vazia')
+    out = { frames, cw, ch, y0: top, uh: bottom - top + 1 }
+  } catch { out = null }
+  sheetCache.set(name, out)
+  return out
+}
+// Desenha um quadro com os pés na origem e a altura da figura igual a hh (sem espelhar: as linhas já têm as poses de cada lado).
+function drawFrame(ctx: CanvasRenderingContext2D, sh: Sheet, row: number, col: number, hh: number) {
+  const ww = (hh * sh.cw) / sh.uh
+  ctx.drawImage(sh.frames[row][col], 0, sh.y0, sh.cw, sh.uh, -ww / 2, -hh, ww, hh)
+}
+
+// Vinheta e alerta de dano: tela inteira.
+function vignette(ctx: CanvasRenderingContext2D, g: Game, v: View) {
+  const vg = ctx.createRadialGradient(v.w / 2, v.h / 2, Math.min(v.w, v.h) * 0.35, v.w / 2, v.h / 2, Math.max(v.w, v.h) * 0.75); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, g.player.flash > 0 ? 'rgba(160,20,10,.5)' : 'rgba(0,0,0,.55)')
+  ctx.fillStyle = vg; ctx.fillRect(0, 0, v.w, v.h)
+}
+
 // Pré-aquecimento: carrega as imagens da arena e gera, uma por vez e fora do caminho do combate, os recortes, contornos e versões em brasa,
 // para o primeiro inimigo ou abate não custar um quadro perdido.
 export function warmArena() {
   const jobs: (() => boolean)[] = []
   for (const n of ['inimigo-sombra', 'inimigo-sentinela', 'inimigo-acusador', 'boss-dragao']) jobs.push(() => { const sp = arenaSprite(n, ENEMY_OPTS); if (!sp) return false; rimOf(sp); emberOf(sp); return true })
   jobs.push(() => !!arenaSprite('portador-luz', PLAYER_OPTS))
+  jobs.push(() => !!arenaSheet('portador-walk-sheet', 1.25, 1.08))
+  jobs.push(() => !!arenaSheet('sombra-walk-sheet', 1.35))
   let i = 0, tries = 0
   const tick = () => { if (i >= jobs.length || tries++ > 80) return; if (jobs[i]()) i++; setTimeout(tick, 50) }
   setTimeout(tick, 0)
@@ -793,6 +867,8 @@ export function render(ctx: CanvasRenderingContext2D, g: Game, v: View, fogLayer
   corpses(ctx, g)
   for (const o of g.obstacles) pillar(ctx, o.x, o.y, o.r, g.player)
   brazierBodies(ctx, g, v)
+  // névoa de borda e vinheta ficam por baixo dos personagens, que mantêm o brilho; a névoa de visão do Farol continua por cima
+  { const T = ctx.getTransform(); ctx.setTransform(1, 0, 0, 1, 0, 0); mist(ctx, g, v); vignette(ctx, g, v); ctx.setTransform(T) }
   // personagens ordenados por profundidade (quem está mais embaixo na tela fica na frente)
   const actors: { y: number; draw: () => void }[] = g.enemies.map(e => ({ y: e.y, draw: () => enemy(ctx, g, e) }))
   actors.push({ y: g.player.y, draw: () => player(ctx, g) })
@@ -821,7 +897,6 @@ export function render(ctx: CanvasRenderingContext2D, g: Game, v: View, fogLayer
   floatTexts(ctx, g)
   ctx.setTransform(1, 0, 0, 1, 0, 0)
   if (fogLayer) fog(g, v, fogLayer, ctx)
-  mist(ctx, g, v)
   if (g.nova && g.nova.t / tuning.novaTime < 0.35) { ctx.fillStyle = `rgba(255,225,150,${0.28 * (1 - g.nova.t / (tuning.novaTime * 0.35))})`; ctx.fillRect(0, 0, v.w, v.h) }
   if (g.story?.storm?.on) { ctx.strokeStyle = 'rgba(255,225,170,.16)'; ctx.lineWidth = 2; const a = g.story.storm.dir; for (let i = 0; i < 46; i++) { const x = ((i * 137 + g.time * 420 * Math.cos(a)) % v.w + v.w) % v.w, y = ((i * 91 + g.time * 420 * Math.sin(a)) % v.h + v.h) % v.h; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * 46, y + Math.sin(a) * 46); ctx.stroke() } }
   const target = storyTarget(g)
@@ -834,9 +909,6 @@ export function render(ctx: CanvasRenderingContext2D, g: Game, v: View, fogLayer
       ctx.beginPath(); ctx.moveTo(12 * v.scale, 0); ctx.lineTo(-8 * v.scale, 8 * v.scale); ctx.lineTo(-3 * v.scale, 0); ctx.lineTo(-8 * v.scale, -8 * v.scale); ctx.closePath(); ctx.fill(); ctx.restore()
     }
   }
-  // vinheta e alerta de dano
-  const vg = ctx.createRadialGradient(v.w / 2, v.h / 2, Math.min(v.w, v.h) * 0.35, v.w / 2, v.h / 2, Math.max(v.w, v.h) * 0.75); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, g.player.flash > 0 ? 'rgba(160,20,10,.5)' : 'rgba(0,0,0,.55)')
-  ctx.fillStyle = vg; ctx.fillRect(0, 0, v.w, v.h)
 }
 
 // Minimapa: mesmo estado, escala pequena.

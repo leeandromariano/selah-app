@@ -341,3 +341,17 @@
 .lg-top-center { padding: 0 24px; }
 .lg-top-center strong { font-size: 36px; line-height: 1.1; }
 .lg-top-center span { font-size: 14px; margin-top: 2px; font-weight: 700; }
+
+/* ---- Rótulos das habilidades sempre abaixo do próprio quadrado (o X é maior e sobrepunha o rótulo); placar compacto no celular ---- */
+.lg-skill small { top: calc(100% + 6px); }
+.lg-skills { padding-bottom: 34px; }
+.lg-game[data-touch='true'] .lg-top, .lg-top.lg-compact { min-width: 0; padding: 3px 12px 4px; gap: 3px 8px; }
+.lg-game[data-touch='true'] .lg-top-side { font-size: 9px; letter-spacing: .05em; padding: 2px 4px; }
+.lg-game[data-touch='true'] .lg-top-center { padding: 0 8px; }
+.lg-game[data-touch='true'] .lg-top-center strong { font-size: 17px; line-height: 1.1; }
+.lg-game[data-touch='true'] .lg-top-center span { font-size: 9px; margin-top: 0; }
+@media (max-width: 700px) {
+  .lg-top { min-width: 0; max-width: calc(100vw - 24px); padding: 3px 12px 4px; gap: 3px 8px; }
+  .lg-top-side { font-size: 9px; letter-spacing: .05em; padding: 2px 4px; }
+  .lg-top-center { padding: 0 8px; } .lg-top-center strong { font-size: 17px; } .lg-top-center span { font-size: 9px; margin-top: 0; }
+}
