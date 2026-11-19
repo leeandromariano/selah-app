@@ -9,15 +9,19 @@ export type Rng = () => number
 
 // Máquina de estados de um chefe (a lógica de cada Ato fica em story.ts).
 export type BossState = { id: 'tentador' | 'sentinela' | 'acusador' | 'dragao'; name: string; state: string; t: number; phase: number; invuln: boolean; minHp: number; finisher: boolean; cycle: number; dash: { dx: number; dy: number; t: number } | null; hidden: boolean }
-export type Enemy = { boss?: BossState; id: number; kind: EnemyKind; x: number; y: number; vx: number; vy: number; hp: number; maxHp: number; r: number; speed: number; cd: number; armor: number; maxArmor: number; revealed: number; hit: number; wob: number }
+export type Enemy = { boss?: BossState; id: number; kind: EnemyKind; x: number; y: number; vx: number; vy: number; hp: number; maxHp: number; r: number; speed: number; cd: number; armor: number; maxArmor: number; revealed: number; hit: number; wob: number; lunge?: number }
 export type Projectile = { x: number; y: number; vx: number; vy: number; r: number; dmg: number; from: 'player' | 'enemy'; life: number; crit: boolean; reflected: boolean }
 export type Particle = { x: number; y: number; vx: number; vy: number; life: number; max: number; size: number; color: string }
 export type FloatText = { x: number; y: number; text: string; life: number; color: string }
 export type Obstacle = { x: number; y: number; r: number }
 // Só desenho e sensação de jogo (tremor, arcos de corte, clarões de rebote); nunca entra nas contas de física, colisão ou dano.
-export type Slash = { x: number; y: number; a: number; t: number; max: number; heavy: boolean }
-export type Flash = { x: number; y: number; a: number; t: number; max: number }
-export type Fx = { shake: number; slashes: Slash[]; flashes: Flash[] }
+export type Slash = { x: number; y: number; a: number; t: number; max: number; heavy: boolean; side?: number; big?: boolean }
+export type Flash = { x: number; y: number; a: number; t: number; max: number; purple?: boolean }
+// Coluna de luz do CONSUMADO (t começa negativo: atraso até cair) e corpo em brasa que fica no chão depois de um abate.
+export type Pillar = { x: number; y: number; t: number; max: number }
+export type Corpse = { x: number; y: number; r: number; kind: EnemyKind; a: number; flip: boolean; t: number; max: number }
+export type Fx = { shake: number; slashes: Slash[]; flashes: Flash[]; pillars: Pillar[]; corpses: Corpse[] }
+export type Swing = { x: number; y: number; a: number; reach: number; arc: number; dmg: number }
 
 export type Input = { moveX: number; moveY: number; aimX: number; aimY: number; fire: boolean; assist: boolean }
 export type Want = { c: boolean; q: boolean; e: boolean; x: boolean }
@@ -34,6 +38,7 @@ export const blessings: { id: BlessingId; name: string; description: string }[] 
 
 export const tuning = {
   playerRadius: 14, baseSpeed: 230, baseDamage: 14, fireRate: 4.6, beamSpeed: 760, beamRange: 640, critChance: 0.12, critMult: 2.5,
+  swingReach: 120, swingArc: 1.1, swingRate: 2.9, swingMul: 2.2, swingKnock: 260, spearReach: 100, spearWindup: 0.45,
   cdPulse: 14, cdShield: 16, cdDash: 7, ultMax: 100, ultPassive: 1.2,
   pulseRadius: 250, pulseTime: 0.45, shieldRadius: 64, shieldArc: 1.05, dashDistance: 290, dashTime: 0.18, dashDamage: 46,
   novaRadius: 480, novaTime: 0.9, novaDamage: 140,
@@ -57,7 +62,7 @@ export type Game = {
   time: number; kills: number; score: number
   player: {
     x: number; y: number; r: number; hp: number; maxHp: number; ap: number; maxAp: number; aim: number; lastMove: number; fireCd: number; invuln: number; flash: number
-    speed: number; damage: number; dashT: number; dashDx: number; dashDy: number; dashHit: Set<number>
+    speed: number; damage: number; dashT: number; dashDx: number; dashDy: number; dashHit: Set<number>; walk: number; stride: number; facing: number; atk: number
     cd: { c: number; q: number; e: number }; cdMax: { c: number; q: number; e: number }; cdScale: { c: number; q: number; e: number }; ult: number; ultScale: number; shield: number; shieldMax: number
   }
   input: Input; want: Want
@@ -69,7 +74,7 @@ export type Game = {
   result: { mode: Mode; wave: number; kills: number; seconds: number; won: boolean; phase?: number } | null
   hook: ((g: Game, dt: number) => void) | null; story: StoryState | null
   fogRadius: number; fogTone: 'dark' | 'sand'; lights: { x: number; y: number; r: number }[]; ultLocked: boolean; blocked: boolean; wind: { x: number; y: number }
-  lastCrit: number; blessingEco: boolean; fx: Fx
+  lastCrit: number; blessingEco: boolean; fx: Fx; swingNow: Swing | null; swingSide: number
 }
 
 const dist = (ax: number, ay: number, bx: number, by: number) => Math.hypot(ax - bx, ay - by)
@@ -102,14 +107,14 @@ export function createGame(mode: Mode, armadura: Armadura, rng: Rng = Math.rando
     time: 0, kills: 0, score: 0,
     player: {
       x: start.x, y: start.y, r: tuning.playerRadius, hp: perks.maxHp, maxHp: perks.maxHp, ap: perks.maxAp, maxAp: perks.maxAp, aim: 0, lastMove: 0, fireCd: 0, invuln: 0, flash: 0,
-      speed: tuning.baseSpeed * perks.speed, damage: tuning.baseDamage * perks.damage, dashT: 0, dashDx: 0, dashDy: 0, dashHit: new Set(),
+      speed: tuning.baseSpeed * perks.speed, damage: tuning.baseDamage * perks.damage, dashT: 0, dashDx: 0, dashDy: 0, dashHit: new Set(), walk: 0, stride: 0, facing: -1, atk: 9,
       cd: { c: 0, q: 0, e: 0 }, cdMax: { c: tuning.cdPulse, q: tuning.cdShield * perks.shieldCooldown, e: tuning.cdDash }, cdScale: { c: 1, q: 1, e: 1 }, ult: 0, ultScale: perks.ultCharge, shield: 0, shieldMax: perks.shieldSeconds,
     },
     input: { moveX: 0, moveY: 0, aimX: 1, aimY: 0, fire: false, assist: false }, want: { c: false, q: false, e: false, x: false },
     enemies: [], projectiles: [], particles: [], floats: [], pulse: null, nova: null, fogClear: 0, nextId: 1,
     wave: 0, queue: [], spawnCd: 0, breather: 1.2, offer: [],
     farol: { stage: 'advance', timeLeft: tuning.farol.limit, altar, plant: 0, hp: tuning.farol.beaconHp, defendLeft: tuning.farol.defend, detonation: 0 },
-    result: null, lastCrit: 0, blessingEco: false, fx: { shake: 0, slashes: [], flashes: [] },
+    result: null, lastCrit: 0, blessingEco: false, fx: { shake: 0, slashes: [], flashes: [], pillars: [], corpses: [] }, swingNow: null, swingSide: 1,
     hook: null, story: null, fogRadius: mode === 'farol' ? tuning.farol.vision : 0, fogTone: 'dark', lights: [], ultLocked: false, blocked: false, wind: { x: 0, y: 0 },
   }
   return g
@@ -174,16 +179,76 @@ export function damageEnemy(g: Game, e: Enemy, amount: number, crit = false): bo
   if (e.hp > 0) return false
   if (e.kind === 'clone') { burst(g, e.x, e.y, 10, '#d8b6ff', 200, 0.4); return true }
   g.kills++; g.score += e.kind === 'brutamontes' ? 150 : 25
+  if (!e.boss && g.fx.corpses.length < 8) { const k = Math.sin(e.id * 12.9898) * 43758.5453; g.fx.corpses.push({ x: e.x, y: e.y, r: e.r, kind: e.kind, a: (k - Math.floor(k) - 0.5) * 0.9, flip: Math.floor(k * 7) % 2 === 0, t: 0, max: 6 }) }
   g.fx.shake = Math.max(g.fx.shake, e.boss ? 4 : e.kind === 'brutamontes' ? 3 : 2)
   chargeUlt(g, e.kind === 'brutamontes' ? 25 : 6)
   burst(g, e.x, e.y, e.kind === 'brutamontes' ? 26 : 10, '#ffcf8a', 220, 0.6)
   burst(g, e.x, e.y, e.kind === 'brutamontes' ? 14 : 6, '#ff6a1f', 150, 0.8, 3)
-  if (g.mode === 'vigilia') float(g, e.x, e.y, '+25 PURIFICAÇÃO', '#ffe9c4')
+  // o inimigo se desfaz em cinzas e fogo que sobem (sem sorteio da simulação, para não mexer nas sementes)
+  for (let i = 0; i < 9 && g.particles.length < 250; i++) { const k = Math.sin((e.id + 1) * 12.9898 + i * 78.233) * 43758.5453, j = k - Math.floor(k); g.particles.push({ x: e.x + (j - 0.5) * e.r * 1.6, y: e.y, vx: (j - 0.5) * 40, vy: -300 - j * 220, life: 1.5, max: 1.5, size: 2 + j * 2.4, color: i % 2 ? '#ff8a3d' : '#a69a92' }) }
+  float(g, e.x, e.y + 14, '+100 PURIFICAÇÃO', '#ffe9c4')
   return true
 }
 
 // ---------- habilidades ----------
-function aimVector(g: Game) { return { x: Math.cos(g.player.aim), y: Math.sin(g.player.aim) } }
+// ---------- golpes corpo a corpo ----------
+// O arco do golpe atual (g.swingNow) vale só no passo em que foi dado; inimigos, torres e selos testam contra ele.
+export function inSwing(g: Game, x: number, y: number, radius: number) {
+  const s = g.swingNow
+  if (!s) return false
+  const d = dist(x, y, s.x, s.y)
+  if (d > s.reach + radius) return false
+  if (d <= radius) return true
+  let da = Math.atan2(y - s.y, x - s.x) - s.a
+  while (da > Math.PI) da -= Math.PI * 2
+  while (da < -Math.PI) da += Math.PI * 2
+  return Math.abs(da) <= s.arc + Math.asin(Math.min(1, radius / d))
+}
+
+function swing(g: Game) {
+  const p = g.player, crit = g.rng() < tuning.critChance
+  p.fireCd = 1 / tuning.swingRate; g.swingSide *= -1; p.atk = 0
+  const base = p.damage * tuning.swingMul
+  g.swingNow = { x: p.x, y: p.y, a: p.aim, reach: tuning.swingReach, arc: tuning.swingArc, dmg: base }
+  if (g.fx.slashes.length < 5) g.fx.slashes.push({ x: p.x, y: p.y, a: p.aim, t: 0, max: 0.26, heavy: crit, side: g.swingSide })
+  for (const e of g.enemies) {
+    if (e.hp <= 0 || !isVisible(g, e) || !inSwing(g, e.x, e.y, e.r)) continue
+    const d = Math.max(dist(e.x, e.y, p.x, p.y), 1)
+    if (!e.boss) { e.vx += ((e.x - p.x) / d) * tuning.swingKnock * 2; e.vy += ((e.y - p.y) / d) * tuning.swingKnock * 2; e.lunge = 0 }
+    burst(g, e.x, e.y, 5, '#ffd9a8', 150, 0.28)
+    damageEnemy(g, e, base * (crit ? tuning.critMult : 1), crit)
+  }
+}
+
+// Fim do [E]: meia-lua larga no ponto de chegada, que fere quem o corte da passagem não pegou.
+function dashSweep(g: Game) {
+  const p = g.player, a = Math.atan2(p.dashDy, p.dashDx)
+  p.atk = 0
+  g.fx.slashes.push({ x: p.x, y: p.y, a, t: 0, max: 0.42, heavy: true, big: true, side: g.swingSide })
+  g.fx.shake = Math.max(g.fx.shake, 2.5)
+  const prev = g.swingNow
+  g.swingNow = { x: p.x, y: p.y, a, reach: 140, arc: 1.5, dmg: 0 }
+  for (const e of g.enemies) {
+    if (e.hp <= 0 || p.dashHit.has(e.id) || !inSwing(g, e.x, e.y, e.r)) continue
+    p.dashHit.add(e.id)
+    if (damageEnemy(g, e, tuning.dashDamage * g.perks.damage * 2, true)) { p.cd.e = 0; float(g, p.x, p.y - 30, 'RESET', '#fff0c8') }
+  }
+  g.swingNow = prev
+}
+
+// Estocada de lança do Sombra: acerta à frente dele; o Escudo da Fé bloqueia, repele e solta faíscas roxas.
+function spearThrust(g: Game, e: Enemy, ux: number, uy: number, d: number) {
+  const p = g.player, bx = e.x + ux * 56, by = e.y + uy * 56
+  if (d > tuning.spearReach + p.r + 16) return
+  if (p.shield > 0 && inShieldArc(g, e.x, e.y, tuning.spearReach + 60)) {
+    e.vx -= ux * 320; e.vy -= uy * 320
+    burst(g, bx, by, 12, '#b26bff', 220, 0.45); burst(g, bx, by, 18, '#ffb347', 300, 0.5)
+    chargeUlt(g, 3); g.fx.shake = Math.max(g.fx.shake, 1.5)
+    if (g.fx.flashes.length < 6) g.fx.flashes.push({ x: bx, y: by, a: Math.atan2(-uy, -ux), t: 0, max: 0.3, purple: true })
+    return
+  }
+  hurtPlayer(g, 11); burst(g, bx, by, 6, '#b26bff', 160, 0.3)
+}
 
 function castPulse(g: Game) {
   const p = g.player
@@ -219,6 +284,7 @@ function castNova(g: Game) {
   for (const e of g.enemies) {
     if (dist(e.x, e.y, p.x, p.y) > tuning.novaRadius + e.r) continue
     e.armor = 0; e.revealed = 3
+    if (g.fx.pillars.length < 10) g.fx.pillars.push({ x: e.x, y: e.y, t: -0.08 * g.fx.pillars.length, max: 0.9 })
     if (e.boss?.finisher) { e.boss.minHp = 0; e.hp = Math.min(e.hp, 1) }
     damageEnemy(g, e, tuning.novaDamage * g.perks.damage, false)
   }
@@ -368,22 +434,23 @@ function step(g: Game, dt: number) {
       p.dashHit.add(e.id)
       if (damageEnemy(g, e, tuning.dashDamage * g.perks.damage * 2, true)) { p.cd.e = 0; float(g, p.x, p.y - 30, 'RESET', '#fff0c8') }
     }
+    if (p.dashT <= 0) dashSweep(g)
   } else if (mv > 0.01) {
     const s = p.speed * Math.min(1, mv) / mv
     p.x += g.input.moveX * s * dt; p.y += g.input.moveY * s * dt
   }
   if (g.wind.x || g.wind.y) { p.x += g.wind.x * dt; p.y += g.wind.y * dt }
   pushOut(g, p, p.r)
+  // fase da animação do Portador (só leitura para o desenho)
+  p.walk += ((p.dashT > 0 ? 0 : Math.min(1, mv)) - p.walk) * Math.min(1, dt * 10); p.stride += p.walk * dt * 13; p.atk += dt
+  p.facing += ((Math.cos(p.aim) > 0 ? -1 : 1) - p.facing) * Math.min(1, dt * 16)
 
-  // disparo
+  // golpe de espada: arco curto à frente do Portador (no celular, só golpeia quando há alvo ao alcance)
   p.fireCd -= dt
-  const wantsFire = g.input.assist ? !!target : g.input.fire
-  if (wantsFire && p.fireCd <= 0 && p.dashT <= 0) {
-    p.fireCd = 1 / tuning.fireRate
-    const crit = g.rng() < tuning.critChance, v = aimVector(g)
-    g.projectiles.push({ x: p.x + v.x * 18, y: p.y + v.y * 18, vx: v.x * tuning.beamSpeed, vy: v.y * tuning.beamSpeed, r: 5, dmg: p.damage * (crit ? tuning.critMult : 1), from: 'player', life: tuning.beamRange / tuning.beamSpeed, crit, reflected: false })
-    if (g.fx.slashes.length < 5) g.fx.slashes.push({ x: p.x, y: p.y, a: p.aim, t: 0, max: 0.16, heavy: crit })
-  }
+  g.swingNow = null
+  const inReach = !!target && dist(target.x, target.y, p.x, p.y) < tuning.swingReach + target.r + 40
+  const wantsFire = g.input.assist ? inReach : g.input.fire
+  if (wantsFire && p.fireCd <= 0 && p.dashT <= 0) swing(g)
 
   if (g.mode === 'vigilia') updateWaves(g, dt); else if (g.mode === 'farol') updateFarol(g, dt); else g.hook?.(g, dt)
   if (g.phase !== 'playing') return
@@ -397,6 +464,9 @@ function step(g: Game, dt: number) {
   g.fx.shake = Math.max(0, g.fx.shake - dt * 16)
   for (const s of g.fx.slashes) s.t += dt
   for (const f of g.fx.flashes) f.t += dt
+  for (const q of g.fx.pillars) { if (q.t < 0 && q.t + dt >= 0) g.fx.shake = Math.max(g.fx.shake, 3); q.t += dt }
+  for (const c of g.fx.corpses) c.t += dt
+  g.fx.pillars = g.fx.pillars.filter(q => q.t < q.max); g.fx.corpses = g.fx.corpses.filter(c => c.t < c.max)
   g.fx.slashes = g.fx.slashes.filter(s => s.t < s.max); g.fx.flashes = g.fx.flashes.filter(f => f.t < f.max)
   g.floats = g.floats.filter(f => f.life > 0)
   if (p.hp <= 0) finish(g, false)
@@ -420,6 +490,11 @@ function updateEnemies(g: Game, dt: number) {
       if (e.cd <= 0 && d < 560) { e.cd = 1.8; g.projectiles.push({ x: e.x, y: e.y, vx: (dx / d) * 330, vy: (dy / d) * 330, r: 6, dmg: 10, from: 'enemy', life: 2.4, crit: false, reflected: false }) }
     } else {
       mx = dx / d; my = dy / d
+      if (e.kind === 'sombra' && tgt === p) {
+        const lg = e.lunge ?? 0
+        if (lg > 0) { mx = 0; my = 0; e.lunge = lg - dt; if (e.lunge <= 0) spearThrust(g, e, dx / d, dy / d, d) }
+        else { if (d < 84) { mx = 0; my = 0 } if (d < tuning.spearReach && e.cd <= 0) { e.lunge = tuning.spearWindup; e.cd = 1.9 } }
+      }
       if (e.kind === 'brutamontes' && e.cd <= 0) {
         e.cd = 3.2
         for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2 + e.wob; g.projectiles.push({ x: e.x, y: e.y, vx: Math.cos(a) * 250, vy: Math.sin(a) * 250, r: 6, dmg: 8, from: 'enemy', life: 2.2, crit: false, reflected: false }) }
@@ -457,8 +532,8 @@ function updateProjectiles(g: Game, dt: number) {
     if (b.from === 'enemy') {
       if (p.shield > 0 && inShieldArc(g, b.x, b.y, tuning.shieldRadius + 6) && dist(b.x, b.y, p.x, p.y) > tuning.shieldRadius - 14) {
         b.from = 'player'; b.reflected = true; b.vx *= -1.25; b.vy *= -1.25; b.dmg *= 2.2; b.life = 1.6
-        burst(g, b.x, b.y, 8, '#ffd9a8', 180, 0.35); chargeUlt(g, 3)
-        if (g.fx.flashes.length < 6) g.fx.flashes.push({ x: b.x, y: b.y, a: Math.atan2(b.vy, b.vx), t: 0, max: 0.3 })
+        burst(g, b.x, b.y, 16, '#ffb347', 300, 0.5); burst(g, b.x, b.y, 10, '#b26bff', 220, 0.4); chargeUlt(g, 3)
+        if (g.fx.flashes.length < 6) g.fx.flashes.push({ x: b.x, y: b.y, a: Math.atan2(b.vy, b.vx), t: 0, max: 0.3, purple: true })
         continue
       }
       if (dist(b.x, b.y, p.x, p.y) < b.r + p.r) { hurtPlayer(g, b.dmg); b.life = 0; burst(g, b.x, b.y, 5, '#ff8a5c', 120, 0.3) }

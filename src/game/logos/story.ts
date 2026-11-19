@@ -2,7 +2,7 @@
 // Roda como gancho da simulação (g.hook); o desenho fica em render.ts.
 import type { Armadura } from './rules'
 import type { BossId, PhaseDef } from './campaign'
-import { burst, createGame, damageEnemy, edgePoint, finish, float, hurtPlayer, pushOut, spawnEnemy, type Enemy, type Game, type Rng } from './sim'
+import { burst, createGame, damageEnemy, edgePoint, finish, float, hurtPlayer, inSwing, pushOut, spawnEnemy, type Enemy, type Game, type Rng } from './sim'
 
 export type Tower = { x: number; y: number; hp: number; maxHp: number; cd: number; down: boolean }
 export type Seal = { x: number; y: number; hp: number; maxHp: number; broken: boolean }
@@ -192,10 +192,15 @@ function update(g: Game, dt: number) {
   const hit = (list: { x: number; y: number; hp: number; down?: boolean; broken?: boolean }[], radius: number, onBreak: (t: { x: number; y: number }) => void) => {
     for (const t of list) {
       if (t.down || t.broken) continue
+      const strike = (amount: number, x: number, y: number) => {
+        t.hp -= amount; burst(g, x, y, 4, '#ffd9a8', 140, 0.25)
+        if (t.hp <= 0 && !t.down && !t.broken) { if ('down' in t) t.down = true; else t.broken = true; burst(g, t.x, t.y, 30, '#ffcf8a', 280, 0.7); onBreak(t) }
+      }
+      // golpe de espada
+      if (g.swingNow && inSwing(g, t.x, t.y, radius)) strike(g.swingNow.dmg, t.x, t.y)
       for (const b of g.projectiles) {
         if (b.from !== 'player' || b.life <= 0 || dist(b.x, b.y, t.x, t.y) > radius + b.r) continue
-        t.hp -= b.dmg; b.life = 0; burst(g, b.x, b.y, 4, '#ffd9a8', 140, 0.25)
-        if (t.hp <= 0) { if ('down' in t) t.down = true; else t.broken = true; burst(g, t.x, t.y, 30, '#ffcf8a', 280, 0.7); onBreak(t) }
+        b.life = 0; strike(b.dmg, b.x, b.y)
       }
     }
   }

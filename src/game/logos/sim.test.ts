@@ -36,20 +36,32 @@ describe('LOGOS: movimento e disparo', () => {
     g.input.moveX = 1; g.breather = 999; run(g, 10)
     expect(g.player.x).toBeLessThanOrEqual(g.w - g.player.r + 0.001)
   })
-  it('o clique dispara um feixe que fere o inimigo', () => {
+  it('o clique golpeia com a espada: fere quem está à frente, ao alcance, e ignora quem está atrás ou longe', () => {
     const g = newGame(); calm(g)
-    const e = add(g, 'sombra', g.player.x + 220, g.player.y)
-    e.speed = 0
+    const front = add(g, 'sombra', g.player.x + 90, g.player.y), behind = add(g, 'sombra', g.player.x - 90, g.player.y), far = add(g, 'sombra', g.player.x + 260, g.player.y)
+    for (const e of [front, behind, far]) e.speed = 0
     g.input.fire = true; g.input.aimX = 1; g.input.aimY = 0
-    run(g, 0.5)
-    expect(e.hp).toBeLessThan(e.maxHp)
+    run(g, 0.2)
+    expect(front.hp).toBeLessThan(front.maxHp)
+    expect(behind.hp).toBe(behind.maxHp); expect(far.hp).toBe(far.maxHp)
+  })
+  it('o golpe alterna o lado, deixa um arco de corte e abate deixa um corpo em brasa', () => {
+    const g = newGame(); calm(g)
+    const e = add(g, 'sombra', g.player.x + 80, g.player.y); e.speed = 0; e.hp = 5
+    g.input.fire = true; g.input.aimX = 1; g.input.aimY = 0
+    run(g, 0.1)
+    expect(g.fx.slashes.length).toBeGreaterThan(0)
+    expect(g.enemies.includes(e)).toBe(false); expect(g.fx.corpses).toHaveLength(1); expect(g.fx.corpses[0].kind).toBe('sombra')
+    const side = g.swingSide; g.player.fireCd = 0; run(g, 0.05); expect(g.swingSide).toBe(-side)
+    run(g, 7); expect(g.fx.corpses).toHaveLength(0)
   })
   it('no celular a mira é assistida: acerta o inimigo mais próximo sem apontar', () => {
     const g = newGame(); calm(g)
-    const e = add(g, 'sombra', g.player.x, g.player.y - 240); e.speed = 0
+    const e = add(g, 'sombra', g.player.x, g.player.y - 110); e.speed = 0; e.hp = e.maxHp = 300
+    const out = add(g, 'sombra', g.player.x + 600, g.player.y); out.speed = 0
     g.input.assist = true; g.input.fire = false
     run(g, 0.6)
-    expect(e.hp).toBeLessThan(e.maxHp)
+    expect(e.hp).toBeLessThan(e.maxHp); expect(out.hp).toBe(out.maxHp)
     expect(g.player.aim).toBeCloseTo(-Math.PI / 2, 1)
   })
   it('inimigo oculto só é alvo depois do Pulso ou de chegar perto', () => {
@@ -111,6 +123,33 @@ describe('LOGOS: habilidades', () => {
     expect(g.player.x - x0).toBeGreaterThan(250)
     expect(g.enemies.includes(weak)).toBe(false); expect(g.kills).toBe(1)
     expect(g.player.cd.e).toBe(0)
+  })
+  it('[E] termina com uma meia-lua que fere quem ficou no ponto de chegada', () => {
+    const g = newGame(); calm(g)
+    g.input.aimX = 1; g.input.aimY = 0
+    const end = add(g, 'brutamontes', g.player.x + 340, g.player.y); end.speed = 0
+    g.want.e = true; run(g, 0.3)
+    expect(g.fx.slashes.some(s => s.big)).toBe(true); expect(end.hp).toBeLessThan(end.maxHp)
+  })
+  it('o Sombra avisa a estocada de lança antes de ferir, e o Escudo da Fé a bloqueia', () => {
+    const open = newGame(); calm(open)
+    const a = add(open, 'sombra', open.player.x + 70, open.player.y); a.speed = 0; a.cd = 0
+    open.input.aimX = -1; open.input.aimY = 0
+    run(open, 0.2)
+    expect(a.lunge ?? 0).toBeGreaterThan(0); expect(open.player.ap).toBe(open.player.maxAp)
+    run(open, 0.5)
+    expect(open.player.ap).toBeLessThan(open.player.maxAp)
+    const g = newGame(); calm(g)
+    const b = add(g, 'sombra', g.player.x + 70, g.player.y); b.speed = 0; b.cd = 0
+    g.input.aimX = 1; g.input.aimY = 0; g.want.q = true
+    run(g, 0.9)
+    expect(g.player.ap).toBe(g.player.maxAp); expect(g.player.ult).toBeGreaterThan(2)
+  })
+  it('[X] faz uma coluna de luz cair sobre cada inimigo atingido', () => {
+    const g = newGame(); calm(g)
+    for (let i = 0; i < 3; i++) add(g, 'sombra', g.player.x + 100 + i * 60, g.player.y).speed = 0
+    g.player.ult = 100; g.want.x = true; run(g, 0.05)
+    expect(g.fx.pillars).toHaveLength(3)
   })
   it('[E] Dash que não abate mantém a recarga', () => {
     const g = newGame(); calm(g)

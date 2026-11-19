@@ -5,7 +5,7 @@ import type { PhaseDef } from './campaign'
 import { createStoryGame } from './story'
 import { StoryResult } from './StoryResult'
 import { applyBlessing, blessings, createGame, forfeit, hudSnapshot, queueAbility, update, type BlessingId, type Hud, type Phase } from './sim'
-import { makeView, render, renderMinimap, type View } from './render'
+import { makeView, render, renderMinimap, warmArena, type View } from './render'
 import { Art3D } from './Art3D'
 import { bindDesktop, bindJoystick, type Joystick } from './input'
 
@@ -36,7 +36,7 @@ function paintHud(els: Map<string, HTMLElement>, h: Hud) {
   for (const k of ['c', 'q', 'e'] as const) {
     const left = h.cd[k], el = els.get(`skill-${k}`)
     if (el) { el.style.setProperty('--cd', String(Math.min(1, left / h.cdMax[k]))); el.dataset.ready = left <= 0 ? 'true' : 'false'; if (k === 'q') el.dataset.active = h.shield > 0 ? 'true' : 'false' }
-    set(`cd-${k}`, left > 0 ? String(Math.ceil(left)) : k === 'e' ? 'PRONTO' : '')
+    set(`cd-${k}`, left > 0 ? String(Math.ceil(left)) : 'PRONTO')
   }
   const x = els.get('skill-x'); if (x) { x.style.setProperty('--cd', String(1 - h.ult / 100)); x.dataset.ready = h.ult >= 100 ? 'true' : 'false' }
   set('cd-x', `${h.ult}%`)
@@ -85,7 +85,7 @@ export function LogosGame({ mode, armadura, repo, touch, onExit, onSaved, onAgai
       const w = Math.max(1, Math.round((box?.width ?? 800) * dpr)), h = Math.max(1, Math.round((box?.height ?? 450) * dpr))
       canvas.width = fogLayer.width = w; canvas.height = fogLayer.height = h
     }
-    resize()
+    resize(); warmArena()
     const observer = typeof ResizeObserver === 'function' && canvas.parentElement ? new ResizeObserver(resize) : null
     if (observer && canvas.parentElement) observer.observe(canvas.parentElement)
     window.addEventListener('resize', resize)
@@ -162,7 +162,8 @@ export function LogosGame({ mode, armadura, repo, touch, onExit, onSaved, onAgai
       <span className="lg-portrait" aria-hidden="true" />
       <div><b>Portador da Luz</b>
         <div className="lg-row"><i className="lg-bar lg-hp" data-k="hp-bar" /><span data-k="hp">HP: 100</span></div>
-        <div className="lg-row"><i className="lg-bar lg-ap" data-k="ap-bar" /><span data-k="ap">AP: 20</span></div></div>
+        <div className="lg-row"><i className="lg-bar lg-ap" data-k="ap-bar" /><span data-k="ap">AP: 20</span></div>
+        <small className="lg-weapon">ESPADA DO ESPÍRITO</small></div>
     </div>
     <div className="lg-skills" role="group" aria-label="Habilidades">
       {skills.map(s => <button type="button" key={s.key} className="lg-skill" data-skill={s.key} data-k={`skill-${s.key}`} data-ready="true" aria-label={`${s.name} (${s.label})`} onPointerDown={e => { e.preventDefault(); press(s.key) }} onClick={e => { if (e.detail === 0) press(s.key) }}>
