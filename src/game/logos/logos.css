@@ -331,3 +331,13 @@
 .lg-minimap small { color: rgba(255, 200, 150, .75); font-weight: 700; }
 .lg-game[data-touch='true'] .lg-weapon, .lg-game[data-touch='true'] .lg-vitals::before { display: none; }
 .lg-game[data-touch='true'] .lg-top { padding: 4px 10px 5px; }
+
+/* ---- Correções finais: mapa cabe na tela sem rolar; HUD superior maior e nítido ---- */
+.lg-campaign { width: min(100%, calc((100vh - 150px) * 16 / 9)); margin-inline: auto; }
+.lg-map, .lg-map[data-art='true'] { max-height: calc(100vh - 150px); min-height: 0; aspect-ratio: 16 / 9; }
+@media (max-width: 900px) { .lg-campaign { width: 100%; } .lg-map, .lg-map[data-art='true'] { max-height: none; } }
+.lg-top { min-width: min(860px, 88vw); padding: 12px 44px 14px; gap: 24px; }
+.lg-top-side { font-size: 15px; letter-spacing: .1em; padding: 6px 10px; font-weight: 800; }
+.lg-top-center { padding: 0 24px; }
+.lg-top-center strong { font-size: 36px; line-height: 1.1; }
+.lg-top-center span { font-size: 14px; margin-top: 2px; font-weight: 700; }

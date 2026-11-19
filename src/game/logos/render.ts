@@ -38,7 +38,13 @@ export function arenaArt(name: string): HTMLImageElement | null {
 // Recorte dos sprites 3D num canvas fora da tela, feito uma única vez quando a imagem carrega (nada disso roda no loop de 60 fps):
 // o fundo escuro ligado às bordas some (preenchimento a partir da borda, então a armadura escura por dentro é preservada) e, se pedido, corta a base e esmaece o pé.
 export type Sprite = { src: CanvasImageSource; w: number; h: number }
-type SpriteOpts = { key?: boolean; crop?: number; max?: number }
+type SpriteOpts = { key?: boolean; crop?: number; max?: number; gain?: number; contrast?: number }
+const ENEMY_OPTS: SpriteOpts = { key: true, gain: 1.35 }
+const PLAYER_OPTS: SpriteOpts = { crop: 0.8, max: 420, gain: 1.25, contrast: 1.08 }
+// brilho e contraste aplicados uma única vez no recorte (nada disso roda no loop)
+function lift(d: Uint8ClampedArray, gain: number, contrast: number) {
+  for (let i = 0; i < d.length; i += 4) { if (!d[i + 3]) continue; for (let c = 0; c < 3; c++) d[i + c] = Math.max(0, Math.min(255, ((d[i + c] / 255 - 0.5) * contrast + 0.5) * 255 * gain)) }
+}
 const spriteCache = new Map<string, Sprite | null>()
 
 function floodKey(d: Uint8ClampedArray, w: number, h: number, thr = 46) {
@@ -83,6 +89,7 @@ export function arenaSprite(name: string, opts: SpriteOpts = {}): Sprite | null 
       const data = c.getImageData(0, 0, w, h)
       if (opts.key) floodKey(data.data, w, h)
       if (crop < 1) fadeBottom(data.data, w, h, 0.08)
+      if (opts.gain) lift(data.data, opts.gain, opts.contrast ?? 1)
       c.putImageData(data, 0, 0); out = { src: cv, w, h }
     }
   } catch { out = null }
@@ -177,27 +184,47 @@ function brazierLights(ctx: CanvasRenderingContext2D, g: Game, v: View) {
   })
   ctx.restore()
 }
+// Pira de pedra: base e coluna de pedra escura com juntas, tigela de metal com aro, núcleo de brasa incandescente (#FF5500 -> #FFF2CC), halo suave no piso, chamas e faíscas subindo.
 function brazierBodies(ctx: CanvasRenderingContext2D, g: Game, v: View) {
   const t = g.time
   brazierSpots(g).forEach(([x, y], i) => {
     if (x < v.camX - 80 || x > v.camX + v.w / v.scale + 80 || y < v.camY - 80 || y > v.camY + v.h / (v.scale * TILT) + 200) return
-    ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.beginPath(); ctx.ellipse(x + 4, y + 4, 22, 9, 0, 0, 7); ctx.fill()
+    const fl = 0.85 + 0.15 * Math.sin(t * 9 + i * 1.7) + 0.06 * Math.sin(t * 23 + i)
+    ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.beginPath(); ctx.ellipse(x + 5, y + 5, 32, 13, 0, 0, 7); ctx.fill()
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'
+    const halo = ctx.createRadialGradient(x, y + 4, 4, x, y + 4, 120); halo.addColorStop(0, `rgba(255,130,45,${0.3 * fl})`); halo.addColorStop(1, 'rgba(255,85,0,0)')
+    ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(x, y + 4, 120, 0, 7); ctx.fill(); ctx.restore()
     stand(ctx, x, y, () => {
-      ctx.scale(1.35, 1.35)
-      ctx.strokeStyle = '#2b2d35'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(-12, 0); ctx.lineTo(-8, -20); ctx.moveTo(12, 0); ctx.lineTo(8, -20); ctx.stroke()
-      const bowl = ctx.createLinearGradient(0, -30, 0, -16); bowl.addColorStop(0, '#4a3a2e'); bowl.addColorStop(1, '#1d1a1a')
-      ctx.fillStyle = bowl; ctx.beginPath(); ctx.moveTo(-18, -30); ctx.lineTo(18, -30); ctx.lineTo(10, -16); ctx.lineTo(-10, -16); ctx.closePath(); ctx.fill()
-      ctx.strokeStyle = 'rgba(255,140,60,.55)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-18, -30); ctx.lineTo(18, -30); ctx.stroke()
+      ctx.scale(1.5, 1.5)
+      // base de pedra
+      const base = ctx.createLinearGradient(0, -10, 0, 0); base.addColorStop(0, '#3a3c46'); base.addColorStop(1, '#17181d')
+      ctx.fillStyle = base; ctx.beginPath(); ctx.moveTo(-19, 0); ctx.lineTo(19, 0); ctx.lineTo(14, -10); ctx.lineTo(-14, -10); ctx.closePath(); ctx.fill()
+      ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.lineWidth = 1.2; ctx.stroke()
+      // coluna com juntas
+      const col = ctx.createLinearGradient(-9, 0, 9, 0); col.addColorStop(0, '#16171c'); col.addColorStop(0.45, '#3d3f4a'); col.addColorStop(1, '#17181d')
+      ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(-9, -10); ctx.lineTo(9, -10); ctx.lineTo(7, -25); ctx.lineTo(-7, -25); ctx.closePath(); ctx.fill()
+      ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.beginPath(); ctx.moveTo(-8.5, -16); ctx.lineTo(8.5, -16); ctx.moveTo(-7.6, -21); ctx.lineTo(7.6, -21); ctx.moveTo(-1, -10); ctx.lineTo(-1.5, -16); ctx.moveTo(2, -16); ctx.lineTo(2.4, -21); ctx.stroke()
+      // luz da brasa tingindo a pedra
+      ctx.fillStyle = `rgba(255,110,30,${0.12 * fl})`; ctx.fillRect(-9, -25, 18, 15)
+      // tigela de metal
+      const bowl = ctx.createLinearGradient(0, -36, 0, -23); bowl.addColorStop(0, '#8a7458'); bowl.addColorStop(0.5, '#4a3b2e'); bowl.addColorStop(1, '#1d1612')
+      ctx.fillStyle = bowl; ctx.beginPath(); ctx.moveTo(-21, -35); ctx.lineTo(21, -35); ctx.lineTo(13, -23); ctx.lineTo(-13, -23); ctx.closePath(); ctx.fill()
+      ctx.strokeStyle = 'rgba(255,170,90,.35)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(-17, -31); ctx.lineTo(17, -31); ctx.stroke()
+      ctx.fillStyle = '#120c08'; ctx.beginPath(); ctx.ellipse(0, -35, 21, 5, 0, 0, 7); ctx.fill()
+      ctx.strokeStyle = '#b8935c'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(0, -35, 21, 5, 0, 0, 7); ctx.stroke()
+      // núcleo de brasa
+      const core = ctx.createRadialGradient(0, -35.5, 1, 0, -35.5, 16); core.addColorStop(0, '#FFF2CC'); core.addColorStop(0.35, '#FFAA44'); core.addColorStop(0.7, '#FF5500'); core.addColorStop(1, 'rgba(120,28,0,0)')
+      ctx.fillStyle = core; ctx.globalAlpha = 0.85 + 0.15 * fl; ctx.beginPath(); ctx.ellipse(0, -35.5, 16, 3.6, 0, 0, 7); ctx.fill(); ctx.globalAlpha = 1
       ctx.save(); ctx.globalCompositeOperation = 'lighter'
       for (let k = 0; k < 3; k++) {
         const ph = t * 7 + i * 2 + k * 2.1, hgt = 24 + 9 * Math.sin(ph), w = 10 - k * 2.5, sway = Math.sin(ph * 0.7) * 3
-        const fg = ctx.createLinearGradient(0, -30, 0, -30 - hgt); fg.addColorStop(0, 'rgba(255,90,10,.95)'); fg.addColorStop(0.6, 'rgba(255,170,60,.8)'); fg.addColorStop(1, 'rgba(255,230,160,0)')
-        ctx.fillStyle = fg; ctx.beginPath(); ctx.moveTo(-w, -30); ctx.quadraticCurveTo(-w * 0.3, -30 - hgt * 0.6, sway, -30 - hgt); ctx.quadraticCurveTo(w * 0.3, -30 - hgt * 0.5, w, -30); ctx.closePath(); ctx.fill()
+        const fg = ctx.createLinearGradient(0, -36, 0, -36 - hgt); fg.addColorStop(0, 'rgba(255,90,10,.95)'); fg.addColorStop(0.6, 'rgba(255,170,60,.8)'); fg.addColorStop(1, 'rgba(255,230,160,0)')
+        ctx.fillStyle = fg; ctx.beginPath(); ctx.moveTo(-w, -36); ctx.quadraticCurveTo(-w * 0.3, -36 - hgt * 0.6, sway, -36 - hgt); ctx.quadraticCurveTo(w * 0.3, -36 - hgt * 0.5, w, -36); ctx.closePath(); ctx.fill()
       }
       // fagulhas subindo sem parar
-      for (let k = 0; k < 6; k++) {
-        const ph = (t * 0.55 + k / 6 + i * 0.13) % 1, sx = Math.sin((ph + k) * 6.3) * 12 * ph
-        ctx.fillStyle = `rgba(255,${150 + k * 12},60,${1 - ph})`; ctx.beginPath(); ctx.arc(sx, -34 - ph * 110, 2.1 * (1 - ph) + 0.5, 0, 7); ctx.fill()
+      for (let k = 0; k < 7; k++) {
+        const ph = (t * 0.55 + k / 7 + i * 0.13) % 1, sx = Math.sin((ph + k) * 6.3) * 12 * ph
+        ctx.fillStyle = `rgba(255,${150 + k * 12},60,${1 - ph})`; ctx.beginPath(); ctx.arc(sx, -40 - ph * 120, 2.1 * (1 - ph) + 0.5, 0, 7); ctx.fill()
       }
       ctx.restore()
     })
@@ -313,11 +340,11 @@ const stand = (ctx: CanvasRenderingContext2D, x: number, y: number, fn: () => vo
 function enemySprite(e: Pick<Enemy, 'kind' | 'boss'>): Sprite | null {
   if (e.boss) {
     const n = e.boss.id === 'dragao' ? 'boss-dragao' : e.boss.id === 'acusador' ? 'inimigo-acusador' : e.boss.id === 'sentinela' ? 'inimigo-sentinela' : null
-    return n ? arenaSprite(n, { key: true }) : null
+    return n ? arenaSprite(n, ENEMY_OPTS) : null
   }
-  if (e.kind === 'dardo') return arenaSprite('inimigo-sentinela', { key: true })
-  if (e.kind === 'brutamontes') return arenaSprite('inimigo-acusador', { key: true })
-  if (e.kind === 'sombra' || e.kind === 'fantasma' || e.kind === 'clone') return arenaSprite('inimigo-sombra', { key: true })
+  if (e.kind === 'dardo') return arenaSprite('inimigo-sentinela', ENEMY_OPTS)
+  if (e.kind === 'brutamontes') return arenaSprite('inimigo-acusador', ENEMY_OPTS)
+  if (e.kind === 'sombra' || e.kind === 'fantasma' || e.kind === 'clone') return arenaSprite('inimigo-sombra', ENEMY_OPTS)
   return null
 }
 
@@ -330,7 +357,8 @@ function enemy(ctx: CanvasRenderingContext2D, g: Game, e: Enemy) {
   const outlined = e.revealed > 0 && g.fogClear > 0
   ctx.save(); ctx.globalAlpha = alpha
   // sombra de contato no piso (no plano do chão, já achatada pela projeção)
-  ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.beginPath(); ctx.ellipse(e.x + 2, e.y + e.r * 0.5, e.r * 1.3, e.r * 0.66, 0, 0, 7); ctx.fill()
+  { const au = ctx.createRadialGradient(e.x, e.y - e.r * 0.05, e.r * 0.4, e.x, e.y - e.r * 0.05, e.r * 2.6); au.addColorStop(0, 'rgba(210,60,125,.35)'); au.addColorStop(1, 'rgba(210,60,125,0)'); ctx.fillStyle = au; ctx.beginPath(); ctx.ellipse(e.x, e.y - e.r * 0.05, e.r * 2.6, e.r * 1.6, 0, 0, 7); ctx.fill() }
+  ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.beginPath(); ctx.ellipse(e.x + 2, e.y - e.r * 0.05, e.r * 1.3, e.r * 0.66, 0, 0, 7); ctx.fill()
   if (outlined) { ctx.strokeStyle = `rgba(255,110,30,${0.75 * Math.min(1, g.fogClear)})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(e.x, e.y + e.r * 0.5, e.r * 1.7, e.r * 0.95, 0, 0, 7); ctx.stroke() }
   if ((e.lunge ?? 0) > 0) { const k = 1 - (e.lunge as number) / tuning.spearWindup, L = tuning.spearReach * (0.45 + 0.55 * k); ctx.save(); ctx.lineCap = 'round'; ctx.strokeStyle = `rgba(190,120,255,${0.3 + 0.55 * k})`; ctx.lineWidth = 3 + 4 * k; ctx.shadowColor = '#9a4dff'; ctx.shadowBlur = 14; ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(e.x + Math.cos(toward) * L, e.y + Math.sin(toward) * L); ctx.stroke(); ctx.restore() }
   if (e.boss?.dash && (e.boss.state === 'aim' || e.boss.state === 'strike') && e.boss.t < 0.85) { ctx.strokeStyle = 'rgba(255,70,50,.55)'; ctx.lineWidth = 6; ctx.setLineDash([14, 10]); ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(e.x + e.boss.dash.dx * 520, e.y + e.boss.dash.dy * 520); ctx.stroke(); ctx.setLineDash([]) }
@@ -343,7 +371,7 @@ function enemy(ctx: CanvasRenderingContext2D, g: Game, e: Enemy) {
       ctx.save(); ctx.translate(0, wob * 0.4)
       if (e.kind === 'dardo' || e.boss?.id === 'sentinela') { if (g.player.x < e.x) ctx.scale(-1, 1) }
       const rim = rimOf(sprite)
-      if (rim) { const kk = ww / sprite.w; ctx.save(); ctx.globalAlpha = alpha * 0.9; ctx.drawImage(rim.cv, -ww / 2 - rim.pad * kk, -hh - rim.pad * kk, rim.cv.width * kk, rim.cv.height * kk); ctx.restore() }
+      if (rim) { const kk = ww / sprite.w; ctx.save(); ctx.globalAlpha = alpha * 0.9; ctx.drawImage(rim.cv, -ww / 2 - rim.pad * kk, -hh - rim.pad * kk, rim.cv.width * kk, rim.cv.height * kk); ctx.drawImage(rim.cv, -ww / 2 - rim.pad * kk, -hh - rim.pad * kk, rim.cv.width * kk, rim.cv.height * kk); ctx.restore() }
       if (outlined) { ctx.shadowColor = '#ff7a2e'; ctx.shadowBlur = 16 }
       ctx.drawImage(sprite.src, -ww / 2, -hh, ww, hh)
       if (e.hit > 0) { ctx.shadowBlur = 0; ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = alpha * 0.55; ctx.drawImage(sprite.src, -ww / 2, -hh, ww, hh) }
@@ -370,7 +398,7 @@ function enemy(ctx: CanvasRenderingContext2D, g: Game, e: Enemy) {
 // Portador em pé (render recortado, sem o pedestal), com aura brasa e sombra no chão. A espada do render fica à esquerda: espelha quando a mira aponta para a direita.
 function player(ctx: CanvasRenderingContext2D, g: Game) {
   const p = g.player, r = p.r
-  const sprite = arenaSprite('portador-luz', { crop: 0.8, max: 420 })
+  const sprite = arenaSprite('portador-luz', PLAYER_OPTS)
   const pulse = 1 + Math.sin(g.time * 4) * 0.08, aura = r * 4 * pulse
   const flip = Math.cos(p.aim) > 0
   const dir = { x: Math.cos(p.aim), y: Math.sin(p.aim) * TILT }, dl = Math.hypot(dir.x, dir.y) || 1
@@ -405,7 +433,7 @@ function player(ctx: CanvasRenderingContext2D, g: Game) {
       const w = p.walk, st = p.stride, t = g.time, mvx = Math.cos(p.lastMove), aimx = Math.cos(p.aim)
       const atk = p.atk < 0.28 ? Math.sin((p.atk / 0.28) * Math.PI) : 0, dashing = p.dashT > 0
       const bob = -Math.abs(Math.sin(st)) * 6 * w + Math.sin(t * 2.1) * 1.1 * (1 - w)
-      const lean = mvx * 0.1 * w + Math.sin(st) * 0.035 * w + aimx * (atk * 0.16 + (dashing ? 0.28 : 0)) - (p.flash > 0 ? aimx * 0.12 : 0)
+      const lean = mvx * 0.1 * w + Math.sin(st) * 0.035 * w + aimx * (atk * 0.2 + (dashing ? 0.28 : 0)) - (p.flash > 0 ? aimx * 0.12 : 0)
       const sy = 1 + Math.sin(st * 2) * 0.022 * w + Math.sin(t * 2.1) * 0.008 * (1 - w) - atk * 0.04
       const sx = p.facing * (1 + atk * 0.05 + (dashing ? 0.12 : 0))
       const ww = hh * sprite.w / sprite.h, N = 10, legs = 0.3, body = hh * (1 - legs), srcBody = sprite.h * (1 - legs), srcStrip = srcBody / N
@@ -425,7 +453,7 @@ function player(ctx: CanvasRenderingContext2D, g: Game) {
           ctx.restore()
         }
       }
-      ctx.save(); ctx.translate(Math.cos(p.aim) * (atk * 12 + (dashing ? 8 : 0)), bob); ctx.rotate(lean)
+      ctx.save(); ctx.translate(Math.cos(p.aim) * (atk * 12 + (dashing ? 8 : 0)), bob + Math.sin(p.aim) * atk * 7); ctx.rotate(lean)
       drawAll()
       if (p.flash > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.5; drawAll() }
       ctx.restore()
@@ -595,6 +623,9 @@ function vfx(ctx: CanvasRenderingContext2D, g: Game) {
       ctx.fillStyle = col; ctx.shadowColor = '#FF5500'; ctx.shadowBlur = blur
       ctx.beginPath(); ctx.arc(0, 0, r0, tail, head); ctx.arc(-r0 * 0.14 * (inner / 0.7), 0, r0 * inner, head, tail, true); ctx.closePath(); ctx.fill()
     }
+    // feixe luminoso da lâmina, do corpo até a ponta do arco, sincronizado com o corte
+    { const bl = ctx.createLinearGradient(0, 0, Math.cos(head) * r0, Math.sin(head) * r0); bl.addColorStop(0, 'rgba(255,85,0,0)'); bl.addColorStop(0.55, '#FF5500'); bl.addColorStop(1, '#FFF3D1')
+      ctx.strokeStyle = bl; ctx.lineCap = 'round'; ctx.shadowColor = '#FF5500'; ctx.shadowBlur = 16; ctx.lineWidth = 6 * (1 - k * 0.5); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(head) * r0, Math.sin(head) * r0); ctx.stroke() }
     ctx.shadowBlur = 0
     // fumaça na ponta do corte (tom escuro, fora do modo aditivo)
     ctx.globalCompositeOperation = 'source-over'
@@ -656,8 +687,9 @@ function floatTexts(ctx: CanvasRenderingContext2D, g: Game) {
   for (const f of g.floats) {
     const crit = f.text.includes('CRÍTICO'), age = 0.9 - f.life, pop = Math.max(0.15, 1 - Math.exp(-age * 11) * Math.cos(age * 30))
     stand(ctx, f.x, f.y, () => {
-      ctx.globalAlpha = Math.min(1, f.life * 2.2); ctx.font = `800 ${Math.round((crit ? 19 : 14) * pop)}px "Plus Jakarta Sans", Inter, sans-serif`
-      ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(8,6,10,.85)'; ctx.strokeText(f.text, 0, 0)
+      if (pop < 0.3) return
+      ctx.translate(0, crit ? -104 : -94); ctx.globalAlpha = Math.min(1, f.life * 2.2); ctx.font = `800 ${Math.round((crit ? 19 : 14) * pop)}px "Plus Jakarta Sans", Inter, sans-serif`
+      ctx.lineWidth = 4 * Math.min(1, pop); ctx.strokeStyle = 'rgba(8,6,10,.85)'; ctx.strokeText(f.text, 0, 0)
       ctx.fillStyle = f.color; ctx.fillText(f.text, 0, 0)
     })
   }
@@ -737,8 +769,8 @@ function lightPillars(ctx: CanvasRenderingContext2D, g: Game) {
 // para o primeiro inimigo ou abate não custar um quadro perdido.
 export function warmArena() {
   const jobs: (() => boolean)[] = []
-  for (const n of ['inimigo-sombra', 'inimigo-sentinela', 'inimigo-acusador', 'boss-dragao']) jobs.push(() => { const sp = arenaSprite(n, { key: true }); if (!sp) return false; rimOf(sp); emberOf(sp); return true })
-  jobs.push(() => !!arenaSprite('portador-luz', { crop: 0.8, max: 420 }))
+  for (const n of ['inimigo-sombra', 'inimigo-sentinela', 'inimigo-acusador', 'boss-dragao']) jobs.push(() => { const sp = arenaSprite(n, ENEMY_OPTS); if (!sp) return false; rimOf(sp); emberOf(sp); return true })
+  jobs.push(() => !!arenaSprite('portador-luz', PLAYER_OPTS))
   let i = 0, tries = 0
   const tick = () => { if (i >= jobs.length || tries++ > 80) return; if (jobs[i]()) i++; setTimeout(tick, 50) }
   setTimeout(tick, 0)

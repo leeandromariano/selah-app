@@ -1,4 +1,9 @@
 import { useState } from 'react'
+
+// A pintura é carregada uma vez e lembrada fora do componente: ao voltar da partida (ou trocar de fase) o mapa já nasce pintado, sem piscar.
+const MAP_SRC = '/assets/3d/logos/mapa-campanha.webp'
+let mapArt: boolean | undefined
+if (typeof Image !== 'undefined') { const probe = new Image(); probe.onload = () => { mapArt = true }; probe.onerror = () => { mapArt = false }; probe.src = MAP_SRC }
 import { BibleReference } from '../../components/BibleReference'
 import { acts, isBossPhase, isUnlocked, nextPhase, phases, rewardFor, type PhaseDef } from './campaign'
 import type { Fragment } from './repository'
@@ -36,14 +41,14 @@ function RegionMap({ art }: { art: boolean }) {
 
 // Pintura atmosférica do mapa (public/assets/3d/logos/mapa-campanha.webp). Só aparece quando o arquivo existe e carrega; sem ele, vale o desenho em SVG.
 function MapBackdrop({ onReady }: { onReady: (ready: boolean) => void }) {
-  return <img className="lg-map-bg" src="/assets/3d/logos/mapa-campanha.webp" alt="" aria-hidden="true" draggable={false} decoding="async" onLoad={() => onReady(true)} onError={() => onReady(false)} />
+  return <img className="lg-map-bg" src={MAP_SRC} alt="" aria-hidden="true" draggable={false} decoding="async" onLoad={() => { mapArt = true; onReady(true) }} onError={() => { mapArt = false; onReady(false) }} />
 }
 
 export function Campaign({ fragments, onPlay }: { fragments: Fragment[]; onPlay: (phase: PhaseDef) => void }) {
   const cleared = fragments.map(f => f.phase)
   const suggested = nextPhase(cleared) ?? phases[phases.length - 1]
   const [selectedId, setSelected] = useState(suggested.id)
-  const [art, setArt] = useState(false)
+  const [art, setArt] = useState(mapArt === true)
   const lay = art ? layouts.art : layouts.svg, pts = lay.pts
   const phase = phases.find(p => p.id === selectedId) ?? suggested
   const act = acts[phase.act - 1]
