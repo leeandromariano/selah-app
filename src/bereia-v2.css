@@ -34,3 +34,6 @@
 .logos-hero-text strong { font-size: clamp(24px, 4vw, 38px); letter-spacing: -.01em; } .logos-hero-text span { color: #c9bcae; font-size: 14px; line-height: 1.5; }
 .logos-hero-go { flex: none; border: 1px solid #ff9a52; border-radius: 12px; padding: 12px 18px; background: linear-gradient(180deg, #ff8a3d, #d3541a); font-weight: 800; }
 @media (max-width: 600px) { .logos-hero { flex-direction: column; align-items: flex-start; } }
+
+.logos-hero-soon { cursor: default; border-color: rgba(255, 122, 46, .25); filter: saturate(.7); box-shadow: none; } .logos-hero-soon .logos-hero-go { background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .18); color: #c9bcae; }
+.logos-soon { display: grid; gap: 6px; max-width: 520px; margin: 40px auto; }

@@ -18,10 +18,17 @@ grant execute on function pg_temp.denied(text, text) to authenticated;
 
 insert into auth.users(id, email, email_confirmed_at, raw_user_meta_data)
 select gen_random_uuid(), 'logos-' || r || '@example.invalid', clock_timestamp(), jsonb_build_object('username', 'logos_' || r, 'whatsapp', '+5511999990000')
-from unnest(array['ana', 'beto']) r;
+from unnest(array['ana', 'beto', 'cris']) r;
 insert into logos_fixture select substr(split_part(email, '@', 1), 7), id from auth.users where email like 'logos-%@example.invalid';
 
 create function pg_temp.as_user(who text) returns void language plpgsql as $$begin
+  reset role;
+  delete from private.app_owner; insert into private.app_owner(user_id) select id from logos_fixture where role_name = who;
+  perform set_config('request.jwt.claims', json_build_object('sub', (select id from logos_fixture where role_name = who), 'role', 'authenticated')::text, true);
+  set local role authenticated;
+end $$;
+create function pg_temp.as_guest(who text) returns void language plpgsql as $$begin
+  reset role;
   perform set_config('request.jwt.claims', json_build_object('sub', (select id from logos_fixture where role_name = who), 'role', 'authenticated')::text, true);
   set local role authenticated;
 end $$;
@@ -144,6 +151,11 @@ select pg_temp.denied($$select pg_temp.play_run('farol', 0, 5, 20, true)$$, 'ven
 -- o jogador não lê nem escreve sessões direto
 select pg_temp.denied($$select count(*) from public.logos_sessions$$, 'sessões não são legíveis direto');
 select pg_temp.denied($$update public.logos_sessions set started_at = now() - interval '1 day'$$, 'o jogador não mexe no relógio da sessão');
+-- por enquanto só o OWNER joga: os demais recebem "em breve" e não abrem partida
+select pg_temp.as_guest('cris');
+select pg_temp.denied($$select public.logos_session_start('vigilia')$$, 'quem não é OWNER não abre partida (vigília)');
+select pg_temp.denied($$select public.logos_session_start('historia', 1)$$, 'quem não é OWNER não abre a campanha');
 reset role;
+select pg_temp.ok((select count(*) = 0 from public.logos_sessions where user_id = (select id from logos_fixture where role_name = 'cris')), 'nenhuma sessão criada para quem não é OWNER');
 select count(*) as verificacoes from logos_checks;
 rollback;

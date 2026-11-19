@@ -21,6 +21,13 @@ select gen_random_uuid(), 'camp-' || r || '@example.invalid', clock_timestamp(),
 from unnest(array['ana', 'beto']) r;
 insert into camp_fixture select substr(split_part(email, '@', 1), 6), id from auth.users where email like 'camp-%@example.invalid';
 create function pg_temp.as_user(who text) returns void language plpgsql as $$begin
+  reset role;
+  delete from private.app_owner; insert into private.app_owner(user_id) select id from camp_fixture where role_name = who;
+  perform set_config('request.jwt.claims', json_build_object('sub', (select id from camp_fixture where role_name = who), 'role', 'authenticated')::text, true);
+  set local role authenticated;
+end $$;
+create function pg_temp.as_guest(who text) returns void language plpgsql as $$begin
+  reset role;
   perform set_config('request.jwt.claims', json_build_object('sub', (select id from camp_fixture where role_name = who), 'role', 'authenticated')::text, true);
   set local role authenticated;
 end $$;

@@ -7,7 +7,7 @@ import { ReaderLibrary } from './ReaderLibrary'
 import { JourneyLogos } from '../game/logos/Fragments'
 
 export function JourneyPage() {
-  const { session, loading, recovery } = useAuth()
+  const { session, loading, recovery, owner } = useAuth()
   if (loading) return <p role="status">Carregando sessão…</p>
   if (!session || recovery) return <div className="info">Entre na sua conta para acompanhar sua jornada. <a href="#login">Entrar</a></div>
   return <div className="journey-v2">
@@ -15,7 +15,7 @@ export function JourneyPage() {
     <ConsistencySection userId={session.user.id} showHistory />
     <JourneyLastOpening key={session.user.id} userId={session.user.id} />
     <JourneyRewards userId={session.user.id} />
-    <JourneyLogos />
+    {owner && <JourneyLogos />}
     <PrayerMural />
     <ReaderLibrary page="minhas-leituras" embedded />
     <div className="actions journey-links"><a className="text-link" href="#historico">Escolher um devocional →</a></div>
