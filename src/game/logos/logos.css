@@ -375,12 +375,9 @@
 .lg-menu-item[data-active='true'] { background: linear-gradient(100deg, rgba(255, 85, 0, .3), rgba(255, 122, 46, .08)); }
 
 /* palco do Portador: raios dourados, anel de runas no chão e brasas */
-.lg-hero { min-height: min(640px, 76vh); overflow: visible; }
-.lg-hero::before { content: ''; position: absolute; z-index: 0; left: 50%; top: 46%; width: min(640px, 96%); aspect-ratio: 1; transform: translate(-50%, -50%); background: repeating-conic-gradient(from 0deg, rgba(255, 160, 70, .17) 0 3deg, transparent 3deg 13deg); -webkit-mask-image: radial-gradient(closest-side, #000 18%, transparent 74%); mask-image: radial-gradient(closest-side, #000 18%, transparent 74%); animation: lg-rays 90s linear infinite; pointer-events: none; }
-.lg-hero::after { content: ''; position: absolute; z-index: 0; left: 50%; bottom: 7%; width: 96%; height: 24%; transform: translateX(-50%); border: 2px dashed rgba(255, 130, 50, .5); border-radius: 50%; box-shadow: 0 0 26px rgba(255, 85, 0, .32), inset 0 0 28px rgba(255, 85, 0, .22); pointer-events: none; }
+.lg-hero { min-height: min(820px, 92vh); overflow: visible; }
 .lg-hero > canvas, .lg-hero > img, .lg-hero > svg { position: relative; z-index: 1; }
 .lg-hero-tag { z-index: 2; padding: 10px 20px; border-radius: 10px; font-weight: 700; letter-spacing: .06em; }
-@keyframes lg-rays { to { transform: translate(-50%, -50%) rotate(360deg); } }
 
 /* cartões laterais */
 .lg-card { border-radius: 14px; padding: 18px 20px; border-color: rgba(255, 255, 255, .1); }
@@ -400,5 +397,8 @@
 .lg-play::before { content: ''; position: absolute; inset: 0; background-image: radial-gradient(circle, rgba(255, 240, 200, .85) 0 1.2px, transparent 1.6px), radial-gradient(circle, rgba(255, 220, 150, .6) 0 1px, transparent 1.4px); background-size: 46px 38px, 71px 59px; background-position: 6px 10px, 30px 4px; opacity: .45; pointer-events: none; }
 .lg-play > * { position: relative; }
 .lg-hint { font-size: 13px; }
-@media (prefers-reduced-motion: reduce) { .lg-hero::before { animation: none; } }
 @media (max-width: 900px) { .lg-lobby::before { display: none; } .lg-hero { min-height: 300px; } .lg-menu-item { padding: 12px; } .lg-title b { font-size: 22px; } .lg-play strong { font-size: 30px; } }
+
+/* Portador do lobby maior, com raios, plataforma e letras gregas desenhados no próprio canvas (os raios ficam atrás do personagem) */
+.lg-hero .lg-lobby-art { display: block; position: relative; z-index: 1; height: min(820px, 92vh); width: auto; max-width: none; pointer-events: none; }
+@media (max-width: 900px) { .lg-hero { min-height: 380px; } .lg-hero .lg-lobby-art { height: 380px; max-width: 100%; } }
