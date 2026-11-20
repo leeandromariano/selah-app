@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Art3D } from './Art3D'
 
-const SRC = '/assets/3d/logos/portador-luz.webp'
+const SRC = '/assets/3d/logos/portador-lobby.webp'
 const ALT = 'O Portador da Luz, de capuz e armadura, com a espada em brasa'
 const hash = (a: number, b: number) => { const k = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return k - Math.floor(k) }
 
@@ -68,6 +68,6 @@ export function LobbyBearer({ fallback }: { fallback: React.ReactNode }) {
     return () => cancelAnimationFrame(raf)
   }, [img])
 
-  if (!img) return <Art3D name="portador-luz" alt={ALT} fallback={fallback} />
+  if (!img) return <Art3D name="portador-lobby" className="lg-lobby-static" alt={ALT} fallback={fallback} />
   return <canvas ref={ref} className="lg-lobby-art" role="img" aria-label={ALT} />
 }

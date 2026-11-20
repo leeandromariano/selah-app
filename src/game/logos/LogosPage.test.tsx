@@ -49,7 +49,7 @@ describe('CORAM // LOGOS: renders 3D com reserva', () => {
     const { container } = render(<LogosPage repo={repo} />)
     await screen.findByRole('button', { name: 'Jogar Vigília na Arena' })
     const hero = container.querySelector('.lg-hero img.lg-art') as HTMLImageElement
-    expect(hero.getAttribute('src')).toBe('/assets/3d/logos/portador-luz.webp')
+    expect(hero.getAttribute('src')).toBe('/assets/3d/logos/portador-lobby.webp')
     expect(hero).toHaveAccessibleName(/Portador da Luz/)
     fireEvent.error(hero)
     expect(container.querySelector('.lg-hero img.lg-art')).toBeNull()
