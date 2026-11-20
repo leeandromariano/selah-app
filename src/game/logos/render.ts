@@ -412,10 +412,16 @@ function enemy(ctx: CanvasRenderingContext2D, g: Game, e: Enemy) {
 function player(ctx: CanvasRenderingContext2D, g: Game) {
   const p = g.player, r = p.r
   const sprite = arenaSprite('portador-luz', PLAYER_OPTS)
-  const sheet = arenaSheet('portador-walk-sheet', 1.25, 1.08)
-  // linha pela direção do movimento (ou da mira, parado, golpeando ou no dash); quadro de corrida só enquanto anda, neutro parado
+  const walkS = arenaSheet('portador-walk-sheet', 1.25, 1.08), atkS = arenaSheet('portador-attack-sheet', 1.25, 1.08), shS = arenaSheet('portador-shield-sheet', 1.25, 1.08)
+  // máquina de estados: CAST (col 2→3 da folha do escudo) > ATTACK/dash (4 quadros do golpe) > SHIELD (guarda, col 0/1) > RUN/IDLE (folha de corrida).
+  // linha pela mira em ataque/defesa/conjuração e pelo movimento na corrida; sem espelhar, cada linha já tem a pose do seu lado.
   const moving = p.walk > 0.05, face = p.dashT > 0 ? Math.atan2(p.dashDy, p.dashDx) : moving && p.atk > 0.5 ? p.lastMove : p.aim
-  const pose = sheet ? { row: rowFor(Math.cos(face), Math.sin(face)), col: moving ? Math.floor((p.stride * 10) / 13) % 4 : 0 } : null
+  const aimRow = rowFor(Math.cos(p.aim), Math.sin(p.aim))
+  let sheet: Sheet | null = walkS, pose: { row: number; col: number } | null = walkS ? { row: rowFor(Math.cos(face), Math.sin(face)), col: moving ? Math.floor((p.stride * 10) / 13) % 4 : 0 } : null
+  if (p.cast > 0 && shS) { sheet = shS; pose = { row: aimRow, col: p.cast > 0.175 ? 2 : 3 } }
+  else if (p.dashT > 0 && atkS) { sheet = atkS; pose = { row: rowFor(Math.cos(face), Math.sin(face)), col: Math.min(3, Math.floor((1 - p.dashT / tuning.dashTime) * 4)) } }
+  else if (p.atk < 0.24 && atkS) { sheet = atkS; pose = { row: aimRow, col: Math.min(3, Math.floor((p.atk / 0.24) * 4)) } }
+  else if (p.shield > 0 && shS) { sheet = shS; pose = { row: aimRow, col: Math.floor(g.time * 3) % 2 } }
   const pulse = 1 + Math.sin(g.time * 4) * 0.08, aura = r * 4 * pulse
   const flip = Math.cos(p.aim) > 0
   const dir = { x: Math.cos(p.aim), y: Math.sin(p.aim) * TILT }, dl = Math.hypot(dir.x, dir.y) || 1
@@ -844,6 +850,8 @@ export function warmArena() {
   for (const n of ['inimigo-sombra', 'inimigo-sentinela', 'inimigo-acusador', 'boss-dragao']) jobs.push(() => { const sp = arenaSprite(n, ENEMY_OPTS); if (!sp) return false; rimOf(sp); emberOf(sp); return true })
   jobs.push(() => !!arenaSprite('portador-luz', PLAYER_OPTS))
   jobs.push(() => !!arenaSheet('portador-walk-sheet', 1.25, 1.08))
+  jobs.push(() => !!arenaSheet('portador-attack-sheet', 1.25, 1.08))
+  jobs.push(() => !!arenaSheet('portador-shield-sheet', 1.25, 1.08))
   jobs.push(() => !!arenaSheet('sombra-walk-sheet', 1.35))
   let i = 0, tries = 0
   const tick = () => { if (i >= jobs.length || tries++ > 80) return; if (jobs[i]()) i++; setTimeout(tick, 50) }

@@ -62,7 +62,7 @@ export type Game = {
   time: number; kills: number; score: number
   player: {
     x: number; y: number; r: number; hp: number; maxHp: number; ap: number; maxAp: number; aim: number; lastMove: number; fireCd: number; invuln: number; flash: number
-    speed: number; damage: number; dashT: number; dashDx: number; dashDy: number; dashHit: Set<number>; walk: number; stride: number; facing: number; atk: number
+    speed: number; damage: number; dashT: number; dashDx: number; dashDy: number; dashHit: Set<number>; walk: number; stride: number; facing: number; atk: number; cast: number
     cd: { c: number; q: number; e: number }; cdMax: { c: number; q: number; e: number }; cdScale: { c: number; q: number; e: number }; ult: number; ultScale: number; shield: number; shieldMax: number
   }
   input: Input; want: Want
@@ -107,7 +107,7 @@ export function createGame(mode: Mode, armadura: Armadura, rng: Rng = Math.rando
     time: 0, kills: 0, score: 0,
     player: {
       x: start.x, y: start.y, r: tuning.playerRadius, hp: perks.maxHp, maxHp: perks.maxHp, ap: perks.maxAp, maxAp: perks.maxAp, aim: 0, lastMove: 0, fireCd: 0, invuln: 0, flash: 0,
-      speed: tuning.baseSpeed * perks.speed, damage: tuning.baseDamage * perks.damage, dashT: 0, dashDx: 0, dashDy: 0, dashHit: new Set(), walk: 0, stride: 0, facing: -1, atk: 9,
+      speed: tuning.baseSpeed * perks.speed, damage: tuning.baseDamage * perks.damage, dashT: 0, dashDx: 0, dashDy: 0, dashHit: new Set(), walk: 0, stride: 0, facing: -1, atk: 9, cast: 0,
       cd: { c: 0, q: 0, e: 0 }, cdMax: { c: tuning.cdPulse, q: tuning.cdShield * perks.shieldCooldown, e: tuning.cdDash }, cdScale: { c: 1, q: 1, e: 1 }, ult: 0, ultScale: perks.ultCharge, shield: 0, shieldMax: perks.shieldSeconds,
     },
     input: { moveX: 0, moveY: 0, aimX: 1, aimY: 0, fire: false, assist: false }, want: { c: false, q: false, e: false, x: false },
@@ -252,7 +252,7 @@ function spearThrust(g: Game, e: Enemy, ux: number, uy: number, d: number) {
 
 function castPulse(g: Game) {
   const p = g.player
-  g.pulse = { t: 0, x: p.x, y: p.y }; g.fogClear = 3.2
+  g.pulse = { t: 0, x: p.x, y: p.y }; g.fogClear = 3.2; p.cast = 0.35
   const push = g.blessingEco ? 220 : 150
   for (const e of g.enemies) {
     const d = dist(e.x, e.y, p.x, p.y)
@@ -279,7 +279,7 @@ function castDash(g: Game) {
 
 function castNova(g: Game) {
   const p = g.player
-  p.ult = 0; p.invuln = Math.max(p.invuln, 1)
+  p.ult = 0; p.invuln = Math.max(p.invuln, 1); p.cast = 0.35
   g.nova = { t: 0, x: p.x, y: p.y }; g.projectiles = g.projectiles.filter(b => b.from === 'player')
   for (const e of g.enemies) {
     if (dist(e.x, e.y, p.x, p.y) > tuning.novaRadius + e.r) continue
@@ -442,7 +442,7 @@ function step(g: Game, dt: number) {
   if (g.wind.x || g.wind.y) { p.x += g.wind.x * dt; p.y += g.wind.y * dt }
   pushOut(g, p, p.r)
   // fase da animação do Portador (só leitura para o desenho)
-  p.walk += ((p.dashT > 0 ? 0 : Math.min(1, mv)) - p.walk) * Math.min(1, dt * 10); p.stride += p.walk * dt * 13; p.atk += dt
+  p.walk += ((p.dashT > 0 ? 0 : Math.min(1, mv)) - p.walk) * Math.min(1, dt * 10); p.stride += p.walk * dt * 13; p.atk += dt; p.cast = Math.max(0, p.cast - dt)
   p.facing += ((Math.cos(p.aim) > 0 ? -1 : 1) - p.facing) * Math.min(1, dt * 16)
 
   // golpe de espada: arco curto à frente do Portador (no celular, só golpeia quando há alvo ao alcance)
