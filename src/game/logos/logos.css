@@ -402,3 +402,6 @@
 /* Portador do lobby maior, com raios, plataforma e letras gregas desenhados no próprio canvas (os raios ficam atrás do personagem) */
 .lg-hero .lg-lobby-art { display: block; position: relative; z-index: 1; height: min(820px, 92vh); width: auto; max-width: none; pointer-events: none; }
 @media (max-width: 900px) { .lg-hero { min-height: 380px; } .lg-hero .lg-lobby-art { height: 380px; max-width: 100%; } }
+
+/* Portador (render com fundo já removido): mistura normal, só a máscara radial suave nas bordas — armadura, malha e pedestal 100% opacos sobre a luz de fundo */
+.logos-3d-cutout[src*="portador-luz"] { mix-blend-mode: normal; -webkit-mask-image: radial-gradient(ellipse farthest-corner at 50% 50%, #000 78%, transparent 98%); mask-image: radial-gradient(ellipse farthest-corner at 50% 50%, #000 78%, transparent 98%); }
