@@ -22,7 +22,7 @@ describe('comunidade exclusiva do OWNER', () => {
   it('paginação e busca por teclado normalizam username e reiniciam página', async () => {
     respond(); const user = userEvent.setup(); render(<CommunityPanel />)
     await user.click(await screen.findByRole('button', { name: 'Próxima página' }))
-    expect(await screen.findByText('Página 2 · 30 leitores encontrados')).toBeVisible()
+    expect(await screen.findByText('Página 2 de 2 · 30 leitores encontrados')).toBeVisible()
     await user.type(screen.getByLabelText('Buscar por username'), '@LEITOR{Enter}')
     await waitFor(() => expect(supabase.rpc).toHaveBeenLastCalledWith('get_owner_community', { p_search: 'leitor', p_page: 0, p_size: 25 }))
     expect(await screen.findByRole('button', { name: 'Página anterior' })).toBeDisabled()

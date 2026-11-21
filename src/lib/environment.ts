@@ -3,7 +3,14 @@ export type Variables = Record<string, string | undefined>
 export type BuildEnvironment = { mode: string; variables: Variables }
 const modes: Record<string, EnvironmentName> = { development: 'DEV', staging: 'STAGING', production: 'PROD' }
 const localUrl = 'http://127.0.0.1:54321'
-export type HostedEnvironment = { name: 'STAGING' | 'PROD'; url: string; key: string; projectRef: string; siteOrigin: string; login: 'email' }
+export type HostedEnvironment = { name: 'STAGING' | 'PROD'; url: string; key: string; projectRef: string; siteOrigin: string; additionalSiteOrigin?: string; login: 'email' }
+
+function validHostedSiteOrigin(value: string) {
+  try {
+    const site = new URL(value)
+    return site.protocol === 'https:' && site.origin === value && !site.username && !site.password && !site.port && site.hostname.includes('.') && site.hostname !== 'localhost' && !site.hostname.endsWith('.localhost') && !site.hostname.endsWith('.local') && !/^\d+(?:\.\d+){3}$/.test(site.hostname) && !site.hostname.includes(':')
+  } catch { return false }
+}
 
 // Validate a future contract without enabling a build or creating a client.
 export function prepareHostedEnvironment(mode: 'staging' | 'production', variables: Variables): HostedEnvironment {
@@ -12,17 +19,17 @@ export function prepareHostedEnvironment(mode: 'staging' | 'production', variabl
   const prefix = `VITE_${name}_SUPABASE_`
   const url = variables[`${prefix}URL`], key = variables[`${prefix}PUBLISHABLE_KEY`], projectRef = variables[`${prefix}PROJECT_REF`]
   const siteOrigin = variables[`VITE_${name}_SITE_ORIGIN`]
+  const additionalSiteOrigin = variables[`VITE_${name}_ADDITIONAL_SITE_ORIGIN`]
   if (!url || !key || !projectRef || !siteOrigin) throw new Error('Configuração hospedada incompleta.')
-  let site: URL
-  try { site = new URL(siteOrigin) } catch { throw new Error('Origem HTTPS inválida.') }
-  if (site.protocol !== 'https:' || site.origin !== siteOrigin || site.username || site.password || site.port || !site.hostname.includes('.') || site.hostname === 'localhost' || site.hostname.endsWith('.localhost') || site.hostname.endsWith('.local') || /^\d+(?:\.\d+){3}$/.test(site.hostname) || site.hostname.includes(':')) throw new Error('Origem HTTPS hospedada inválida.')
+  if (!validHostedSiteOrigin(siteOrigin)) throw new Error('Origem HTTPS hospedada inválida.')
+  if (additionalSiteOrigin !== undefined && (!validHostedSiteOrigin(additionalSiteOrigin) || additionalSiteOrigin === siteOrigin)) throw new Error('Origem HTTPS adicional inválida.')
   const other = name === 'STAGING' ? 'PROD' : 'STAGING'
-  if (variables[`VITE_${other}_SITE_ORIGIN`] === siteOrigin) throw new Error('STAGING e PROD devem usar origens distintas.')
-  return { name, url, key, projectRef, siteOrigin, login: 'email' }
+  if ([siteOrigin, additionalSiteOrigin].some(origin => origin && [variables[`VITE_${other}_SITE_ORIGIN`], variables[`VITE_${other}_ADDITIONAL_SITE_ORIGIN`]].includes(origin))) throw new Error('STAGING e PROD devem usar origens distintas.')
+  return { name, url, key, projectRef, siteOrigin, ...(additionalSiteOrigin ? { additionalSiteOrigin } : {}), login: 'email' }
 }
 
 export function validateHostedOrigin(config: HostedEnvironment, origin: string) {
-  if (origin !== config.siteOrigin) throw new Error('Origem não corresponde ao ambiente hospedado.')
+  if (origin !== config.siteOrigin && origin !== config.additionalSiteOrigin) throw new Error('Origem não corresponde ao ambiente hospedado.')
 }
 
 export function validatePublicKey(key: string) {
@@ -93,9 +100,13 @@ export function createBuildEnvironment(mode: string, variables: Variables, stagi
     const preview = variables.VITE_STAGING_PREVIEW_ORIGIN
     if (previewBuildAuthorized !== Boolean(preview)) throw new Error('Preview requires explicit build authorization and origin.')
     if (previewBuildAuthorized) prepareHostedEnvironment('staging', variables)
-    const selected = previewBuildAuthorized ? { ...variables, VITE_STAGING_SITE_ORIGIN: preview } : variables
+    const selected = previewBuildAuthorized ? { ...variables, VITE_STAGING_SITE_ORIGIN: preview, VITE_STAGING_ADDITIONAL_SITE_ORIGIN: undefined } : variables
     const config = prepareHostedEnvironment('staging', selected)
-    return { mode, variables: { VITE_APP_ENV: config.name, VITE_STAGING_SUPABASE_URL: config.url, VITE_STAGING_SUPABASE_PROJECT_REF: config.projectRef, VITE_STAGING_SUPABASE_PUBLISHABLE_KEY: config.key, VITE_STAGING_SITE_ORIGIN: config.siteOrigin } }
+    const bibleEnabled = variables.VITE_STAGING_BIBLE_ENABLED
+    if (bibleEnabled !== undefined && bibleEnabled !== 'true' && bibleEnabled !== 'false') throw new Error('Sinal da Bíblia hospedada inválido.')
+    const guidedEnabled = variables.VITE_STAGING_GUIDED_DEVOTIONAL_ENABLED
+    if (guidedEnabled !== undefined && guidedEnabled !== 'true' && guidedEnabled !== 'false') throw new Error('Sinal do devocional guiado inválido.')
+    return { mode, variables: { VITE_APP_ENV: config.name, VITE_STAGING_SUPABASE_URL: config.url, VITE_STAGING_SUPABASE_PROJECT_REF: config.projectRef, VITE_STAGING_SUPABASE_PUBLISHABLE_KEY: config.key, VITE_STAGING_SITE_ORIGIN: config.siteOrigin, ...(config.additionalSiteOrigin ? { VITE_STAGING_ADDITIONAL_SITE_ORIGIN: config.additionalSiteOrigin } : {}), VITE_STAGING_BIBLE_ENABLED: bibleEnabled === 'true' ? 'true' : 'false', VITE_STAGING_GUIDED_DEVOTIONAL_ENABLED: guidedEnabled === 'true' ? 'true' : 'false' } }
   }
   const config = requireEnabledEnvironment(mode, variables)
   return { mode, variables: { VITE_APP_ENV: config.name, VITE_DEV_SUPABASE_URL: config.url, VITE_DEV_SUPABASE_PUBLISHABLE_KEY: config.key } }

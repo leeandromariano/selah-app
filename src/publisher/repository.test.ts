@@ -5,7 +5,7 @@ import type { DevotionalInput } from '../admin/repository'
 const draft: DevotionalInput = {
   author_name: 'Autor Convidado', title: 'Mensagem de teste', bible_reference: 'João 14:27',
   bible_text: 'Texto bíblico fictício', content: 'Reflexão fictícia',
-  reflection_question: 'Pergunta fictícia?', status: 'draft', publish_at: null,
+  reflection_question: 'Pergunta fictícia?', practical_challenge: 'Faça uma pausa.', prayer_prompt: 'Ore por paz.', status: 'draft', publish_at: null,
 }
 function boundary(allowed: boolean) {
   const table = {

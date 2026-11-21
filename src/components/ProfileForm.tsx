@@ -60,7 +60,7 @@ function ReaderProfile({ userId, metadata }: { userId: string; metadata: Record<
   }
   function change(key: keyof ProfileFields, value: string) { setFields(previous => ({ ...previous, [key]: value })); setMessage(''); setError('') }
   if (loading) return <p role="status">Carregando seu perfil…</p>
-  return <><Heading eyebrow="SEU ESPAÇO NO SELAH" title="Meu perfil" description="Cuide dos seus dados pessoais." /><section className="auth-card">
+  return <><Heading eyebrow="SEU ESPAÇO NO CORAM" title="Meu perfil" description="Cuide dos seus dados pessoais." /><section className="auth-card">
     {error && <div className="info" role="alert">{error}</div>}
     {!ready ? <button className="button secondary" onClick={() => { setLoading(true); setAttempt(value => value + 1) }}>Tentar novamente</button> : <>
       {!profile && <div className="info">Seu perfil ainda não foi criado. Confira seus dados e salve para concluir.</div>}

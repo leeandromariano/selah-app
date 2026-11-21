@@ -90,6 +90,9 @@ describe('sessão e autorização', () => {
     await user.click(screen.getByRole('button'))
     expect(screen.getByText('signed out')).toBeVisible()
     expect(supabase.auth.signOut).toHaveBeenCalledTimes(2)
+    // sair aqui não derruba as sessões da conta em outros aparelhos
+    expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: 'local' })
+    expect(supabase.auth.signOut).not.toHaveBeenCalledWith({ scope: 'global' })
   })
 
   it('ignora resposta administrativa pendente após logout', async () => {

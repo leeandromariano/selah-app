@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { EditorialValidationError, adminColumns, editorialFields } from '../admin/repository'
+import { guidedDevotionalsEnabled } from '../devotionals/guidedFeature.ts'
 import type { AdminDevotional, DevotionalInput } from '../admin/repository'
 
 export type PublisherDevotional = AdminDevotional
@@ -24,7 +25,7 @@ export function createPublisherRepository(client: Pick<SupabaseClient, 'from' | 
       const rows: PublisherDevotional[] = []
       for (let offset = 0; ; offset += 100) {
         const { data, error } = await client.from('devotionals')
-          .select(adminColumns)
+          .select<typeof adminColumns, PublisherDevotional>(adminColumns)
           .eq('author_id', userId)
           .order('created_at', { ascending: false })
           .order('id', { ascending: false })
@@ -35,12 +36,12 @@ export function createPublisherRepository(client: Pick<SupabaseClient, 'from' | 
       }
     },
     async saveDraft(userId: string, input: DevotionalInput, id?: string): Promise<PublisherDevotional> {
-      const fields = editorialFields({ ...input, status: 'draft', publish_at: null })
+      const fields = editorialFields({ ...input, status: 'draft', publish_at: null }, new Date(), guidedDevotionalsEnabled && !id)
       await authorize()
       const query = id
         ? client.from('devotionals').update(fields).eq('id', id).eq('author_id', userId)
         : client.from('devotionals').insert({ ...fields, author_id: userId })
-      const { data, error } = await query.select(adminColumns).single()
+      const { data, error } = await query.select<typeof adminColumns, PublisherDevotional>(adminColumns).single()
       if (error) throw error
       if (!data || (id && data.id !== id)) throw { code: 'PGRST116' }
       return data as PublisherDevotional

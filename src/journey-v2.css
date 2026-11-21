@@ -1,0 +1,67 @@
+/* Minha Jornada: Obsidian, vidro e brasa. Tudo sob .journey-v2; cores vêm dos tokens. */
+.journey-v2 { display: grid; gap: 20px; padding: clamp(10px, 2vw, 22px); margin: calc(-1 * clamp(10px, 2vw, 22px)); border-radius: 28px; }
+.journey-v2 > * { min-width: 0; margin-block: 0; }
+.journey-v2 .journey-heading { margin: 0; }
+.journey-v2 .journey-heading h1 em { font-family: Literata, Georgia, serif; font-style: italic; font-weight: 500; color: var(--text); }
+.journey-v2 .eyebrow { color: var(--accent); }
+
+/* retome sua leitura */
+.journey-v2 .journey-last { margin: 0; padding: 18px 22px; border-color: var(--glass-border); border-radius: 24px; background: linear-gradient(150deg, var(--glass-bg), transparent 70%), var(--surface); }
+.journey-v2 .journey-last h2 { margin-bottom: 8px; font: 800 clamp(18px, 2.2vw, 24px)/1.15 'Plus Jakarta Sans', Inter, sans-serif; letter-spacing: -.03em; }
+.journey-v2 .journey-last-content { gap: 18px; }
+.journey-v2 .journey-last-content > div { flex: 1; }
+.journey-last-art { width: 132px; height: 80px; flex: none; object-fit: cover; border-radius: 16px; border: 1px solid var(--plate-border); background: linear-gradient(160deg, var(--plate-top), var(--plate-bottom)); }
+.journey-v2 .journey-last .button.primary { border-radius: 999px; background: var(--brand-ember); color: #fff; border-color: transparent; padding-inline: 24px; font-weight: 700; }
+.journey-v2 .journey-last-note { margin-top: 10px; font-size: 12px; }
+
+/* ofensiva + calendário */
+.journey-v2 .consistency { margin: 0; padding: clamp(18px, 2.4vw, 26px); border-color: var(--glass-border); border-radius: 28px; background: linear-gradient(150deg, var(--glass-bg), transparent 70%), var(--surface); }
+.journey-v2 .consistency .section-heading h2 { font: 800 clamp(20px, 2.4vw, 28px)/1.15 'Plus Jakarta Sans', Inter, sans-serif; letter-spacing: -.035em; }
+.journey-v2 .consistency-current { gap: 16px; }
+.consistency-flame { width: 84px; height: 84px; flex: none; padding: 8px; object-fit: contain; border-radius: 22px; border: 1px solid var(--plate-border); background: radial-gradient(circle at 50% 72%, var(--hero-glow), transparent 66%), linear-gradient(160deg, var(--plate-top), var(--plate-bottom)); filter: drop-shadow(0 8px 20px var(--hero-glow)); }
+.journey-v2 .consistency-current strong { font-size: clamp(44px, 6vw, 68px); line-height: 1; color: var(--brand-ember); }
+.journey-v2 .consistency-current p { font-size: 16px; }
+.journey-v2 .consistency-today { border-color: var(--brand-ember); background: transparent; color: var(--accent); border-radius: 999px; padding: 7px 16px; font-weight: 600; }
+.journey-v2 .consistency-calendar .calendar-navigation .button { border-radius: 12px; background: var(--accent-bg); border-color: var(--accent-border); color: var(--accent); }
+.journey-v2 .calendar-navigation h3 { color: var(--text); text-transform: none; }
+.journey-v2 .calendar-navigation h3::first-letter { text-transform: uppercase; }
+.journey-v2 .consistency-calendar td { border-radius: 14px; }
+.journey-v2 .consistency-calendar .calendar-completed { background: var(--accent-bg); border-color: var(--accent-border); color: var(--brand-ember); }
+.journey-v2 .consistency-calendar .calendar-today { border: 1.5px solid var(--brand-ember); color: var(--accent); box-shadow: 0 6px 20px var(--hero-glow); }
+
+/* ofensiva à esquerda, calendário à direita, totais numa linha inteira embaixo */
+.journey-v2 .consistency-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); column-gap: clamp(20px, 4vw, 48px); row-gap: 14px; align-items: start; grid-template-rows: auto auto 1fr auto auto; }
+.journey-v2 .consistency-summary { display: contents; }
+.journey-v2 .consistency-calendar { grid-column: 2; grid-row: 1 / span 3; }
+.journey-v2 .consistency-current, .journey-v2 .consistency-message, .journey-v2 .consistency-today { grid-column: 1; }
+.journey-v2 .consistency-message { margin: 0; }
+.journey-v2 .consistency-today { justify-self: start; align-self: start; }
+.journey-v2 .consistency-totals { grid-column: 1 / -1; grid-row: 4; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 6px 0 0; }
+.journey-v2 .consistency-reference { grid-column: 1 / -1; grid-row: 5; margin: 0; }
+@media (max-width: 900px) {
+  .journey-v2 .consistency-layout { grid-template-columns: 1fr; }
+  .journey-v2 .consistency-calendar, .journey-v2 .consistency-totals, .journey-v2 .consistency-reference { grid-column: 1; grid-row: auto; max-width: none; }
+  .journey-v2 .consistency-calendar { order: 4; } .journey-v2 .consistency-totals { order: 5; } .journey-v2 .consistency-reference { order: 6; }
+  .journey-v2 .consistency-totals { grid-template-columns: 1fr 1fr; }
+}
+
+/* totais com objeto 3D */
+.journey-v2 .consistency-totals > div { position: relative; padding: 16px 18px; border: 1px solid var(--glass-border); border-radius: 20px; background: var(--surface-soft); min-height: 92px; }
+.journey-v2 .consistency-totals dt { font-size: 13px; }
+.journey-v2 .consistency-totals dd { font: 700 28px/1.1 'Plus Jakarta Sans', Inter, sans-serif; color: var(--text); letter-spacing: -.03em; }
+.journey-v2 .consistency-totals > div > img { position: absolute; right: 12px; top: 50%; width: 58px; height: 58px; padding: 4px; transform: translateY(-50%); object-fit: contain; border-radius: 16px; border: 1px solid var(--plate-border); background: linear-gradient(160deg, var(--plate-top), var(--plate-bottom)); }
+.journey-v2 .consistency-totals > div:has(> img) { padding-right: 84px; }
+
+/* conquistas, desafios, mural, leituras no mesmo vidro */
+.journey-v2 .journey-rewards { margin: 0; }
+.journey-v2 .journey-badges li, .journey-v2 .journey-challenges li { border-color: var(--glass-border); border-radius: 22px; background: var(--surface); }
+.journey-v2 .journey-badges .badge-earned { border-color: var(--brand-ember); box-shadow: 0 10px 28px var(--hero-glow); }
+.journey-v2 .info, .journey-v2 .prayer-mural { border-color: var(--glass-border); border-radius: 22px; }
+@media (max-width: 650px) {
+  .journey-last-art { display: none; }
+  .journey-v2 .journey-last { padding: 18px 16px; }
+  .journey-v2 .consistency-totals { grid-template-columns: 1fr 1fr; }
+  .journey-v2 .consistency-totals > div:has(> img) { padding: 14px 14px 56px; }
+  .journey-v2 .consistency-totals > div > img { top: auto; bottom: 10px; right: 10px; width: 40px; height: 40px; transform: none; border-radius: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .consistency-flame { filter: none; } }

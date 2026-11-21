@@ -1,0 +1,95 @@
+/* CORAM Wrapped: cards no estilo de Stories, Obsidian com brasa. Cores vêm dos tokens. */
+.wrapped-page { display: grid; gap: 16px; align-content: start; }
+.wrapped-page > * { min-width: 0; }
+.wrapped-periods { display: flex; flex-wrap: wrap; gap: 8px; }
+.wrapped-periods a { display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border: 1px solid var(--glass-border); border-radius: 999px; background: var(--surface-soft); color: var(--text); font-size: 14px; font-weight: 700; text-decoration: none; }
+.wrapped-periods a[aria-current='page'] { border-color: var(--brand-ember); box-shadow: 0 0 0 1px var(--brand-ember) inset; background: var(--accent-bg); }
+
+.wrapped-story { display: grid; gap: 14px; width: min(100%, 460px); margin-inline: auto; }
+.wrapped-progress { list-style: none; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; margin: 0; padding: 0; }
+.wrapped-progress li { height: 4px; overflow: hidden; border-radius: 999px; background: var(--surface-soft); }
+.wrapped-progress i { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--brand-ember); }
+.wrapped-progress li[data-state='done'] i { width: 100%; }
+.wrapped-progress li[data-state='active'] i { animation: wrapped-fill linear forwards; }
+.wrapped-progress li[data-state='active'][data-paused] i { animation-play-state: paused; }
+.wrapped-progress li[data-state='active'][data-paused]:last-child i, .wrapped-progress li[data-state='active']:last-child i { width: 100%; animation: none; }
+@keyframes wrapped-fill { from { width: 0; } to { width: 100%; } }
+
+.wrapped-card { position: relative; display: grid; gap: 10px; align-content: start; justify-items: center; min-height: min(72vh, 560px); padding: 26px 22px 28px; overflow: hidden; text-align: center; border: 1px solid var(--glass-border); border-radius: 28px;
+  background: radial-gradient(circle at 50% 22%, var(--hero-glow), transparent 62%), linear-gradient(160deg, var(--plate-top), var(--plate-bottom)); color: #f4f1ea; box-shadow: 0 18px 48px var(--hero-glow); animation: wrapped-in .45s ease-out both; }
+.wrapped-card .eyebrow { color: #ff7a33; font-size: 11px; font-weight: 700; }
+.wrapped-art { width: clamp(120px, 38vw, 190px); height: auto; margin-top: 6px; filter: drop-shadow(0 12px 30px var(--hero-glow)); animation: wrapped-float 4s ease-in-out infinite; }
+.wrapped-card h2 { margin: 6px 0 0; color: #b9b5ac; font: 700 18px/1.25 'Plus Jakarta Sans', Inter, sans-serif; letter-spacing: -.01em; }
+.wrapped-headline { margin: 0; font: 800 clamp(56px, 16vw, 92px)/1 'Plus Jakarta Sans', Inter, sans-serif; letter-spacing: -.04em; overflow-wrap: anywhere; animation: wrapped-pop .6s .15s cubic-bezier(.2, 1.4, .4, 1) both; }
+.wrapped-headline small { font-size: .32em; font-weight: 700; letter-spacing: 0; color: #d8d4cb; }
+.wrapped-headline.muted-headline { color: #6d6a63; font-size: clamp(34px, 10vw, 52px); }
+.wrapped-headline.wrapped-reference { font-size: clamp(36px, 11vw, 58px); }
+.wrapped-detail { margin: 0; max-width: 34ch; color: #d8d4cb; font-size: 15px; line-height: 1.5; animation: wrapped-in .5s .35s ease-out both; }
+.wrapped-books { list-style: none; display: grid; gap: 14px; width: 100%; margin: 8px 0 0; padding: 0; text-align: left; }
+.wrapped-books li { display: grid; gap: 4px; animation: wrapped-in .5s ease-out both; }
+.wrapped-book-name { font: 800 20px/1.2 'Plus Jakarta Sans', Inter, sans-serif; }
+.wrapped-books small { color: #b9b5ac; }
+.wrapped-bar { display: block; height: 10px; overflow: hidden; border-radius: 999px; background: #ffffff1a; }
+.wrapped-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #ff7a33, var(--brand-ember)); transform-origin: left; animation: wrapped-grow .8s ease-out both; }
+.wrapped-controls, .wrapped-share { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+@keyframes wrapped-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes wrapped-pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+@keyframes wrapped-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes wrapped-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@media (prefers-reduced-motion: reduce) { .wrapped-card, .wrapped-art, .wrapped-headline, .wrapped-detail, .wrapped-books li, .wrapped-bar i, .wrapped-progress li[data-state='active'] i { animation: none !important; } .wrapped-progress li[data-state='active'] i { width: 100%; } }
+
+/* aviso na Home */
+.home-wrapped { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 22px; padding: clamp(16px, 2.4vw, 24px); border: 1px solid var(--brand-ember); border-radius: 24px; background: linear-gradient(150deg, var(--hero-glow), transparent 70%), var(--surface); box-shadow: 0 14px 40px var(--hero-glow); }
+.home-wrapped > div:first-child { min-width: 0; flex: 1 1 280px; }
+.home-wrapped .eyebrow { color: var(--accent); font-size: 11px; font-weight: 700; }
+.home-wrapped h2 { margin: 4px 0 6px; font: 800 clamp(20px, 2.6vw, 28px)/1.15 'Plus Jakarta Sans', Inter, sans-serif; letter-spacing: -.03em; }
+.home-wrapped p { margin: 0; color: var(--text-muted); font-size: 14px; line-height: 1.5; }
+.home-wrapped-links { display: flex; flex-wrap: wrap; gap: 10px; }
+.home-wrapped-links a { text-decoration: none; }
+@media (max-width: 560px) {
+  .wrapped-periods { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; }
+  .wrapped-periods a { flex: none; }
+}
+
+/* Recap Coram, no estilo do mockup: título em itálico serifado, 4 cards lado a lado no computador e marcos de constância */
+.wrapped-heading { position: relative; min-height: 112px; padding-right: 140px; margin: 0; }
+.wrapped-heading .eyebrow { color: var(--accent); }
+.wrapped-heading h1 { margin: 4px 0 8px; font: 500 clamp(34px, 5.4vw, 58px)/1.05 Literata, Georgia, serif; letter-spacing: -.02em; }
+.wrapped-heading h1 em { font-family: 'Instrument Serif', Literata, Georgia, serif; font-style: italic; font-weight: 400; font-size: 1.1em; }
+.wrapped-heading p { max-width: 56ch; }
+.wrapped-heading::after { content: ''; position: absolute; top: 0; right: 0; width: 120px; aspect-ratio: 1; background: url(/home/recap-cards.webp) center / contain no-repeat; filter: drop-shadow(0 10px 28px var(--hero-glow)); }
+.wrapped-story[data-gallery] { width: 100%; }
+.wrapped-gallery { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.wrapped-gallery .wrapped-card { min-height: 0; padding: 20px 14px 22px; cursor: pointer; animation-fill-mode: both; }
+.wrapped-gallery .wrapped-card[data-selected='true'] { border-color: var(--brand-ember); box-shadow: 0 0 0 1px var(--brand-ember) inset, 0 18px 48px var(--hero-glow); }
+.wrapped-gallery .wrapped-card:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.wrapped-gallery .wrapped-art { width: clamp(84px, 9vw, 130px); }
+.wrapped-gallery .wrapped-card h2 { font-size: 15px; }
+.wrapped-gallery .wrapped-headline { font-size: clamp(36px, 4vw, 56px); }
+.wrapped-gallery .wrapped-headline.wrapped-reference { font-size: clamp(22px, 2.4vw, 32px); }
+.wrapped-gallery .wrapped-headline.muted-headline { font-size: clamp(22px, 2.4vw, 30px); }
+.wrapped-gallery .wrapped-detail { font-size: 13px; }
+.wrapped-gallery .wrapped-book-name { font-size: 15px; }
+.wrapped-chip { display: inline-block; padding: 6px 14px; border: 1px solid var(--brand-ember); border-radius: 999px; background: #ff55001f; color: #ffb48a; font: 700 13px/1 'Plus Jakarta Sans', Inter, sans-serif; }
+.wrapped-milestones { display: grid; gap: 12px; }
+.wrapped-milestones h3 { margin: 0; color: var(--text-muted); font: 700 12px/1 'JetBrains Mono', monospace; letter-spacing: .06em; }
+.wrapped-milestones ul { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; }
+.wrapped-milestones li { display: grid; justify-items: center; gap: 4px; padding: 14px 8px; text-align: center; border: 1px solid var(--glass-border); border-radius: 18px; background: var(--surface-soft); }
+.wrapped-milestones li[data-reached='true'] { border-color: var(--brand-ember); box-shadow: 0 8px 26px var(--hero-glow); }
+.wrapped-milestones li[data-reached='false'] img { filter: grayscale(.85) brightness(.7); opacity: .6; }
+.wrapped-milestones img { width: 64px; height: 64px; object-fit: contain; }
+.wrapped-milestones strong { font-size: 14px; }
+.wrapped-milestones span { color: var(--text); font-size: 13px; }
+.wrapped-milestones small { color: var(--text-muted); font-size: 12px; }
+.wrapped-story:not([data-gallery]) .wrapped-controls { width: 100%; }
+@media (max-width: 560px) { .wrapped-heading { padding-right: 84px; min-height: 90px; } .wrapped-heading::after { width: 76px; } .wrapped-milestones ul { gap: 8px; } .wrapped-milestones strong { font-size: 13px; } }
+
+.home-wrapped { position: relative; }
+.home-wrapped-art { width: 80px; height: auto; flex: none; filter: drop-shadow(0 8px 22px var(--hero-glow)); }
+
+/* No computador, só o card selecionado fica nítido: os outros ficam desfocados até serem escolhidos */
+.wrapped-gallery .wrapped-card > * { transition: filter .35s ease, opacity .35s ease; }
+.wrapped-gallery .wrapped-card[data-selected='false'] > * { filter: blur(9px); opacity: .55; }
+.wrapped-gallery .wrapped-card[data-selected='false'] { box-shadow: none; }
+.wrapped-gallery .wrapped-card[data-selected='false']::after { content: 'Toque para revelar'; position: absolute; inset: auto 12px 18px; padding: 8px 10px; border-radius: 999px; background: #0d0e11cc; border: 1px solid var(--glass-border); color: #f4f1ea; font: 700 12px/1 'Plus Jakarta Sans', Inter, sans-serif; text-align: center; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .wrapped-gallery .wrapped-card > * { transition: none; } }

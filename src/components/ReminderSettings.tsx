@@ -3,7 +3,7 @@ import { useAuth } from '../auth/auth'
 import { supabase } from '../lib/supabase'
 import { createReminderRepository } from '../notifications/repository'
 import type { ReminderSnapshot } from '../notifications/repository'
-import { deviceKey, notificationPermission, reminderWorker, workerMessage } from '../notifications/device'
+import { deviceKey, forgetDeviceKey, notificationPermission, reminderWorker, workerMessage } from '../notifications/device'
 import { Heading } from './UI'
 import { bindReminderDevice } from '../notifications/session'
 
@@ -39,7 +39,8 @@ function Settings({ user }: { user: string }) {
     try { await work() } catch (error) { setError(error instanceof Error ? error.message : 'Não foi possível atualizar seus lembretes.') }
     finally { setBusy(false) }
   }
-  async function save(subscription?: object, simulated = snapshot?.device?.mode !== 'webpush') {
+  // O modo vem do servidor: com o banco em webpush, um navegador sem aparelho nunca cadastra um aparelho fictício.
+  async function save(subscription?: object, simulated = snapshot?.mode === 'simulation') {
     const key = deviceKey(user, true)!
     const data = await repository.save(key, { enabled, time, timezone,
       permission: simulated && subscription ? 'granted' : simulated ? snapshot?.device?.permission ?? permission : permission,
@@ -57,6 +58,7 @@ function Settings({ user }: { user: string }) {
       {!snapshot && !error && <p role="status">Carregando lembretes…</p>}
       {snapshot && <>
         <label><input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} disabled={busy} /> Ativar lembretes da minha conta</label>
+        <p className="muted">Inclui o aviso de que chegou a hora de rever um pedido da sua cápsula de oração e o aviso, na hora, quando uma devocional nova é publicada.</p>
         <p><label>Horário neste dispositivo <input type="time" value={time} required onChange={e => setTime(e.target.value)} disabled={busy} /></label></p>
         <p>Fuso configurado: <strong>{timezone}</strong>. Fuso detectado: {Intl.DateTimeFormat().resolvedOptions().timeZone}.</p>
         <button className="text-link" disabled={busy} onClick={() => setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC')}>Usar fuso atual do dispositivo</button>
@@ -78,6 +80,7 @@ function Settings({ user }: { user: string }) {
             })}>Assinar neste dispositivo</button>}
           {snapshot.device && <button className="button secondary" disabled={busy} onClick={() => void action(async () => {
             await repository.revoke(deviceKey(user)!)
+            forgetDeviceKey(user) // cancelamento de propósito: o app não reativa este aparelho sozinho
             await Promise.allSettled([workerMessage('clear'), (async () => {
               const registration = await reminderWorker()
               await (await registration?.pushManager.getSubscription())?.unsubscribe()
@@ -93,7 +96,7 @@ function Settings({ user }: { user: string }) {
         </div>
         {snapshot.mode === 'simulation' && <p>Modo local: somente intenções de envio. O dispositivo fictício não representa a permissão do navegador e não recebe notificações reais.</p>}
         <p>Salvar não solicita permissão nem cria automaticamente uma assinatura. Sair da conta cancela a assinatura deste dispositivo; outros dispositivos mantêm suas próprias configurações.</p>
-        {snapshot.last && <p>Última intenção: {snapshot.last.kind === 'share' ? 'compartilhamento' : snapshot.last.kind === 'reading' ? 'leitura' : 'sem conteúdo enviado'} — {snapshot.last.status}; dia de Brasília {snapshot.last.brt_day}, dia local {snapshot.last.local_day}.</p>}
+        {snapshot.last && <p>Última intenção: {snapshot.last.kind === 'share' ? 'compartilhamento' : snapshot.last.kind === 'reading' ? 'leitura' : snapshot.last.kind === 'prayer' ? 'pedido de oração' : 'sem conteúdo enviado'} — {snapshot.last.status}; dia de Brasília {snapshot.last.brt_day}, dia local {snapshot.last.local_day}.</p>}
         <p>As notificações podem aparecer na tela bloqueada. Não incluem seu nome, histórico ou contatos. A entrega depende do navegador e não é garantida.</p>
       </>}
       {message && <p role="status">{message}</p>}

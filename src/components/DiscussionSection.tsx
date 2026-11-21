@@ -47,14 +47,14 @@ export function DiscussionSection({ devotionalId }: { devotionalId: string }) {
     finally { if (alive.current) setBusy(false) }
   }
   return <section className="discussion reflection" aria-labelledby={`discussion-${devotionalId}`} aria-busy={loading || busy}>
-    <h2 id={`discussion-${devotionalId}`}>Compartilhe sua reflexão</h2>
+    <h2 id={`discussion-${devotionalId}`}>Deixe seu comentário</h2>
     <p>Comente aqui o que você aprendeu e refletiu com essa devocional.</p>
     {error && <p role="alert">{error}</p>}
     {notice && <p role="status">{notice}</p>}
     {loading && <p role="status">Carregando reflexões…</p>}
     <button className="text-link" disabled={busy || loading} onClick={() => setAttempt(n => n + 1)}>Atualizar reflexões</button>
     {data && <>
-      <div className="actions" role="group" aria-label="Sua reação privada">
+      <div className="actions" role="group" aria-label="Sua reação">
         <button className="button secondary" aria-pressed={data.reaction === 'like'} disabled={busy || loading} onClick={() => void act(() => repository.react(devotionalId, data.reaction === 'like' ? null : 'like'), 'Reação atualizada.')}>Gostei</button>
         <button className="button secondary" aria-pressed={data.reaction === 'dislike'} disabled={busy || loading} onClick={() => void act(() => repository.react(devotionalId, data.reaction === 'dislike' ? null : 'dislike'), 'Reação atualizada.')}>Não gostei</button>
       </div>

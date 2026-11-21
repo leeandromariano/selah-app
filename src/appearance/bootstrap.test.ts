@@ -31,9 +31,9 @@ function boot({ saved = null, dark = false, denied = false, quota = false, noMed
   }
 }
 describe('bootstrap real de aparência, independente de React e autenticação', () => {
-  it('sem preferência segue Sistema e aplica dark sincronicamente antes de qualquer montagem', () => {
+  it('sem preferência inicia no escuro antes de qualquer montagem', () => {
     const value=boot({dark:true})
-    expect(value.store.getSnapshot()).toMatchObject({preference:'system',resolved:'dark'})
+    expect(value.store.getSnapshot()).toMatchObject({preference:'dark',resolved:'dark'})
     expect(value.root.dataset.theme).toBe('dark')
     expect(value.root.style.colorScheme).toBe('dark')
     expect(value.values.size).toBe(0)
@@ -60,9 +60,9 @@ describe('bootstrap real de aparência, independente de React e autenticação',
     value.store.setPreference('system');value.changeSystem(true)
     expect(value.values.get('selah.appearance.v1')).toBe('system')
   })
-  it.each(['broken','{"theme":"dark"}','<script>bad</script>','', 'DARK'])('storage inválido %j cai em Sistema sem executar conteúdo', saved => {
+  it.each(['broken','{"theme":"dark"}','<script>bad</script>','', 'DARK'])('storage inválido %j cai em Escuro sem executar conteúdo', saved => {
     expect(boot({saved,dark:true}).root.dataset.theme).toBe('dark')
-    expect(boot({saved}).store.getSnapshot().preference).toBe('system')
+    expect(boot({saved}).store.getSnapshot().preference).toBe('dark')
   })
   it('storage negado ou cheio não impede seleção na aba', () => {
     for(const options of [{denied:true},{quota:true}]) {
@@ -73,9 +73,9 @@ describe('bootstrap real de aparência, independente de React e autenticação',
       expect(value.values.size).toBe(0)
     }
   })
-  it('ausência de matchMedia cai em Claro, mas permite escolha explícita', () => {
+  it('ausência de matchMedia mantém Escuro, mas permite escolha explícita', () => {
     const value=boot({noMedia:true})
-    expect(value.root.dataset.theme).toBe('light')
+    expect(value.root.dataset.theme).toBe('dark')
     value.store.setPreference('dark')
     expect(value.root.dataset.theme).toBe('dark')
   })
@@ -87,12 +87,12 @@ describe('bootstrap real de aparência, independente de React e autenticação',
     value.storageEvent('selah.appearance.v1','dark')
     expect(value.store.getSnapshot().preference).toBe('dark')
     value.storageEvent('selah.appearance.v1',null)
-    expect(value.store.getSnapshot().preference).toBe('system')
+    expect(value.store.getSnapshot().preference).toBe('dark')
     value.store.setPreference('light');value.storageEvent(null,null)
     expect(value.root.dataset.theme).toBe('dark')
   })
   it('assina sem notificações redundantes, ignora valores não permitidos e limpa listeners', () => {
-    const value=boot();let changes=0
+    const value=boot({saved:'system'});let changes=0
     const unsubscribe=value.store.subscribe(()=>changes++)
     value.store.setPreference('system')
     expect(changes).toBe(0)

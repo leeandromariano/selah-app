@@ -1,0 +1,18 @@
+[
+  {
+    "term": "Graça (exemplo)",
+    "words": ["graça", "graças"],
+    "original": "Do grego charis: favor dado de graça, sem ser merecido nem comprado.",
+    "context": "No mundo greco-romano, um favor criava dívida: quem recebia ficava devendo ao benfeitor. A graça de Deus quebra essa lógica.",
+    "parallel_reference": "Romanos 11:6",
+    "verses": ["Efésios 2:8", "Romanos 3:24", "Tito 2:11"]
+  },
+  {
+    "term": "Fé (exemplo)",
+    "words": ["fé"],
+    "original": "Do grego pistis: confiança e fidelidade.",
+    "context": "No mundo romano, pistis também era a lealdade numa relação. Fé bíblica é confiar e permanecer fiel.",
+    "parallel_reference": "Hebreus 11:6",
+    "verses": "Hebreus 11:1; Romanos 10:17"
+  }
+]

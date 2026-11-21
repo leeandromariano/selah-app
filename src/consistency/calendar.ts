@@ -29,3 +29,16 @@ export function monthLabel(month: string) {
 export function dayLabel(day: string) {
   return new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(day + 'T12:00:00Z'))
 }
+
+export function presenceWeek(today: string, current: { date: string; completions: number }[], previous: { date: string; completions: number }[] = []) {
+  if (!civilDate(today)) throw new Error('Invalid server day')
+  const start = new Date(today + 'T12:00:00Z')
+  start.setUTCDate(start.getUTCDate() - (start.getUTCDay() + 6) % 7)
+  const known = new Map([...previous, ...current].map(day => [day.date, day.completions]))
+  const labels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
+  return labels.map((label, offset) => {
+    const day = new Date(start); day.setUTCDate(day.getUTCDate() + offset)
+    const date = day.toISOString().slice(0, 10)
+    return { date, label, today: date === today, future: date > today, completed: date > today ? false : known.has(date) ? known.get(date)! > 0 : null }
+  })
+}

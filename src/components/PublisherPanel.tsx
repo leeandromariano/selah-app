@@ -6,11 +6,15 @@ import { createPublisherRepository, publisherMessage } from '../publisher/reposi
 import type { PublisherDevotional } from '../publisher/repository'
 import type { DevotionalInput } from '../admin/repository'
 import { Heading } from './UI'
+import { BiblePassagePicker } from './BiblePassagePicker'
+import { bibleEditorialEnabled } from '../bible/editorialFeature'
+import { guidedDevotionalsEnabled } from '../devotionals/guidedFeature'
+import '../admin-v2.css'
 
 const repository = createPublisherRepository(supabase)
 const blank: DevotionalInput = {
-  author_name: '', title: '', bible_reference: '', bible_text: '', content: '',
-  reflection_question: '', status: 'draft', publish_at: null,
+  author_name: '', title: '', share_phrase: '', bible_reference: '', bible_text: '', content: '',
+  reflection_question: '', practical_challenge: '', prayer_prompt: '', status: 'draft', publish_at: null,
 }
 
 export function PublisherPanel() {
@@ -29,6 +33,7 @@ function PublisherWorkspace({ userId }: { userId: string }) {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [attempt, setAttempt] = useState(0)
+  const [showBiblePicker, setShowBiblePicker] = useState(false)
   const active = useRef(false)
   useEffect(() => { active.current = true; return () => { active.current = false } }, [])
   useEffect(() => {
@@ -43,6 +48,7 @@ function PublisherWorkspace({ userId }: { userId: string }) {
 
   function edit(item: DevotionalInput & { id?: string }) {
     setEditing({ ...item, author_name: item.author_name ?? '' })
+    setShowBiblePicker(false)
     setError(''); setNotice('')
   }
   async function save(event: FormEvent<HTMLFormElement>) {
@@ -75,36 +81,41 @@ function PublisherWorkspace({ userId }: { userId: string }) {
   }
   const fields = [
     { key: 'title', label: 'Título' },
-    { key: 'bible_reference', label: 'Referência bíblica' },
-    { key: 'bible_text', label: 'Texto bíblico' },
+    { key: 'share_phrase', label: 'Frase central para compartilhar' },
+    ...(!bibleEditorialEnabled ? [{ key: 'bible_reference', label: 'Referência bíblica' }, { key: 'bible_text', label: 'Texto bíblico' }] as const : []),
     { key: 'content', label: 'Reflexão' },
     { key: 'reflection_question', label: 'Para refletir' },
+    ...(guidedDevotionalsEnabled ? [{ key: 'practical_challenge', label: 'Coram Deo na Prática' }, { key: 'prayer_prompt', label: 'Oração' }] as const : []),
   ] as const
   const stateLabel = (item: PublisherDevotional) => item.status === 'published' ? 'Publicado'
     : item.status === 'scheduled' ? 'Agendado'
     : item.review_requested_at ? 'Em revisão' : 'Rascunho'
-  return <>
-    <Heading eyebrow="MEUS TEXTOS" title="Espaço do PUBLICADOR" description="Escreva seus próprios devocionais e envie rascunhos para revisão editorial. Você não possui acesso administrativo." />
+  const counts = [{ title: 'Rascunho', art: 'rascunho', value: items.filter(item => stateLabel(item) === 'Rascunho').length }, { title: 'Em revisão', art: 'revisao', value: items.filter(item => stateLabel(item) === 'Em revisão').length }, { title: 'Agendado', art: 'agendado', value: items.filter(item => item.status === 'scheduled').length }, { title: 'Publicado', art: 'publicado', value: items.filter(item => item.status === 'published').length }]
+  return <div className="admin-v2 publisher-v2">
+    <div className="admin-head"><Heading eyebrow="MEUS TEXTOS" title="Espaço do PUBLICADOR" description="Escreva seus próprios devocionais e envie rascunhos para revisão editorial. Você não possui acesso administrativo." /></div>
     <div className="info">A assinatura do autor aparece publicamente no devocional. Sua conta é registrada separadamente para controle de autoria e permissões. Textos enviados para revisão ficam bloqueados para edição até a devolução.</div>
     {loading ? <p role="status">Carregando seus devocionais…</p> : <>
       {error && <div className="info" role="alert">{error}</div>}
       {!ready ? <button className="button secondary" onClick={() => { setLoading(true); setAttempt(value => value + 1) }}>Tentar novamente</button> : <>
-        <div className="section-heading"><h2>Meus devocionais</h2><button className="button primary" disabled={busy} onClick={() => edit(blank)}>+ Novo devocional</button></div>
+        <div className="stats">{counts.map(stat => <div className="stat" key={stat.title}><p>{stat.title}</p><strong>{stat.value}</strong><small>Seus textos</small><img src={`/home/${stat.art}.webp`} alt="" width="96" height="96" loading="lazy" /></div>)}</div>
+        <div className="section-heading admin-manage"><div><h2>Meus devocionais</h2></div><button className="button primary" disabled={busy} onClick={() => edit(blank)}>+ Novo devocional</button></div>
         {notice && <p className="success" role="status">{notice}</p>}
         {editing && <form className="editor" onSubmit={event => void save(event)} noValidate>
-          <h3>{editing.id ? 'Editar meu rascunho' : 'Novo devocional'}</h3>
+          <div className="editor-head"><span className="editor-art" aria-hidden="true"><img src="/home/novo.webp" alt="" width="72" height="72" /></span><div><h3>{editing.id ? 'Editar meu rascunho' : 'Novo devocional'}</h3><p className="muted">Preencha as etapas: Palavra, Real, Coram Deo na Prática, Oração e a frase para lembrar.</p></div></div>
           <fieldset disabled={busy}><div className="form-grid">
-            <label>Autor (crédito público)<input required maxLength={120} value={editing.author_name ?? ''} onChange={event => setEditing({ ...editing, author_name: event.target.value })} /></label>
-            {fields.map(field => <label key={field.key}>{field.label}<textarea required maxLength={field.key === 'title' || field.key === 'bible_reference' ? 200 : undefined} value={editing[field.key]} onChange={event => setEditing({ ...editing, [field.key]: event.target.value })} /></label>)}
-          </div><div className="actions">
+            <label data-field="author_name">Autor (crédito público)<input required maxLength={120} value={editing.author_name ?? ''} onChange={event => setEditing({ ...editing, author_name: event.target.value })} /></label>
+            {fields.map(field => <label key={field.key} data-field={field.key}>{field.label}<textarea required={field.key !== 'share_phrase' && !(editing.id && (field.key === 'practical_challenge' || field.key === 'prayer_prompt') && !editing.practical_challenge && !editing.prayer_prompt)} maxLength={field.key === 'share_phrase' ? 180 : field.key === 'title' || field.key === 'bible_reference' ? 200 : field.key === 'practical_challenge' || field.key === 'prayer_prompt' ? 500 : undefined} value={editing[field.key] ?? ''} onChange={event => setEditing({ ...editing, [field.key]: event.target.value })} /></label>)}
+            {bibleEditorialEnabled && <div className="editor-passage"><p>Passagem: {editing.bible_reference || 'nenhuma selecionada'}{editing.bible_selection && ` · ${editing.bible_selection.translation.toUpperCase()}`}</p><button type="button" className="button secondary" onClick={() => setShowBiblePicker(value => !value)}>Selecionar passagem</button>{showBiblePicker && <BiblePassagePicker onSelect={({ reference, ...selection }) => { setEditing({ ...editing, bible_reference: reference, bible_text: null, bible_selection: selection }); setShowBiblePicker(false) }} />}</div>}
+          </div><div className="actions editor-actions">
             <button className="button primary" type="submit">{busy ? 'Salvando…' : 'Salvar rascunho'}</button>
             <button className="button secondary" type="button" onClick={() => setEditing(null)}>Cancelar</button>
           </div></fieldset>
         </form>}
         {!items.length && <div className="info">Você ainda não criou devocionais.</div>}
         <div className="admin-list">{items.map(item => <div className="admin-row" key={item.id}>
+          <span className="mini-icon"><img src="/home/devocionais.webp" alt="" width="40" height="40" loading="lazy" /></span>
           <div><strong>{item.title}</strong><small>Por {item.author_name?.trim() || 'Autoria não informada'} · {item.bible_reference}</small></div>
-          <span className="chip">{stateLabel(item)}</span>
+          <span className="chip" data-status={item.status === 'published' ? 'published' : item.status === 'scheduled' ? 'scheduled' : item.review_requested_at ? 'review' : 'draft'}>{stateLabel(item)}</span>
           {item.status === 'draft' && !item.review_requested_at && <>
             <button className="text-link" disabled={busy} onClick={() => edit(item)}>Editar</button>
             <button className="text-link" disabled={busy} onClick={() => void submit(item.id)}>Enviar para revisão</button>
@@ -112,5 +123,5 @@ function PublisherWorkspace({ userId }: { userId: string }) {
         </div>)}</div>
       </>}
     </>}
-  </>
+  </div>
 }

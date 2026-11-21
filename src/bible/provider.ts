@@ -1,9 +1,14 @@
 import type { Location } from './catalog'
-export type Verse = { number: number; text: string }
+import { books } from './catalog'
+import { fetchApiChapter } from './apiClient'
+import type { ApiChapter } from './apiChapter'
+import { bibleAvailable } from './availability'
+export type Verse = { number: number; endNumber?: number; text: string }
 export type Translation = { id: string; name: string; abbreviation: string; language: string; license: string; attribution: string; available: boolean; licensedText: boolean; books: readonly string[] }
 export interface BibleProvider {
   translations: readonly Translation[]
   chapter(location: Location): Promise<Verse[]>
+  chapterDetails?(location: Location): Promise<ApiChapter>
   supportsReference?(location: Location): boolean
 }
 
@@ -21,7 +26,12 @@ export const nviAdapter: BibleProvider = {
   translations: [{ id: 'nvi', name: 'Nova Versão Internacional', abbreviation: 'NVI', language: 'pt-BR', license: 'Autorização pendente', attribution: '', available: false, licensedText: false, books: [] }],
   async chapter() { throw Error('Tradução indisponível') },
 }
-export const bibleProvider: BibleProvider = { translations: [...demoProvider.translations, ...nviAdapter.translations], chapter: location => location.translation === 'demonstracao' ? demoProvider.chapter(location) : nviAdapter.chapter(location) }
+const developmentEditions: Translation[] = ['nvt', 'ara', 'ntlh'].map((id, index) => ({ id, name: ['Nova Versão Transformadora', 'Almeida Revista e Atualizada', 'Nova Tradução na Linguagem de Hoje'][index], abbreviation: id.toUpperCase(), language: 'pt-BR', license: 'API.Bible — não comercial', attribution: 'A atribuição é fornecida com cada capítulo.', available: bibleAvailable, licensedText: false, books: books.map(book => book.id) }))
+export const bibleProvider: BibleProvider = {
+  translations: [...(bibleAvailable ? [] : demoProvider.translations), ...developmentEditions],
+  chapter: location => location.translation === 'demonstracao' ? demoProvider.chapter(location) : nviAdapter.chapter(location),
+  chapterDetails: location => fetchApiChapter(location),
+}
 export function licensedReferenceLink(reference: string, provider: BibleProvider, parse: (value: string) => Omit<Location, 'translation'> | null) {
   const location = parse(reference)
   const translation = provider.translations.find(item => item.available && item.licensedText && location && item.books.includes(location.book))

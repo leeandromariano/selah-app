@@ -17,22 +17,44 @@ async function fillRegistration() {
   await user.click(screen.getByRole('button', { name: /Criar conta/ }))
 }
 
-describe('interface de homologação', () => {
-  it('identifica ambiente e oferece login somente por e-mail', async () => {
+describe('interface em ambiente hospedado', () => {
+  it('oferece login somente por e-mail sem identificar o ambiente', async () => {
     vi.mocked(supabase.auth.onAuthStateChange).mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } } as never)
     vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: null }, error: null })
     location.hash = 'login'
     render(<App />)
-    expect((await screen.findAllByText(/Ambiente de homologação \(STAGING\)/)).length).toBeGreaterThan(0)
-    expect(screen.getByLabelText('E-mail')).toBeVisible()
+    expect(await screen.findByLabelText('E-mail')).toBeVisible()
+    expect(screen.queryByText(/homologação|STAGING|Ambiente local|dados fictícios|informações fictícias/i)).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Usuário ou e-mail')).not.toBeInTheDocument()
-    expect(screen.getByText('Conteúdo e administração no ambiente de homologação')).toBeVisible()
-    expect(screen.queryByText(/Ambiente local/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Conteúdo e administração no ambiente/)).not.toBeInTheDocument()
     expect(supabase.functions.invoke).not.toHaveBeenCalled()
   })
-  it('identifica homologação na privacidade', () => {
+  it('no método hospedado o campo aceita username ou e-mail: e-mail entra direto, username usa a função', async () => {
+    const user = userEvent.setup()
+    vi.mocked(supabase.auth.signInWithPassword).mockResolvedValue({ data: { session: { user: { id: 'f' } } }, error: null } as never)
+    vi.mocked(supabase.functions.invoke).mockResolvedValue({ data: { access_token: 'a', refresh_token: 'r' }, error: null } as never)
+    vi.mocked(supabase.auth.setSession).mockResolvedValue({ data: { session: { user: { id: 'f' } } }, error: null } as never)
+    const view = render(<AuthForm register={false} method="hosted" />)
+    await user.type(screen.getByLabelText('Usuário ou e-mail'), 'pessoa@example.invalid')
+    await user.type(screen.getByLabelText('Senha'), 'senha-ficticia')
+    await user.click(screen.getByRole('button', { name: /Entrar/ }))
+    await screen.findByText('Entrada realizada com sucesso.')
+    expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({ email: 'pessoa@example.invalid', password: 'senha-ficticia' })
+    expect(supabase.functions.invoke).not.toHaveBeenCalled()
+    view.unmount()
+    vi.mocked(supabase.auth.signInWithPassword).mockClear()
+    render(<AuthForm register={false} method="hosted" />)
+    await user.type(screen.getByLabelText('Usuário ou e-mail'), '@Pessoa_01')
+    await user.type(screen.getByLabelText('Senha'), 'senha-ficticia')
+    await user.click(screen.getByRole('button', { name: /Entrar/ }))
+    await screen.findByText('Entrada realizada com sucesso.')
+    expect(supabase.functions.invoke).toHaveBeenCalledWith('password-login', { body: { identifier: 'pessoa_01', password: 'senha-ficticia' } })
+    expect(supabase.auth.signInWithPassword).not.toHaveBeenCalled()
+  })
+  it('política de privacidade não se apresenta como ambiente de testes', () => {
     render(<PrivacyPolicy />)
-    expect(screen.getByText(/Informações para o ambiente de homologação/)).toBeVisible()
+    expect(screen.getByText('Como o Coram trata as suas informações.')).toBeVisible()
+    expect(screen.queryByText(/homologação|ambiente de testes|dados fictícios/i)).not.toBeInTheDocument()
   })
   it('usa a sessão retornada pelo cadastro sem novo login nem sessão fabricada', async () => {
     vi.mocked(supabase.auth.signUp).mockResolvedValueOnce({ data: { session: { user: { id: 'fiction' } }, user: { id: 'fiction' } }, error: null } as never)
