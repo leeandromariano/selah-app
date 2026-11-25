@@ -6,6 +6,7 @@ import { createPublisherRepository, publisherMessage } from '../publisher/reposi
 import type { PublisherDevotional } from '../publisher/repository'
 import type { DevotionalInput } from '../admin/repository'
 import { Heading } from './UI'
+import { useFormDraft } from '../admin/formDraft'
 import { BiblePassagePicker } from './BiblePassagePicker'
 import { bibleEditorialEnabled } from '../bible/editorialFeature'
 import { guidedDevotionalsEnabled } from '../devotionals/guidedFeature'
@@ -28,7 +29,7 @@ function PublisherWorkspace({ userId }: { userId: string }) {
   const [items, setItems] = useState<PublisherDevotional[]>([])
   const [loading, setLoading] = useState(true)
   const [ready, setReady] = useState(false)
-  const [editing, setEditing] = useState<DevotionalInput & { id?: string } | null>(null)
+  const { editing, setEditing, recovered } = useFormDraft<DevotionalInput & { id?: string }>('publicador', userId)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
@@ -102,6 +103,7 @@ function PublisherWorkspace({ userId }: { userId: string }) {
         {notice && <p className="success" role="status">{notice}</p>}
         {editing && <form className="editor" onSubmit={event => void save(event)} noValidate>
           <div className="editor-head"><span className="editor-art" aria-hidden="true"><img src="/home/novo.webp" alt="" width="72" height="72" /></span><div><h3>{editing.id ? 'Editar meu rascunho' : 'Novo devocional'}</h3><p className="muted">Preencha as etapas: Palavra, Real, Coram Deo na Prática, Oração e a frase para lembrar.</p></div></div>
+          {recovered && <p className="muted" role="note">Recuperamos o que você estava preenchendo. Salve para guardar no Coram ou cancele para descartar.</p>}
           <fieldset disabled={busy}><div className="form-grid">
             <label data-field="author_name">Autor (crédito público)<input required maxLength={120} value={editing.author_name ?? ''} onChange={event => setEditing({ ...editing, author_name: event.target.value })} /></label>
             {fields.map(field => <label key={field.key} data-field={field.key}>{field.label}<textarea required={field.key !== 'share_phrase' && !(editing.id && (field.key === 'practical_challenge' || field.key === 'prayer_prompt') && !editing.practical_challenge && !editing.prayer_prompt)} maxLength={field.key === 'share_phrase' ? 180 : field.key === 'title' || field.key === 'bible_reference' ? 200 : field.key === 'practical_challenge' || field.key === 'prayer_prompt' ? 500 : undefined} value={editing[field.key] ?? ''} onChange={event => setEditing({ ...editing, [field.key]: event.target.value })} /></label>)}

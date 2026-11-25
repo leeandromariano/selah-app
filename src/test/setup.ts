@@ -19,6 +19,7 @@ beforeEach(() => {
   ;(window.selahAppearance as AppearanceStore | undefined)?.dispose()
   Reflect.deleteProperty(window, 'selahAppearance')
   localStorage.removeItem('selah.appearance.v1')
+  for (const key of Object.keys(localStorage)) if (key.startsWith('coram.devocional-rascunho.')) localStorage.removeItem(key)
   vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })))
   new Function(appearanceBootstrap)()
   const emptyQuery = { select: vi.fn(), eq: vi.fn(), lte: vi.fn(), order: vi.fn(), range: vi.fn().mockResolvedValue({ data: [], error: null }) }

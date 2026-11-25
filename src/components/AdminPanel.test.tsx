@@ -21,6 +21,41 @@ async function fill(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: 'Usar passagem fictícia' }))
 }
 describe('painel administrativo real', () => {
+  it('sair da aba e voltar não apaga o devocional que está sendo preenchido', async () => {
+    adminBoundary()
+    const user = userEvent.setup()
+    openAdmin()
+    await user.click(await screen.findByRole('button', { name: '+ Novo devocional' }))
+    await user.type(screen.getByLabelText('Título'), 'Texto pela metade')
+    const field = screen.getByLabelText('Título')
+    const session = { user: { id: editorialFixture.author_id } } as never
+    // volta à aba: o Supabase reemite a sessão; o formulário continua montado, sem tela de verificação
+    for (const type of ['SIGNED_IN', 'TOKEN_REFRESHED'] as const) {
+      act(() => { vi.mocked(supabase.auth.onAuthStateChange).mock.calls.at(-1)![0](type, session) })
+      expect(screen.queryByText('Verificando acesso administrativo…')).not.toBeInTheDocument()
+      expect(screen.getByLabelText('Título')).toBe(field)
+    }
+    // rede ainda voltando: a falha passageira na conferência também não fecha o formulário
+    vi.mocked(supabase.rpc).mockResolvedValueOnce({ data: null, error: { message: 'Failed to fetch' } } as never)
+    await act(async () => { vi.mocked(supabase.auth.onAuthStateChange).mock.calls.at(-1)![0]('TOKEN_REFRESHED', session) })
+    expect(screen.getByLabelText('Título')).toHaveValue('Texto pela metade')
+  })
+  it('se a página recarregar, o rascunho volta; cancelar descarta', async () => {
+    adminBoundary()
+    const user = userEvent.setup()
+    const first = openAdmin()
+    await user.click(await screen.findByRole('button', { name: '+ Novo devocional' }))
+    await user.type(screen.getByLabelText('Título'), 'Sobrevive à recarga')
+    first.unmount()
+    const second = openAdmin()
+    expect(await screen.findByLabelText('Título')).toHaveValue('Sobrevive à recarga')
+    expect(screen.getByRole('note')).toHaveTextContent('Recuperamos')
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }))
+    second.unmount()
+    openAdmin()
+    await screen.findByRole('button', { name: '+ Novo devocional' })
+    expect(screen.queryByLabelText('Título')).not.toBeInTheDocument()
+  })
   it('preserva comunidade após foco e renovação de sessão e remontagem', async () => {
     adminBoundary()
     const fallbackRpc = vi.mocked(supabase.rpc).getMockImplementation()!
