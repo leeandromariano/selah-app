@@ -161,7 +161,7 @@ export default function LogosPage({ repo = defaultRepository }: { repo?: LogosRe
           <p className="lg-record">{mode === 'vigilia' ? `Melhor onda: ${state.vigilia_best_wave} · Partidas: ${state.vigilia_runs}` : `Vitórias: ${state.farol_wins} de ${state.farol_runs}`}</p>
         </div>
         <button type="button" className="lg-play" aria-label={`Jogar ${current.name}`} onClick={() => play(null)}><strong>JOGAR</strong><small>{current.name}</small></button>
-        <p className="lg-hint">{touch ? 'Analógico à esquerda, habilidades à direita. A mira é assistida.' : 'WASD move · mouse mira · clique atira · C, Q, E e X são as habilidades.'}</p>
+        <p className="lg-hint">{touch ? 'Analógico à esquerda; ataque e habilidades à direita. A mira é assistida.' : 'WASD move · mouse mira · clique atira · C, Q, E e X são as habilidades.'}</p>
       </aside>
     </section>}
   </div>

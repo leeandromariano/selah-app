@@ -59,10 +59,24 @@ describe('LOGOS: movimento e disparo', () => {
     const g = newGame(); calm(g)
     const e = add(g, 'sombra', g.player.x, g.player.y - 110); e.speed = 0; e.hp = e.maxHp = 300
     const out = add(g, 'sombra', g.player.x + 600, g.player.y); out.speed = 0
-    g.input.assist = true; g.input.fire = false
+    g.input.assist = true; g.input.fire = true
     run(g, 0.6)
     expect(e.hp).toBeLessThan(e.maxHp); expect(out.hp).toBe(out.maxHp)
     expect(g.player.aim).toBeCloseTo(-Math.PI / 2, 1)
+  })
+  it('no celular não ataca sozinho: só golpeia pelo botão, e um toque rápido dá um golpe', () => {
+    const g = newGame(); calm(g)
+    const e = add(g, 'sombra', g.player.x, g.player.y - 90); e.speed = 0; e.hp = e.maxHp = 300
+    g.input.assist = true
+    run(g, 1)
+    expect(e.hp).toBe(e.maxHp)
+    g.input.tap = true
+    run(g, 0.1)
+    const once = e.hp
+    expect(once).toBeLessThan(e.maxHp)
+    e.x = g.player.x; e.y = g.player.y - 90
+    run(g, 1)
+    expect(e.hp).toBe(once)
   })
   it('inimigo oculto só é alvo depois do Pulso ou de chegar perto', () => {
     const g = newGame(); calm(g)

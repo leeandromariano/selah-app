@@ -408,3 +408,15 @@
 /* a etiqueta do Portador fica abaixo da plataforma, sem cobrir a pedra */
 .lg-hero { padding-bottom: 46px; }
 .lg-hero .lg-hero-tag { bottom: 2px; }
+/* celular: botão de ataque grande no canto e as habilidades em arco ao redor dele */
+.lg-game[data-touch='true'] .lg-skills { right: 12px; width: 204px; height: 204px; padding: 0; z-index: 4; pointer-events: none; }
+.lg-game[data-touch='true'] .lg-skill, .lg-attack { pointer-events: auto; }
+.lg-game[data-touch='true'] .lg-skill, .lg-game[data-touch='true'] .lg-skill[data-skill='x'] { width: 58px; height: 58px; margin: 0; }
+.lg-game[data-touch='true'] .lg-skill[data-skill='c'] { right: 144px; bottom: 14px; }
+.lg-game[data-touch='true'] .lg-skill[data-skill='q'] { right: 127px; bottom: 79px; }
+.lg-game[data-touch='true'] .lg-skill[data-skill='e'] { right: 79px; bottom: 127px; }
+.lg-game[data-touch='true'] .lg-skill[data-skill='x'] { right: 14px; bottom: 144px; }
+.lg-attack { position: absolute; right: 0; bottom: 0; width: 100px; height: 100px; padding: 0; border-radius: 50%; display: grid; place-items: center; align-content: center; gap: 2px; color: #fff; border: 2px solid #ff8a3d; background: radial-gradient(circle at 50% 35%, rgba(255, 140, 60, .55), rgba(90, 30, 8, .88) 70%); box-shadow: 0 0 22px rgba(255, 85, 0, .55), inset 0 0 18px rgba(255, 150, 80, .35); touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+.lg-attack:active { transform: scale(.94); }
+.lg-attack .lg-art { width: 52px; height: 52px; pointer-events: none; }
+.lg-attack b { font-size: 11px; letter-spacing: .1em; text-shadow: 0 1px 4px #000; }

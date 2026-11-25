@@ -4,7 +4,7 @@ import type { LogosMode, LogosState, PhaseReport, PhaseResult, RunReward } from 
 import type { PhaseDef } from './campaign'
 import { createStoryGame } from './story'
 import { StoryResult } from './StoryResult'
-import { applyBlessing, blessings, createGame, forfeit, hudSnapshot, queueAbility, update, type BlessingId, type Hud, type Phase } from './sim'
+import { applyBlessing, blessings, createGame, forfeit, hudSnapshot, pressAttack, queueAbility, releaseAttack, update, type BlessingId, type Hud, type Phase } from './sim'
 import { makeView, render, renderMinimap, warmArena, type View } from './render'
 import { Art3D } from './Art3D'
 import { bindDesktop, bindJoystick, type Joystick } from './input'
@@ -144,6 +144,8 @@ export function LogosGame({ mode, armadura, repo, touch, onExit, onSaved, onAgai
 
   const choose = (id: BlessingId) => { applyBlessing(game, id); setPhase(game.phase) }
   const press = (k: 'c' | 'q' | 'e' | 'x') => queueAbility(game, k)
+  const attack = () => pressAttack(game)
+  const stopAttack = () => releaseAttack(game)
   const result = game.result
   const title = phase === 'won' ? 'VITÓRIA // ESTÁ CONSUMADO' : mode === 'vigilia' ? 'A VIGÍLIA TERMINOU' : 'O FAROL NÃO RESISTIU'
 
@@ -168,6 +170,10 @@ export function LogosGame({ mode, armadura, repo, touch, onExit, onSaved, onAgai
     <div className="lg-skills" role="group" aria-label="Habilidades">
       {skills.map(s => <button type="button" key={s.key} className="lg-skill" data-skill={s.key} data-k={`skill-${s.key}`} data-ready="true" aria-label={`${s.name} (${s.label})`} onPointerDown={e => { e.preventDefault(); press(s.key) }} onClick={e => { if (e.detail === 0) press(s.key) }}>
         <kbd>{s.label}</kbd>{s.key === 'q' || s.key === 'e' ? <Art3D name={s.key === 'q' ? 'armadura-escudo' : 'armadura-espada'} fallback={<span className="lg-skill-icon" aria-hidden="true" />} /> : <span className="lg-skill-icon" aria-hidden="true" />}<em data-k={`cd-${s.key}`} /><small>{s.name}</small></button>)}
+      {touch && <button type="button" className="lg-attack" aria-label="Atacar com a espada"
+        onPointerDown={e => { e.preventDefault(); e.currentTarget.setPointerCapture?.(e.pointerId); attack() }}
+        onPointerUp={stopAttack} onPointerCancel={stopAttack} onLostPointerCapture={stopAttack} onContextMenu={e => e.preventDefault()}
+        onClick={e => { if (e.detail === 0) pressAttack(game, false) }}><Art3D name="armadura-espada" fallback={<span aria-hidden="true">⚔</span>} /><b>ATACAR</b></button>}
     </div>
     <div className="lg-minimap"><canvas ref={miniRef} width={150} height={110} aria-hidden="true" /><small>{story ? 'MAPA DA FASE' : mode === 'vigilia' ? 'ARENA' : 'PROTOCOLO LUZ'}</small></div>
     {touch && <div className="lg-stick-zone" ref={zoneRef}><div className="lg-stick-base" ref={baseRef} /><div className="lg-stick-knob" ref={knobRef} /></div>}

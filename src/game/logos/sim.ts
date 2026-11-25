@@ -23,7 +23,7 @@ export type Corpse = { x: number; y: number; r: number; kind: EnemyKind; a: numb
 export type Fx = { shake: number; slashes: Slash[]; flashes: Flash[]; pillars: Pillar[]; corpses: Corpse[] }
 export type Swing = { x: number; y: number; a: number; reach: number; arc: number; dmg: number }
 
-export type Input = { moveX: number; moveY: number; aimX: number; aimY: number; fire: boolean; assist: boolean }
+export type Input = { moveX: number; moveY: number; aimX: number; aimY: number; fire: boolean; assist: boolean; tap?: boolean }
 export type Want = { c: boolean; q: boolean; e: boolean; x: boolean }
 export type BlessingId = 'folego' | 'luz' | 'passos' | 'fe' | 'eco' | 'brasa' | 'lamina'
 export const blessings: { id: BlessingId; name: string; description: string }[] = [
@@ -265,6 +265,10 @@ function castPulse(g: Game) {
   burst(g, p.x, p.y, 24, '#ffd9a8', 260, 0.5)
 }
 
+// Botão de ataque do celular: um toque dá um golpe; segurar repete na cadência da espada. `hold` falso é a ativação por teclado/leitor de tela.
+export function pressAttack(g: Game, hold = true) { g.input.assist = true; g.input.tap = true; if (hold) g.input.fire = true }
+export function releaseAttack(g: Game) { g.input.fire = false }
+
 function castShield(g: Game) { g.player.shield = g.player.shieldMax }
 
 function castDash(g: Game) {
@@ -445,12 +449,11 @@ function step(g: Game, dt: number) {
   p.walk += ((p.dashT > 0 ? 0 : Math.min(1, mv)) - p.walk) * Math.min(1, dt * 10); p.stride += p.walk * dt * 13; p.atk += dt; p.cast = Math.max(0, p.cast - dt)
   p.facing += ((Math.cos(p.aim) > 0 ? -1 : 1) - p.facing) * Math.min(1, dt * 16)
 
-  // golpe de espada: arco curto à frente do Portador (no celular, só golpeia quando há alvo ao alcance)
+  // golpe de espada: arco curto à frente do Portador. Só ataca por comando (clique ou botão de ataque); no celular a mira continua assistida
   p.fireCd -= dt
   g.swingNow = null
-  const inReach = !!target && dist(target.x, target.y, p.x, p.y) < tuning.swingReach + target.r + 40
-  const wantsFire = g.input.assist ? inReach : g.input.fire
-  if (wantsFire && p.fireCd <= 0 && p.dashT <= 0) swing(g)
+  // um toque rápido (apertar e soltar entre dois quadros ou durante a recarga) fica guardado até o golpe sair
+  if ((g.input.fire || g.input.tap) && p.fireCd <= 0 && p.dashT <= 0) { g.input.tap = false; swing(g) }
 
   if (g.mode === 'vigilia') updateWaves(g, dt); else if (g.mode === 'farol') updateFarol(g, dt); else g.hook?.(g, dt)
   if (g.phase !== 'playing') return
