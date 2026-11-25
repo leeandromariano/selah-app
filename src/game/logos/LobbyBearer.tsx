@@ -33,7 +33,8 @@ export function LobbyBearer({ fallback }: { fallback: React.ReactNode }) {
       const t = now / 1000
       ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; ctx.clearRect(0, 0, CW, CH)
       // 1) halo e raios girando, atrás de tudo
-      const hx = OX + W * 0.58, hy = OY + H * 0.46, rr = Math.min(CW * 0.5, CH * 0.5)
+      // o raio nunca passa da borda do canvas: o degradê chega a zero antes e não aparece corte reto
+      const hx = OX + W * 0.58, hy = OY + H * 0.46, rr = Math.min(hx, CW - hx, hy, CH - hy)
       ctx.globalCompositeOperation = 'lighter'
       const halo = ctx.createRadialGradient(hx, hy, 10, hx, hy, rr); halo.addColorStop(0, 'rgba(255,170,80,.34)'); halo.addColorStop(0.5, 'rgba(255,100,20,.13)'); halo.addColorStop(1, 'rgba(255,85,0,0)')
       ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(hx, hy, rr, 0, 7); ctx.fill()

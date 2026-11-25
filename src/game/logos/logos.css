@@ -405,3 +405,6 @@
 
 /* Portador do lobby (render com fundo já removido): mistura normal e máscara radial suave só nas bordas — armadura, malha e pedestal 100% opacos sobre a luz de fundo. O jogo (Arsenal e arena) mantém o render e a mistura anteriores. */
 .logos-3d-cutout.lg-lobby-static { mix-blend-mode: normal; -webkit-mask-image: radial-gradient(ellipse farthest-corner at 50% 50%, #000 78%, transparent 98%); mask-image: radial-gradient(ellipse farthest-corner at 50% 50%, #000 78%, transparent 98%); }
+/* a etiqueta do Portador fica abaixo da plataforma, sem cobrir a pedra */
+.lg-hero { padding-bottom: 46px; }
+.lg-hero .lg-hero-tag { bottom: 2px; }
