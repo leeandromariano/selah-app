@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 252" preserveAspectRatio="xMidYMid slice" role="presentation">
+  <defs>
+    <linearGradient id="slab" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6a6c74"/><stop offset=".45" stop-color="#3a3c43"/><stop offset="1" stop-color="#15161a"/></linearGradient>
+    <linearGradient id="f1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2c2e35"/><stop offset="1" stop-color="#0d0e11"/></linearGradient>
+    <linearGradient id="f2" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4c55"/><stop offset="1" stop-color="#1b1c21"/></linearGradient>
+    <linearGradient id="f3" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#08080a"/><stop offset="1" stop-color="#26282e"/></linearGradient>
+    <radialGradient id="glow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ff5500" stop-opacity=".34"/><stop offset="1" stop-color="#ff5500" stop-opacity="0"/></radialGradient>
+  </defs>
+  <ellipse cx="640" cy="190" rx="300" ry="120" fill="url(#glow)"/>
+  <rect x="430" y="70" width="200" height="220" rx="34" fill="url(#slab)" stroke="#ffffff" stroke-opacity=".22" stroke-width="2"/>
+  <rect x="440" y="80" width="180" height="200" rx="26" fill="none" stroke="#ffffff" stroke-opacity=".06" stroke-width="2"/>
+  <polygon points="640,8 800,92 770,300 600,300 560,120" fill="url(#f1)"/>
+  <polygon points="640,8 800,92 700,150 560,120" fill="url(#f2)"/>
+  <polygon points="700,150 800,92 770,300 700,300" fill="url(#f3)"/>
+  <polygon points="700,150 600,300 700,300" fill="#0a0a0c"/>
+  <polyline points="640,8 800,92 770,300" fill="none" stroke="#ff5500" stroke-opacity=".6" stroke-width="2.5" stroke-linejoin="round"/>
+  <polyline points="560,120 640,8 800,92" fill="none" stroke="#ffffff" stroke-opacity=".28" stroke-width="2" stroke-linejoin="round"/>
+</svg>

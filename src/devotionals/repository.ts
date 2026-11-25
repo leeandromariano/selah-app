@@ -1,8 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-export type Publication = { author_name?: string | null; id: string; title: string; bible_reference: string; bible_text: string; content: string; reflection_question: string; publish_at: string; reading_revision: number }
+import type { BibleSelectionRecord } from '../admin/repository'
+import { bibleEditorialEnabled } from '../bible/editorialFeature.ts'
+import { guidedDevotionalsEnabled } from './guidedFeature.ts'
+export type Publication = { author_name?: string | null; id: string; title: string; share_phrase?: string | null; bible_reference: string; bible_text: string | null; bible_selection?: BibleSelectionRecord | null; content: string; reflection_question: string; practical_challenge?: string | null; prayer_prompt?: string | null; publish_at: string; reading_revision: number }
 export type Opening = { id: string; devotional_id: string | null; opened_at: string }
-export const publicationColumns = 'id,author_name,title,bible_reference,bible_text,content,reflection_question,publish_at,reading_revision'
+export const publicationColumns = `id,author_name,title,share_phrase,bible_reference,bible_text,${bibleEditorialEnabled ? 'bible_selection,' : ''}content,reflection_question,${guidedDevotionalsEnabled ? 'practical_challenge,prayer_prompt,' : ''}publish_at,reading_revision`
 export const readingTimeZone = 'America/Sao_Paulo'
 export function localDay(instant: string | Date) {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: readingTimeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(instant))
@@ -16,7 +19,7 @@ export function displayDate(instant: string) {
   return new Intl.DateTimeFormat('pt-BR', { timeZone: readingTimeZone, dateStyle: 'medium' }).format(new Date(instant))
 }
 export function toCard(item: Publication) {
-  return { id: item.id, author: item.author_name?.trim() ?? '', title: item.title, reference: item.bible_reference, verse: item.bible_text, summary: item.content.length > 150 ? item.content.slice(0, 150) + '…' : item.content, reflection: item.content, question: item.reflection_question, theme: 'Devocional', date: displayDate(item.publish_at), minutes: Math.max(1, Math.ceil((item.bible_text + ' ' + item.content).trim().split(/\s+/).length / 200)), color: 'lavender' }
+  return { id: item.id, author: item.author_name?.trim() ?? '', title: item.title, reference: item.bible_reference, verse: item.bible_text ?? '', summary: item.content.length > 150 ? item.content.slice(0, 150) + '…' : item.content, reflection: item.content, question: item.reflection_question, theme: 'Devocional', date: displayDate(item.publish_at), minutes: Math.max(1, Math.ceil(((item.bible_text ?? '') + ' ' + item.content).trim().split(/\s+/).length / 200)), color: 'lavender' }
 }
 export function devotionalMessage(error: unknown) {
   const code = (error as { code?: string })?.code

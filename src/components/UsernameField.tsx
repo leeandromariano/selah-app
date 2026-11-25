@@ -5,7 +5,7 @@ import { createUsernameRepository, normalizeUsername, usernameMessage } from '..
 const repository = createUsernameRepository(supabase)
 export function UsernameField({ userId }: { userId: string }) {
   const [expanded, setExpanded] = useState(false)
-  return <section><h3>Nome de usuário</h3><p>Seu username é único e não muda nesta versão. {loginMethod === 'local' ? 'Entre com username (com ou sem @) ou e-mail e senha.' : 'Entre com e-mail e senha.'} Instagram é opcional; novas contas exigem WhatsApp.</p><button className="button secondary" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>Consultar meu username</button>{expanded && <Username key={userId} userId={userId} />}</section>
+  return <section><h3>Nome de usuário</h3><p>Seu username é único e não muda nesta versão. {loginMethod !== 'email' ? 'Entre com username (com ou sem @) ou e-mail e senha.' : 'Entre com e-mail e senha.'} Instagram é opcional; novas contas exigem WhatsApp.</p><button className="button secondary" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>Consultar meu username</button>{expanded && <Username key={userId} userId={userId} />}</section>
 }
 function Username({ userId }: { userId: string }) {
   const [username, setUsername] = useState<string | null>(null)
@@ -20,7 +20,7 @@ function Username({ userId }: { userId: string }) {
     return () => { active = false }
   }, [userId, attempt])
   if (!ready) return <div>{error ? <><p role="alert">{error}</p><button onClick={() => { setError(''); setAttempt(value => value + 1) }}>Tentar novamente</button></> : <p role="status">Consultando username…</p>}</div>
-  if (username) return <p role="status">Seu username: <strong>{username}</strong>. {loginMethod === 'local' ? 'Use este nome ou seu e-mail para entrar.' : 'Use seu e-mail para entrar.'}</p>
+  if (username) return <p role="status">Seu username: <strong>{username}</strong>. {loginMethod !== 'email' ? 'Use este nome ou seu e-mail para entrar.' : 'Use seu e-mail para entrar.'}</p>
   return <form onSubmit={async event => {
     event.preventDefault()
     if (pending) return

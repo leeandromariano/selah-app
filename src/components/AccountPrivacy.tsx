@@ -6,7 +6,7 @@ const repository = createPrivacyRepository(supabase)
 
 export function AccountPrivacy({ userId }: { userId: string }) {
   const [expanded, setExpanded] = useState(false)
-  return <section><h3>Privacidade e conta</h3><p>Seu perfil e seu histórico pessoal são acessíveis pela sua sessão. Os campos do perfil são opcionais; você pode corrigi-los ou limpá-los. Dados antigos do cadastro podem continuar nos metadados de autenticação. Conclusões geram métricas individuais de consistência. O proprietário do Selah pode consultar username, ofensiva atual, recorde, dias com conclusão e situação de hoje para gestão e incentivo ao uso. O ranking é administrativo, não público: outros leitores e futuros publicadores não têm acesso. O WhatsApp tem finalidade e regras separadas; a autorização opcional de feedback não é reutilizada para acessar métricas. <a href={'#privacidade'}>Política de privacidade</a></p><button className="button secondary" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>Solicitar exclusão da conta</button>{expanded && <Request key={userId} userId={userId} />}</section>
+  return <section><h3>Privacidade e conta</h3><p>Saiba como tratamos os seus dados na <a href={'#privacidade'}>Política de privacidade</a>.</p><button className="button secondary" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>Solicitar exclusão da conta</button>{expanded && <Request key={userId} userId={userId} />}</section>
 }
 function Request({ userId }: { userId: string }) {
   const [request, setRequest] = useState<DeletionRequest | null>(null)

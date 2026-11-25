@@ -35,7 +35,7 @@ export function CommunityPanel() {
         <thead><tr>{['Username','Ofensiva atual','Recorde','Dias com conclusão','Situação'].map(title => <th scope="col" key={title}>{title}</th>)}</tr></thead>
         <tbody>{data.readers.map((r, i) => <tr key={`${page}:${i}`}><th scope="row">{r.username ? '@' + r.username : 'Conta legada sem username'}</th><td><strong className="community-streak">{r.current_streak}</strong></td><td>{r.best_streak}</td><td>{r.total_days}</td><td><span className="community-status">{labels[r.status]}{r.status === 'empty' ? ' · ofensiva zero' : ''}</span></td></tr>)}</tbody>
       </table></div>}
-      <div className="actions community-pagination"><button className="button secondary" disabled={page === 0} onClick={() => setPage(n => n - 1)}>Página anterior</button><span>Página {page + 1} · {data.matched_readers} leitores encontrados</span><button className="button secondary" disabled={(page + 1) * data.size >= data.matched_readers} onClick={() => setPage(n => n + 1)}>Próxima página</button><button className="text-link" onClick={() => setAttempt(n => n + 1)}>Atualizar ranking</button></div>
+      <div className="actions community-pagination"><button className="button secondary" disabled={page === 0} onClick={() => setPage(n => n - 1)}>Página anterior</button><span>Página {page + 1} de {Math.max(1, Math.ceil(data.matched_readers / data.size))} · {data.matched_readers} leitores encontrados</span><button className="button secondary" disabled={(page + 1) * data.size >= data.matched_readers} onClick={() => setPage(n => n + 1)}>Próxima página</button><button className="text-link" onClick={() => setAttempt(n => n + 1)}>Atualizar ranking</button></div>
     </>}
   </section>
 }

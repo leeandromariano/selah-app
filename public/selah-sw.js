@@ -38,7 +38,7 @@ self.addEventListener('push', event => event.waitUntil((async () => {
   if (!message) return
   if (message.proof) await store('put', { ...state, proof: message.proof })
   await self.registration.showNotification(message.title, {
-    body: message.body, tag: 'selah-' + (payload.day || 'activation'),
+    body: message.body, tag: payload.kind === 'new' ? 'selah-new-' + payload.devotional : 'selah-' + (payload.day || 'activation'),
     data: { path: message.path, binding: state.binding },
   })
 })()))

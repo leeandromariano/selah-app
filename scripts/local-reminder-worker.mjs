@@ -32,8 +32,13 @@ async function tick() {
     }
   }
   const results = await runReminderBatch({ repository, transport })
+  const notices = await runReminderBatch({ transport, repository: {
+    async claim(now) { return query(`select coalesce(json_agg(id),'[]') from private.claim_publish_notices(${literal(now)}::timestamptz,100,${literal(real ? 'webpush' : 'simulation')}) id;`) },
+    async prepare(id, now) { return query(`select private.prepare_publish_notice(${literal(id)}::uuid,${literal(now)}::timestamptz);`) },
+    async finish(id, outcome) { local.psql(`select private.finish_publish_notice(${literal(id)}::uuid,${literal(outcome)});`) },
+  } })
   // No endpoints, credentials, user IDs or payloads in operational logs.
-  console.log(JSON.stringify({ simulation: !real, attempts: results.length, recorded: transport.intents?.length ?? 0 }))
+  console.log(JSON.stringify({ simulation: !real, attempts: results.length, notices: notices.length, recorded: transport.intents?.length ?? 0 }))
   local.psql('select private.cleanup_reminders();')
 }
 if (!args.includes('--check-local')) {

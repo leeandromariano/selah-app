@@ -20,5 +20,5 @@ describe('entrypoints de OWNER não chegam a mutações em ambiente inseguro',()
         expect(result.stderr).not.toContain('fiction-hosted-key')
       }
     }
-  },20000)
+  },60000) // cada script abre vários processos; sozinho o primeiro leva ~18 s neste Windows, perto demais dos 20 s antigos
 })

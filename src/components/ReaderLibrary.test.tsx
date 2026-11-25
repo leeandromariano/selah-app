@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import App from '../App'
 import { supabase } from '../lib/supabase'
 import { libraryBoundary, olderPublications } from '../test/libraryBoundary'
+import { openMenu } from '../test/menu'
 
 function open(page = 'inicio') {
   location.hash = page
@@ -18,9 +19,9 @@ describe('acervo persistente do leitor', () => {
     const column=article.closest('.reading-column')
     expect(column).not.toBeNull()
     const question=article.querySelector<HTMLElement>('.reflection')!
-    const progress=screen.getByRole('region',{name:'Progresso de leitura'})
+    const progress=screen.getByRole('region',{name:'Conclusão do devocional'})
     const share=screen.getByRole('region',{name:'Compartilhar devocional'})
-    const discussion=screen.getByRole('region',{name:'Compartilhe sua reflexão'})
+    const discussion=screen.getByRole('region',{name:'Deixe seu comentário'})
     for(const element of [article,question,progress,share,discussion])expect(column).toContainElement(element)
     expect(question.compareDocumentPosition(progress)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(article.compareDocumentPosition(share)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
@@ -38,71 +39,86 @@ describe('acervo persistente do leitor', () => {
     libraryBoundary([publication]);open(`leitura/${publication.id}`)
     const article=await screen.findByRole('article')
     expect(article.querySelector('.reflection')).toBeNull()
-    expect(screen.getByRole('region',{name:'Progresso de leitura'})).toBeVisible()
+    expect(screen.getByRole('region',{name:'Conclusão do devocional'})).toBeVisible()
     expect(screen.getByRole('region',{name:'Compartilhar devocional'})).toBeVisible()
-    expect(screen.getByRole('region',{name:'Compartilhe sua reflexão'})).toBeVisible()
+    expect(screen.getByRole('region',{name:'Deixe seu comentário'})).toBeVisible()
   })
-  it.each(olderPublications)('compartilhar aparece ao final de $title antes da conclusão, sem creditar leitura', async publication => {
+  it('a leitura do devocional não tem ajuste de tamanho da fonte (ele existe só na Bíblia)', async () => {
+    const publication={...olderPublications[0]}
+    libraryBoundary([publication]);open(`leitura/${publication.id}`)
+    await screen.findByRole('article')
+    expect(screen.queryByRole('slider',{name:'Tamanho da fonte'})).not.toBeInTheDocument()
+  })
+  it.each(olderPublications)('compartilhar aparece ao final de $title antes da conclusão, sem concluir sozinho', async publication => {
     libraryBoundary(olderPublications)
-    const fallback = vi.mocked(supabase.rpc).getMockImplementation()!
-    vi.mocked(supabase.rpc).mockImplementation((name, args) => name === 'get_my_reading_state'
-      ? { abortSignal: async () => ({ data: { status: 'paused', devotional_id: publication.id, revision: 1, credited_ms: 0, revision_changed: false }, error: null }) } as never
-      : fallback(name, args))
     const copy = vi.fn().mockResolvedValue(undefined)
     vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText: copy } })
     open(`leitura/${publication.id}`)
     const share = await screen.findByRole('region', { name: 'Compartilhar devocional' })
     expect(screen.getByRole('article').compareDocumentPosition(share) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(within(share).getByRole('button', { name: 'Compartilhar' })).toBeVisible()
-    expect(screen.getByRole('button', { name: 'Concluir devocional' })).toBeDisabled()
-    fireEvent.click(within(share).getByRole('button', { name: 'Compartilhar' }))
+    expect(within(share).getByRole('button', { name: 'Compartilhar no Instagram' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Concluir devocional' })).toBeEnabled()
+    fireEvent.click(within(share).getByRole('button', { name: 'Copiar link' }))
     await screen.findByText('Link copiado.')
     expect(copy).toHaveBeenCalledWith(location.origin + '/#leitura/' + publication.id)
-    expect(supabase.rpc).not.toHaveBeenCalledWith('complete_devotional', expect.anything())
-    const whatsapp = new URL(within(share).getByRole('link', { name: 'Abrir WhatsApp para compartilhar' }).getAttribute('href')!)
+    expect(supabase.rpc).not.toHaveBeenCalledWith('complete_devotional_now', expect.anything())
+    const whatsapp = new URL(within(share).getByRole('link', { name: 'Compartilhar link pelo WhatsApp' }).getAttribute('href')!)
     expect(whatsapp.origin).toBe('https://wa.me')
     expect(whatsapp.searchParams.get('text')).toContain(location.origin + '/#leitura/' + publication.id)
     expect(within(share).queryByText(/exige autenticação/)).not.toBeInTheDocument()
     expect(within(share).queryByText(/não é um link público/)).not.toBeInTheDocument()
   })
-  it('compartilhar permanece disponível antes e depois da conclusão voluntária de 60000 ms', async () => {
+  it('conclui sem tempo mínimo: o botão vale desde o início e, ao concluir, abre o pop-up de compartilhar', async () => {
     const publication = olderPublications[0]
     libraryBoundary([publication])
     const fallback = vi.mocked(supabase.rpc).getMockImplementation()!
-    let completed = false
-    vi.mocked(supabase.rpc).mockImplementation((name, args) => {
-      if (name === 'complete_devotional') completed = true
-      if (['get_my_reading_state', 'start_reading', 'complete_devotional'].includes(name)) return { abortSignal: async () => ({ data: {
-        status: completed ? 'completed' : 'ready', devotional_id: publication.id, revision: 1, credited_ms: 60000,
-        revision_changed: false, ...(completed ? { completed_at: '2026-10-28T15:00:00Z', completed_day: '2026-10-28' } : {}),
-      }, error: null }) } as never
-      return fallback(name, args)
-    })
+    vi.mocked(supabase.rpc).mockImplementation((name, args) => name === 'complete_devotional_now'
+      ? Promise.resolve({ data: { status: 'completed', devotional_id: publication.id, revision: 1, completed_at: '2026-10-28T15:00:00Z', completed_day: '2026-10-28' }, error: null }) as never
+      : fallback(name, args))
     open(`leitura/${publication.id}`)
-    expect(await screen.findByRole('button', { name: 'Compartilhar' })).toBeVisible()
-    const conclude = await screen.findByRole('button', { name: 'Concluir devocional' })
-    await waitFor(() => expect(conclude).toBeEnabled())
-    fireEvent.click(conclude)
+    expect(await screen.findByRole('button', { name: 'Compartilhar no Instagram' })).toBeVisible()
+    fireEvent.click(await screen.findByRole('button', { name: 'Concluir devocional' }))
     await screen.findByText(/Devocional concluído em/)
-    expect(completed).toBe(true)
-    expect(screen.getByRole('button', { name: 'Compartilhar' })).toBeVisible()
+    expect(supabase.rpc).toHaveBeenCalledWith('complete_devotional_now', { p_devotional_id: publication.id })
+    // ao concluir, abre o pop-up central de compartilhamento
+    const dialog = await screen.findByRole('dialog', { name: 'Que a Palavra continue com você' })
+    expect(within(dialog).getByRole('button', { name: 'Compartilhar no Instagram' })).toBeVisible()
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Fechar' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Compartilhar no Instagram' })).toBeVisible()
     expect(screen.getAllByRole('region', { name: 'Compartilhar devocional' })).toHaveLength(1)
+  })
+  it('não abre o pop-up de compartilhar ao reabrir um devocional já concluído', async () => {
+    const publication = olderPublications[0]
+    const { completionsQuery } = libraryBoundary([publication])
+    completionsQuery.range.mockResolvedValue({ data: [{ source_devotional_id: publication.id, devotional_id: publication.id, completed_at: '2026-10-28T15:00:00Z', completed_day: '2026-10-28' }], error: null })
+    open(`leitura/${publication.id}`)
+    await screen.findByText(/Devocional concluído em/)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Concluir devocional' })).not.toBeInTheDocument()
+  })
+  it('não há barra de progresso nem chamadas de contagem de tempo de leitura', async () => {
+    libraryBoundary(olderPublications)
+    open(`leitura/${olderPublications[0].id}`)
+    await screen.findByRole('article')
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+    for (const name of ['get_my_reading_state', 'start_reading', 'take_over_reading', 'checkpoint_reading', 'pause_reading', 'complete_devotional']) expect(supabase.rpc).not.toHaveBeenCalledWith(name, expect.anything())
   })
   it('destino da notificação e link copiado abrem a mesma publicação sem duplicar compartilhamento', async () => {
     libraryBoundary(olderPublications)
     const id = olderPublications[0].id
     open(`leitura/${id}/compartilhar`)
-    expect(await screen.findByRole('button', { name: 'Compartilhar' })).toBeVisible()
+    expect(await screen.findByRole('button', { name: 'Compartilhar no Instagram' })).toBeVisible()
     expect(screen.getAllByRole('region', { name: 'Compartilhar devocional' })).toHaveLength(1)
     await act(async () => { location.hash = `leitura/${id}`; window.dispatchEvent(new HashChangeEvent('hashchange')) })
     expect(screen.getByRole('heading', { name: olderPublications[0].title })).toBeVisible()
-    expect(screen.getByRole('button', { name: 'Compartilhar' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Compartilhar no Instagram' })).toBeVisible()
   })
   it('não oferece compartilhamento para conteúdo ausente, não publicado ou sem autenticação', async () => {
     libraryBoundary([])
     const view = open(`leitura/${olderPublications[0].id}/compartilhar`)
     await screen.findByText(/Devocional não encontrado ou indisponível/)
-    expect(screen.queryByRole('button', { name: 'Compartilhar' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Compartilhar no Instagram' })).not.toBeInTheDocument()
     view.unmount()
     vi.mocked(supabase.auth.getSession).mockResolvedValue({ data: { session: null }, error: null } as never)
     render(<App />)
@@ -124,14 +140,15 @@ describe('acervo persistente do leitor', () => {
     open('minhas-leituras')
     expect(await screen.findByRole('heading', { name: 'Minhas conclusões' })).toBeVisible()
     await screen.findByText(/Concluído em/)
-    expect(screen.getAllByText('Devocional indisponível')).toHaveLength(2)
+    // última abertura em Minha Jornada + lista de aberturas + lista de conclusões
+    expect(screen.getAllByText('Devocional indisponível')).toHaveLength(3)
     expect(screen.queryByRole('link', { name: 'Reler devocional' })).not.toBeInTheDocument()
   })
   it('falha de consulta às conclusões não é apresentada como lista vazia', async () => {
     const boundary = libraryBoundary([])
     boundary.completionsQuery.range.mockResolvedValueOnce({ data: null, error: { code: '42501' } })
     open('minhas-leituras')
-    expect(await screen.findByRole('alert')).toHaveTextContent('não tem autorização')
+    await waitFor(() => expect(screen.getAllByRole('alert').some(alert => /não tem autorização/.test(alert.textContent ?? ''))).toBe(true))
     expect(screen.queryByText('Você ainda não concluiu nenhum devocional.')).not.toBeInTheDocument()
   })
   it('destaca publicação de hoje e mantém anteriores no acervo sem registrar abertura da lista', async () => {
@@ -139,8 +156,20 @@ describe('acervo persistente do leitor', () => {
     const boundary = libraryBoundary([today, ...olderPublications])
     open()
     expect(await screen.findByRole('heading', { name: today.title })).toBeVisible()
-    expect(screen.getByRole('button', { name: /Começar a leitura/ })).toBeVisible()
+    expect(screen.getByRole('button', { name: /Entrar na Presença/ })).toBeVisible()
     expect(screen.getByRole('heading', { name: olderPublications[0].title })).toBeVisible()
+    expect(boundary.historyQuery.insert).not.toHaveBeenCalled()
+  })
+  it('permite informar como chega hoje sem abrir devocional nem gravar histórico', async () => {
+    const today = { ...olderPublications[0], id: 'mood-today-fiction', publish_at: new Date().toISOString() }
+    const boundary = libraryBoundary([today])
+    const user = userEvent.setup()
+    open()
+    expect(await screen.findByRole('heading', { name: 'Como seu coração chega hoje?' })).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'Cansado' }))
+    expect(screen.getByRole('button', { name: 'Cansado' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Grato' })).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('button', { name: /Entrar na Presença/ })).toBeEnabled()
     expect(boundary.historyQuery.insert).not.toHaveBeenCalled()
   })
   it('inclui o devocional publicado hoje na lista completa e ordena por mais recente', async () => {
@@ -165,7 +194,7 @@ describe('acervo persistente do leitor', () => {
     libraryBoundary(olderPublications)
     open()
     expect(await screen.findByText('Nenhum devocional publicado para hoje.')).toBeVisible()
-    expect(screen.queryByRole('button', { name: /Começar a leitura/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Entrar na Presença/ })).not.toBeInTheDocument()
   })
   it('trata acervo vazio e histórico vazio sem usar os dados demonstrativos', async () => {
     libraryBoundary([])
@@ -173,8 +202,10 @@ describe('acervo persistente do leitor', () => {
     open('historico')
     expect(await screen.findByText('Ainda não há devocionais publicados.')).toBeVisible()
     expect(screen.queryByText('Confie no tempo de Deus')).not.toBeInTheDocument()
-    await user.click(screen.getByRole('link', { name: 'Minhas aberturas' }))
-    expect(await screen.findByText('Você ainda não abriu nenhum devocional.')).toBeVisible()
+    await openMenu()
+    await user.click(screen.getByRole('link', { name: 'Minha Jornada' }))
+    expect(await screen.findByRole('heading', { name: 'Minhas aberturas' })).toBeVisible()
+    expect((await screen.findAllByText('Você ainda não abriu nenhum devocional.')).length).toBeGreaterThan(0)
   })
   it('informa acesso negado ao acervo e recupera consulta por nova tentativa', async () => {
     const boundary = libraryBoundary(olderPublications)
@@ -187,9 +218,10 @@ describe('acervo persistente do leitor', () => {
   })
   it('informa falha de histórico separadamente e não anuncia histórico vazio', async () => {
     const boundary = libraryBoundary(olderPublications)
-    boundary.historyQuery.range.mockRejectedValueOnce(new Error('offline'))
+    // a página consulta o histórico em dois lugares (última abertura e lista): a falha vale para os dois
+    boundary.historyQuery.range.mockRejectedValue(new Error('offline'))
     open('minhas-leituras')
-    expect(await screen.findByRole('alert')).toHaveTextContent('Verifique sua conexão')
+    await waitFor(() => expect(screen.getAllByRole('alert').some(alert => /Verifique sua conexão/.test(alert.textContent ?? ''))).toBe(true))
     expect(screen.queryByText('Você ainda não abriu nenhum devocional.')).not.toBeInTheDocument()
   })
   it('negação de registro não navega nem anuncia abertura concluída', async () => {
@@ -219,7 +251,7 @@ describe('acervo persistente do leitor', () => {
   it('apresenta evento cujo conteúdo ficou indisponível sem revelar conteúdo oculto', async () => {
     libraryBoundary([], [{ id: 'fictional-event', devotional_id: 'hidden-id', opened_at: '2026-10-26T12:00:00Z' }])
     open('minhas-leituras')
-    expect(await screen.findByText('Devocional indisponível')).toBeVisible()
+    expect((await screen.findAllByText('Devocional indisponível')).length).toBeGreaterThan(0)
     expect(screen.queryByRole('button', { name: 'Abrir novamente' })).not.toBeInTheDocument()
   })
   it('descarta resposta atrasada após logout e não mostra dados da sessão anterior', async () => {

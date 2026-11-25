@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calendarWeeks, civilDate, dayLabel, monthDays, monthLabel, shiftMonth } from './calendar'
+import { calendarWeeks, civilDate, dayLabel, monthDays, monthLabel, presenceWeek, shiftMonth } from './calendar'
 describe('calendário civil sem relógio do dispositivo', () => {
   it('respeita fevereiro e séculos bissextos', () => {
     expect(monthDays('2024-02-01')).toHaveLength(29)
@@ -30,6 +30,19 @@ describe('calendário civil sem relógio do dispositivo', () => {
   it('rótulos civis preservam primeiro dia e mês em português', () => {
     expect(dayLabel('2019-01-01')).toBe('1 de janeiro de 2019')
     expect(monthLabel('2018-11-01')).toBe('novembro de 2018')
+  })
+  it('monta a semana do servidor, incluindo mês anterior, sem inferir conclusão desconhecida', () => {
+    const current = monthDays('2026-11-01').map(date => ({ date, completions: date === '2026-11-01' ? 1 : 0 }))
+    const week = presenceWeek('2026-11-01', current)
+    expect(week.map(day => day.date)).toEqual(['2026-10-26', '2026-10-27', '2026-10-28', '2026-10-29', '2026-10-30', '2026-10-31', '2026-11-01'])
+    expect(week[0].completed).toBeNull()
+    expect(presenceWeek('2026-11-01', current, [{ date: '2026-10-26', completions: 2 }])[0].completed).toBe(true)
+    expect(week[6]).toMatchObject({ today: true, completed: true })
+  })
+  it('marca futuros sem depender do relógio do dispositivo', () => {
+    const week = presenceWeek('2026-10-28', monthDays('2026-10-01').map(date => ({ date, completions: 0 })))
+    expect(week[2]).toMatchObject({ date: '2026-10-28', today: true, future: false })
+    expect(week[3]).toMatchObject({ date: '2026-10-29', future: true, completed: false })
   })
   it.each(['2026-02-30', '2026-13-01', '0000-01-01', 'bad'])('recusa data inválida %s', value => {
     expect(civilDate(value)).toBe(false)

@@ -38,7 +38,24 @@ export function localLoginEnvironment(api: string | undefined, database: string 
   return { api: auth.origin, database: db.href }
 }
 
+// Projeto hospedado: https://<ref de 20 letras/números>.supabase.co, sem caminho, credenciais ou parâmetros.
+export function hostedLoginEnvironment(api: string | undefined) {
+  const auth = new URL(api || '')
+  if (auth.protocol !== 'https:' || !/^[a-z0-9]{20}\.supabase\.co$/.test(auth.hostname) || auth.port || auth.pathname !== '/' || auth.username || auth.password || auth.search || auth.hash) throw Error('Hosted Auth required')
+  return { api: auth.origin }
+}
+
+// Origens de navegador aceitas no hospedado. Padrão: o domínio do Coram; SELAH_ALLOWED_ORIGINS (separadas por vírgula) substitui.
+export function allowedOrigins(configured: string | undefined) {
+  const fallback = ['https://appcoram.com.br', 'https://www.appcoram.com.br']
+  const parsed = (configured ? configured.split(',') : fallback).map(item => item.trim()).filter(Boolean).flatMap(item => {
+    try { const url = new URL(item); return url.protocol === 'https:' && url.origin === item && !url.username && !url.password ? [url.origin] : [] } catch { return [] }
+  })
+  return new Set(parsed.length ? parsed : fallback)
+}
+
 type Dependencies = {
+  origins?: Set<string>
   budget: (identifier: string) => Promise<boolean>
   resolve: (username: string) => Promise<string | null>
   authenticate: (email: string, password: string) => Promise<{ access_token: string; refresh_token: string } | null>
@@ -53,16 +70,17 @@ export function createPasswordLogin(dependencies: Dependencies) {
   const pause = dependencies.pause || (ms => new Promise(resolve => setTimeout(resolve, ms)))
   return async (request: Request) => {
     const start = now()
+    const allowed = dependencies.origins || origins
     const origin = request.headers.get('origin')
     const headers: Record<string, string> = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'Pragma': 'no-cache', 'Vary': 'Origin' }
-    if (origin && origins.has(origin)) {
+    if (origin && allowed.has(origin)) {
       headers['Access-Control-Allow-Origin'] = origin
       headers['Access-Control-Allow-Headers'] = 'authorization, apikey, content-type, x-client-info'
       headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
     }
     const reply = (body: object, status: number) => new Response(JSON.stringify(body), { status, headers })
     // Origin is a browser restriction, not authentication. CLI callers can omit it.
-    if (origin && !origins.has(origin)) return reply(unavailableLogin, 403)
+    if (origin && !allowed.has(origin)) return reply(unavailableLogin, 403)
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers })
     if (request.method !== 'POST') return reply(unavailableLogin, 405)
     const invalid = async () => {
