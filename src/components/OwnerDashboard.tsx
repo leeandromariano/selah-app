@@ -8,6 +8,7 @@ import { Bars, Card, Donut, HBars, KpiCard, Ring, StackedBars } from './Dashboar
 import { number, palette, percent } from '../owner/format'
 import { modeForPage, modes } from '../owner/modes'
 import { CommunityPanel } from './CommunityPanel'
+import { OwnerReadingPlansPanel } from './OwnerReadingPlansPanel'
 import { ModerationPanel } from './ModerationPanel'
 import { OwnerContentPanel } from './OwnerContentPanel'
 import '../owner-v2.css'
@@ -168,7 +169,7 @@ export function OwnerDashboard({ page, repo = defaultRepository }: { page: strin
         {mode === 'conteudo' && <Content d={data} />}
       </div>}
       <div className="dash-detail">
-        {mode === 'leitores' && <CommunityPanel />}
+        {mode === 'leitores' && <><OwnerReadingPlansPanel /><CommunityPanel /></>}
         {mode === 'bereia' && <BereiaRankingPanel />}
         {mode === 'reflexoes' && <ModerationPanel />}
         {mode === 'conteudo' && <>

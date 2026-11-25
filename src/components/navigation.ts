@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react'
 export const mainPages = [
   { id: 'inicio', name: 'Início', icon: 'home' },
   { id: 'historico', name: 'Devocionais', icon: 'book' },
-  { id: 'biblia', name: 'Bíblia', icon: 'book' },
-  { id: 'bereia', name: 'Bereia', icon: 'quiz' },
+  { id: 'biblia', name: 'Bíblia', icon: 'bible' },
+  { id: 'bereia', name: 'Bereia', icon: 'gamepad' },
   { id: 'minha-jornada', name: 'Minha Jornada', icon: 'chart' },
 ] as const
 
