@@ -82,7 +82,7 @@ select pg_temp.ok((select value->>'current_streak'='3' and value->>'best_streak'
 update consistency_case set who=pg_temp.fixture(array[pg_temp.today()-3,pg_temp.today()-2,pg_temp.today()-1]);
 update consistency_case set value=pg_temp.read_as(who);
 select pg_temp.ok((select value->>'current_streak'='3' and value->>'status'='pending_today' and value->>'today_completed'='false' from consistency_case),'yesterday keeps active streak pending today');
-update consistency_case set who=pg_temp.fixture(array[pg_temp.today()-4,pg_temp.today()-3,pg_temp.today()-2]);
+update consistency_case set who=pg_temp.fixture(array[pg_temp.today()-6,pg_temp.today()-5,pg_temp.today()-4]);
 update consistency_case set value=pg_temp.read_as(who);
 select pg_temp.ok((select value->>'current_streak'='0' and value->>'best_streak'='3' and value->>'status'='interrupted' from consistency_case),'full missed day interrupts and preserves record');
 update consistency_case set who=pg_temp.fixture(array[pg_temp.today()-10,pg_temp.today()-9,pg_temp.today()-8,pg_temp.today()-7,pg_temp.today()-6,pg_temp.today()]);
@@ -105,6 +105,32 @@ select pg_temp.ok((select jsonb_array_length(pg_temp.read_as(who,date '2000-02-0
 select pg_temp.ok((select pg_temp.read_as(who,date '0001-01-01')->'days'->0->>'date'='0001-01-01' from consistency_case),'minimum calendar year supported');
 select pg_temp.ok((select pg_temp.read_as(who,date '9999-12-01')->'days'->30->>'date'='9999-12-31' from consistency_case),'maximum calendar year is bounded to 31 cells');
 
+-- Sábado e domingo: somam quando há conclusão e não zeram quando não há.
+update consistency_case set who=pg_temp.fixture(array[date '2019-03-08',date '2019-03-11']);
+update consistency_case set value=pg_temp.read_as(who);
+select pg_temp.ok((select value->>'best_streak'='2' and value->>'total_days'='2' from consistency_case),'weekend without completion does not break the streak');
+update consistency_case set who=pg_temp.fixture(array[date '2019-03-08',date '2019-03-09',date '2019-03-11']);
+update consistency_case set value=pg_temp.read_as(who);
+select pg_temp.ok((select value->>'best_streak'='3' and value->>'total_days'='3' from consistency_case),'saturday completion adds a day');
+update consistency_case set who=pg_temp.fixture(array[date '2019-03-08',date '2019-03-09',date '2019-03-10',date '2019-03-11']);
+update consistency_case set value=pg_temp.read_as(who);
+select pg_temp.ok((select value->>'best_streak'='4' and value->>'total_days'='4' from consistency_case),'full weekend adds both days');
+update consistency_case set who=pg_temp.fixture(array[date '2019-03-07',date '2019-03-11']);
+update consistency_case set value=pg_temp.read_as(who);
+select pg_temp.ok((select value->>'best_streak'='1' and value->>'total_days'='2' from consistency_case),'missed friday still breaks');
+update consistency_case set who=pg_temp.fixture(array[date '2019-03-08',date '2019-03-12']);
+update consistency_case set value=pg_temp.read_as(who);
+select pg_temp.ok((select value->>'best_streak'='1' and value->>'total_days'='2' from consistency_case),'missed monday still breaks');
+update consistency_case set who=pg_temp.fixture(array[date '2019-03-01',date '2019-03-04',date '2019-03-05',date '2019-03-06',date '2019-03-07',date '2019-03-08',date '2019-03-11']);
+update consistency_case set value=pg_temp.read_as(who);
+select pg_temp.ok((select value->>'best_streak'='7' and value->>'total_days'='7' from consistency_case),'streak crosses two weekends');
+select pg_temp.ok(private.keeps_streak(date '2019-03-08',date '2019-03-09')=true,'saturday keeps friday streak alive');
+select pg_temp.ok(private.keeps_streak(date '2019-03-08',date '2019-03-10')=true,'sunday keeps friday streak alive');
+select pg_temp.ok(private.keeps_streak(date '2019-03-08',date '2019-03-11')=true,'monday still pending after friday');
+select pg_temp.ok(private.keeps_streak(date '2019-03-08',date '2019-03-12')=false,'tuesday after skipped monday is interrupted');
+select pg_temp.ok(private.keeps_streak(date '2019-03-07',date '2019-03-09')=false,'saturday after skipped friday is interrupted');
+select pg_temp.ok(private.keeps_streak(date '2019-03-09',date '2019-03-11')=true,'saturday completion carries to monday');
+select pg_temp.ok(private.keeps_streak(date '2019-03-01',date '2019-03-11')=false,'a whole week without reading is interrupted');
 select pg_temp.ok(('2026-10-28T02:59:59Z'::timestamptz at time zone 'America/Sao_Paulo')::date=date '2026-10-27','before Brasilia midnight');
 select pg_temp.ok(('2026-10-28T03:00:00Z'::timestamptz at time zone 'America/Sao_Paulo')::date=date '2026-10-28','at Brasilia midnight');
 select pg_temp.ok(('2018-11-04T02:59:59Z'::timestamptz at time zone 'America/Sao_Paulo')::date=date '2018-11-03','historical DST before jump');

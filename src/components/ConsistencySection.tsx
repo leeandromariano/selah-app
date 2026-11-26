@@ -10,9 +10,14 @@ const repository = createConsistencyRepository(supabase)
 const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 const messages = {
   empty: 'Seu primeiro dia começa com uma conclusão voluntária. Leia no seu tempo.',
-  pending_today: 'Você concluiu ontem. Ainda pode manter sua sequência com uma conclusão hoje.',
+  pending_today: 'Sua sequência está ativa. Ainda pode manter sua sequência e somar um dia com uma conclusão hoje.',
   completed_today: 'Conclusão de hoje registrada. Continue no seu ritmo.',
   interrupted: 'Você pode recomeçar hoje. Seus dias anteriores continuam na sua história.',
+}
+const weekendMessage = 'Fim de semana: sua sequência não zera. Se concluir um devocional hoje, o dia soma.'
+function statusMessage(data: Consistency) {
+  const weekend = [0, 6].includes(new Date(data.server_today + 'T12:00:00Z').getUTCDay())
+  return weekend && data.status === 'pending_today' ? weekendMessage : messages[data.status]
 }
 export function ConsistencySection({ userId, refreshKey = 0, showHistory = false, compact = false, lead, cta }: { userId: string; refreshKey?: number; showHistory?: boolean; compact?: boolean; lead?: ReactNode; cta?: ReactNode }) {
   // A new account always receives a fresh component and no prior reader state.
@@ -72,7 +77,7 @@ function ConsistencyView({ refreshKey, showHistory, compact, lead, cta }: { refr
     <div className="home-hero-main">
       {lead ?? <div className="eyebrow">UM DIA DE CADA VEZ</div>}
       <div className="home-hero-actions"><h2 className="home-streak"><Icon name="flame" />{data ? data.current_streak > 0 ? `Dia ${data.current_streak} na Presença` : 'Seu primeiro dia na Presença' : 'Sua presença diária'}</h2>{cta}</div>
-      <p className="home-hero-message">{data ? messages[data.status] : pending ? 'Carregando sua constância…' : error}</p>
+      <p className="home-hero-message">{data ? statusMessage(data) : pending ? 'Carregando sua constância…' : error}</p>
     </div>
     {week.length > 0 && <ol className="coram-week" aria-label="Constância desta semana">{week.map(day => <li key={day.date} className={`${day.today ? 'today' : ''} ${day.completed ? 'done' : ''}`} aria-label={`${dayLabel(day.date)}: ${day.completed === null ? 'dados indisponíveis' : day.future ? 'data futura' : day.completed ? 'devocional concluído' : 'sem conclusão'}`}><span>{day.label}</span><strong aria-hidden="true">{day.completed ? '✓' : Number(day.date.slice(8))}</strong></li>)}</ol>}
     {error && <button type="button" className="button secondary" disabled={pending} onClick={() => setAttempt(value => value + 1)}>Tentar novamente</button>}
@@ -84,8 +89,8 @@ function ConsistencyView({ refreshKey, showHistory, compact, lead, cta }: { refr
     {data && <>
       <div className="consistency-layout">
         <div className="consistency-summary">
-          <div className="consistency-current"><img className="consistency-flame" src="/home/flame.webp" alt="" width="96" height="96" decoding="async" /><div><span>Ofensiva atual</span><p><strong>{data.current_streak}</strong> {data.current_streak === 1 ? 'dia consecutivo' : 'dias consecutivos'}</p></div></div>
-          <p className="consistency-message" role="status">{messages[data.status]}</p>
+          <div className="consistency-current"><img className="consistency-flame" src="/home/flame.webp" alt="" width="96" height="96" decoding="async" /><div><span>Ofensiva atual</span><p><strong>{data.current_streak}</strong> {data.current_streak === 1 ? 'dia na sequência' : 'dias na sequência'}</p></div></div>
+          <p className="consistency-message" role="status">{statusMessage(data)}</p>
           <span className="consistency-today">Hoje: {data.today_completed ? 'concluído ✓' : 'pendente'}</span>
           <dl className="consistency-totals">
             <div><dt>Recorde pessoal</dt><dd>{data.best_streak} {data.best_streak === 1 ? 'dia' : 'dias'}</dd><img src="/home/trophy.webp" alt="" width="64" height="64" loading="lazy" /></div>
@@ -115,7 +120,7 @@ function ConsistencyView({ refreshKey, showHistory, compact, lead, cta }: { refr
         </div>
       </div>
       {showHistory && <MonthlyHistory data={data} />}
-      <p className="consistency-note">A ofensiva registra dias com conclusões; não mede sua fé nem seu valor pessoal. Aberturas e releituras de textos já concluídos não acrescentam dias.</p>
+      <p className="consistency-note">A ofensiva registra dias com conclusões. Sábado e domingo sem conclusão não zeram a sequência; quando você conclui, eles somam. Ela não mede sua fé nem seu valor pessoal. Aberturas e releituras de textos já concluídos não acrescentam dias.</p>
     </>}
   </section>
 }

@@ -62,7 +62,7 @@ function RewardsView() {
       <p>Seu caminho fica na sua história. Uma pausa não apaga os distintivos alcançados.</p>
       <ul className="journey-badges" aria-label="Distintivos pessoais">{data.badges.map((badge, i) => <li key={badge.days} className={badge.unlocked ? 'badge-earned' : ''}>
         <span aria-hidden="true">{badge.unlocked ? '✦' : '◇'}</span><h3>{badgeNames[i]}</h3>
-        <p>{badge.days} dias consecutivos</p><strong>{badge.unlocked ? 'Alcançado' : 'Próximo marco'}</strong>
+        <p>{badge.days} dias na sequência</p><strong>{badge.unlocked ? 'Alcançado' : 'Próximo marco'}</strong>
       </li>)}</ul>
       <h2>Desafios Pessoais</h2>
       <p>Uma escolha opcional. Semana de segunda a domingo, no horário de Brasília. Ao iniciar, os dias já concluídos nesta semana também contam. Uma meta por semana; você pode encerrar sem penalização.</p>
