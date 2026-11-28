@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import type { TouchEvent } from 'react'
 import type { Publication } from '../devotionals/repository'
 import { completeDevotionalNow } from '../reading/instantCompletion'
@@ -30,6 +30,15 @@ export function GuidedDevotional({ item, alreadyCompleted = false, onCompleted, 
   const [finishing, setFinishing] = useState(false)
   const [error, setError] = useState('')
   const touchStart = useRef<{ x: number; y: number } | null>(null)
+  const root = useRef<HTMLDivElement>(null)
+  // Cada etapa começa do topo: se o leitor desceu na etapa anterior, volta até as etapas, logo abaixo do cabeçalho fixo.
+  // Na abertura (sem direção) nada se move, para não desfazer a retomada da leitura.
+  useLayoutEffect(() => {
+    if (!direction || !root.current) return
+    const header = Math.max(0, document.querySelector('.main-shell > header')?.getBoundingClientRect().bottom ?? 0)
+    const top = root.current.getBoundingClientRect().top - header - 12
+    if (top < 0) window.scrollTo({ top: Math.max(0, window.scrollY + top), behavior: 'instant' })
+  }, [step, direction])
   async function navigate(target: number) {
     if (target < 0 || target > lastStep || target === step || finishing) return
     setError('')
@@ -57,7 +66,7 @@ export function GuidedDevotional({ item, alreadyCompleted = false, onCompleted, 
     if (step === prayerStep && deltaX < 0 && !done) return
     void navigate(step + (deltaX < 0 ? 1 : -1))
   }
-  return <div className="guided-devotional">
+  return <div className="guided-devotional" ref={root}>
     <nav className="guided-steps" aria-label="Etapas do devocional">{steps.map((label, index) => <button key={label} type="button" aria-current={step === index ? 'step' : undefined} data-complete={index < step ? 'true' : undefined} onClick={() => void navigate(index)}><span>{String(index + 1).padStart(2, '0')}</span>{label}</button>)}</nav>
     <section key={step} className="guided-panel" aria-label={steps[step]} data-direction={direction ?? undefined} onTouchStart={startSwipe} onTouchEnd={finishSwipe} onTouchCancel={() => { touchStart.current = null }} onTouchMove={event => { if (event.touches.length !== 1) touchStart.current = null }}>
       <div className="guided-head"><span className="guided-art" aria-hidden="true"><img src={`/home/${stepArt[step]}.webp`} alt="" width="96" height="96" decoding="async" /></span><div><div className="eyebrow">{String(step + 1).padStart(2, '0')} / {String(steps.length).padStart(2, '0')} · VIVER CORAM DEO</div>
